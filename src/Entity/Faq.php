@@ -15,27 +15,16 @@ namespace Derafu\Content\Entity;
 use Derafu\Content\Contract\FaqInterface;
 
 /**
- * Class that represents a faq.
+ * Class that represents a FAQ.
  */
-final class Faq extends ContentFile implements FaqInterface
+class Faq extends ContentItem implements FaqInterface
 {
-    /**
-     * Question of the faq.
-     *
-     * @var string
-     */
-    private string $question;
-
     /**
      * {@inheritDoc}
      */
     public function question(): string
     {
-        if (!isset($this->question)) {
-            $this->question = $this->metadata('question') ?? $this->name();
-        }
-
-        return $this->question;
+        return $this->title();
     }
 
     /**
@@ -43,6 +32,6 @@ final class Faq extends ContentFile implements FaqInterface
      */
     public function answer(): string
     {
-        return $this->content();
+        return $this->data();
     }
 }

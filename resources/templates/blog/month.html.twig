@@ -14,11 +14,12 @@
 {% block blog_content %}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item active" aria-current="page">Blog</li>
+            <li class="breadcrumb-item"><a href="{{ base_path }}/blog">Blog</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Month: {{ month.name }}</li>
         </ol>
     </nav>
     {% for post in posts %}
-        <div class="mb-4">
+        <div class="mb-5">
             <twig:block-card
                 image="{{ post.image | default(base_path ~ '/img/blog/default.webp') }}"
                 title="{{ post.title }}"

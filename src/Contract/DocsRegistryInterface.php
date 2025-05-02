@@ -13,23 +13,23 @@ declare(strict_types=1);
 namespace Derafu\Content\Contract;
 
 /**
- * FAQ registry interface.
+ * Docs registry interface.
  */
-interface FaqRegistryInterface extends ContentRegistryInterface
+interface DocsRegistryInterface extends ContentRegistryInterface
 {
     /**
-     * Get FAQs filtered by criteria.
+     * Get docs filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<FaqInterface>
+     * @return array<DocInterface>
      */
     public function filter(array $filters = []): array;
 
     /**
-     * Get a FAQ by slug.
+     * Get a doc by slug.
      *
-     * @param string $slug Slug of the FAQ.
-     * @return FaqInterface
+     * @param string $slug Slug of the doc.
+     * @return DocInterface
      */
-    public function get(string $slug): FaqInterface;
+    public function get(string $slug): DocInterface;
 }

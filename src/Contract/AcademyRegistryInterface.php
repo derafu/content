@@ -13,23 +13,23 @@ declare(strict_types=1);
 namespace Derafu\Content\Contract;
 
 /**
- * FAQ registry interface.
+ * Academy registry interface.
  */
-interface FaqRegistryInterface extends ContentRegistryInterface
+interface AcademyRegistryInterface extends ContentRegistryInterface
 {
     /**
-     * Get FAQs filtered by criteria.
+     * Get academy courses filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<FaqInterface>
+     * @return array<AcademyCourseInterface>
      */
     public function filter(array $filters = []): array;
 
     /**
-     * Get a FAQ by slug.
+     * Get an academy course by slug.
      *
-     * @param string $slug Slug of the FAQ.
-     * @return FaqInterface
+     * @param string $slug Slug of the academy course.
+     * @return AcademyCourseInterface
      */
-    public function get(string $slug): FaqInterface;
+    public function get(string $slug): AcademyCourseInterface;
 }

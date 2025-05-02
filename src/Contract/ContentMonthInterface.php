@@ -16,42 +16,68 @@ use JsonSerializable;
 use Stringable;
 
 /**
- * Content author interface.
+ * Content month interface.
  */
-interface ContentAuthorInterface extends JsonSerializable, Stringable
+interface ContentMonthInterface extends JsonSerializable, Stringable
 {
     /**
-     * Get the name of the author.
+     * Get the name of the month.
      *
      * @return string
      */
     public function name(): string;
 
     /**
-     * Get the slug of the author.
+     * Get the year of the month.
      *
-     * If the slug is not set, it will be generated from the name.
+     * @return int
+     */
+    public function year(): int;
+
+    /**
+     * Get the month of the month.
+     *
+     * @return int
+     */
+    public function month(): int;
+
+    /**
+     * Get the slug of the month.
      *
      * @return string
      */
     public function slug(): string;
 
     /**
-     * Get the author as an array.
+     * Get the count of posts with this month.
+     *
+     * @return int
+     */
+    public function count(): int;
+
+    /**
+     * Increment the count of posts.
+     *
+     * @return void
+     */
+    public function increment(): void;
+
+    /**
+     * Get the month as an array.
      *
      * @return array
      */
     public function toArray(): array;
 
     /**
-     * Get the author as a JSON serializable array.
+     * Get the month as an array.
      *
      * @return array
      */
     public function jsonSerialize(): array;
 
     /**
-     * Get the author as a string.
+     * Get the month as a string.
      *
      * @return string
      */

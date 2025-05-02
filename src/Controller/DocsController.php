@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Content\Controller;
 
 /**
- * Main controller for all content types.
+ * Docs controller.
  */
-class ContentController
+class DocsController
 {
 }

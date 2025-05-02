@@ -15,40 +15,6 @@ namespace Derafu\Content\Contract;
 /**
  * Blog post interface.
  */
-interface BlogPostInterface extends ContentFileInterface
+interface BlogPostInterface extends ContentItemInterface
 {
-    /**
-     * Get the title of the blog post.
-     *
-     * @return string
-     */
-    public function title(): string;
-
-    /**
-     * Get the image of the blog post.
-     *
-     * @return string|null
-     */
-    public function image(): ?string;
-
-    /**
-     * Get the author of the blog post.
-     *
-     * @return ContentAuthorInterface|null
-     */
-    public function author(): ?ContentAuthorInterface;
-
-    /**
-     * Get the reading time of the blog post in minutes.
-     *
-     * @return int
-     */
-    public function time(): int;
-
-    /**
-     * Get the links of the blog post.
-     *
-     * @return array
-     */
-    public function links(): array;
 }

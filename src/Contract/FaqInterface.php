@@ -15,7 +15,7 @@ namespace Derafu\Content\Contract;
 /**
  * Faq interface.
  */
-interface FaqInterface extends ContentFileInterface
+interface FaqInterface extends ContentItemInterface
 {
     /**
      * Get the question of the faq.

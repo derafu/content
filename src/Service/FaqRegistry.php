@@ -10,11 +10,13 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\Content\Controller;
+namespace Derafu\Content\Service;
+
+use Derafu\Content\Contract\FaqRegistryInterface;
 
 /**
- * Main controller for all content types.
+ * FAQ registry.
  */
-class ContentController
+class FaqRegistry extends ContentRegistry implements FaqRegistryInterface
 {
 }

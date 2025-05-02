@@ -10,11 +10,13 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\Content\Controller;
+namespace Derafu\Content\Entity;
+
+use Derafu\Content\Contract\DocInterface;
 
 /**
- * Main controller for all content types.
+ * Class that represents a doc.
  */
-class ContentController
+class Doc extends ContentItem implements DocInterface
 {
 }

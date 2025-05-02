@@ -15,15 +15,15 @@ namespace Derafu\Content\Contract;
 /**
  * Blog registry interface.
  */
-interface BlogRegistryInterface
+interface BlogRegistryInterface extends ContentRegistryInterface
 {
     /**
-     * Get all blog posts.
+     * Get blog posts filtered by criteria.
      *
-     * @param array $filters Filter criteria.
-     * @return BlogPostInterface[]
+     * @param array<string, mixed> $filters Filter criteria.
+     * @return array<BlogPostInterface>
      */
-    public function getPosts(array $filters = []): array;
+    public function filter(array $filters = []): array;
 
     /**
      * Get a blog post by slug.
@@ -31,13 +31,5 @@ interface BlogRegistryInterface
      * @param string $slug Slug of the blog post.
      * @return BlogPostInterface
      */
-    public function getPost(string $slug): BlogPostInterface;
-
-    /**
-     * Get all tags.
-     *
-     * @param array $filters Filter criteria.
-     * @return array<string, ContentTagInterface>
-     */
-    public function getTags(array $filters = []): array;
+    public function get(string $slug): BlogPostInterface;
 }

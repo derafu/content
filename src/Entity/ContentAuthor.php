@@ -18,7 +18,7 @@ use Derafu\Support\Str;
 /**
  * Class that represents a content author.
  */
-final class ContentAuthor implements ContentAuthorInterface
+class ContentAuthor implements ContentAuthorInterface
 {
     /**
      * Name of the author.

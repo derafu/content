@@ -13,14 +13,21 @@ declare(strict_types=1);
 namespace Derafu\Content\Controller;
 
 use Derafu\Content\Contract\BlogRegistryInterface;
+use Derafu\Content\Entity\ContentMonth;
+use Derafu\Content\Entity\ContentTag;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
 
 /**
  * Blog controller.
  */
-final class BlogController
+class BlogController
 {
+    /**
+     * Recent posts limit.
+     */
+    private const RECENT_POSTS_LIMIT = 4;
+
     /**
      * Constructor.
      *
@@ -42,15 +49,19 @@ final class BlogController
     public function index(Request $request): string
     {
         $filters = array_filter($request->all(), fn ($value) => $value !== '');
-        $posts = $this->blogRegistry->getPosts($filters);
-        $tags = $this->blogRegistry->getTags();
-        $recentPosts = $this->blogRegistry->getPosts(['limit' => 5]);
+        $posts = $this->blogRegistry->filter($filters);
+        $recentPosts = $this->blogRegistry->filter([
+            'limit' => self::RECENT_POSTS_LIMIT,
+        ]);
+        $tags = $this->blogRegistry->tags();
+        $months = $this->blogRegistry->months();
 
         return $this->renderer->render('blog/index.html.twig', [
             'filters' => $filters,
             'posts' => $posts,
-            'tags' => $tags,
             'recentPosts' => $recentPosts,
+            'tags' => $tags,
+            'months' => $months,
         ]);
     }
 
@@ -62,14 +73,18 @@ final class BlogController
      */
     public function show(string $slug): string
     {
-        $post = $this->blogRegistry->getPost($slug);
-        $tags = $this->blogRegistry->getTags();
-        $recentPosts = $this->blogRegistry->getPosts(['limit' => 5]);
+        $post = $this->blogRegistry->get($slug);
+        $recentPosts = $this->blogRegistry->filter([
+            'limit' => self::RECENT_POSTS_LIMIT,
+        ]);
+        $tags = $this->blogRegistry->tags();
+        $months = $this->blogRegistry->months();
 
         return $this->renderer->render('blog/show.html.twig', [
             'post' => $post,
-            'tags' => $tags,
             'recentPosts' => $recentPosts,
+            'tags' => $tags,
+            'months' => $months,
         ]);
     }
 
@@ -83,16 +98,56 @@ final class BlogController
     public function tag(Request $request, string $tag): string
     {
         $filters = array_filter($request->all(), fn ($value) => $value !== '');
-        $filters['tag'] = $tag;
-        $posts = $this->blogRegistry->getPosts($filters);
-        $tags = $this->blogRegistry->getTags();
-        $recentPosts = $this->blogRegistry->getPosts(['limit' => 5, 'tag' => $tag]);
+        $tags = $this->blogRegistry->tags();
+        $contentTag = $tags[$tag] ?? new ContentTag($tag);
+        $filters['tag'] = $contentTag->slug();
+        $posts = $this->blogRegistry->filter($filters);
+        $recentPosts = $this->blogRegistry->filter([
+            'tag' => $contentTag->slug(),
+            'limit' => self::RECENT_POSTS_LIMIT,
+        ]);
 
-        return $this->renderer->render('blog/index.html.twig', [
+        $months = $this->blogRegistry->months();
+
+        return $this->renderer->render('blog/tag.html.twig', [
             'filters' => $filters,
             'posts' => $posts,
-            'tags' => $tags,
             'recentPosts' => $recentPosts,
+            'tags' => $tags,
+            'months' => $months,
+            'tag' => $contentTag,
+        ]);
+    }
+
+    /**
+     * Month action.
+     *
+     * @param Request $request Request.
+     * @param string $month Month.
+     * @return string
+     */
+    public function month(Request $request, string $month): string
+    {
+        $filters = array_filter($request->all(), fn ($value) => $value !== '');
+        $contentMonth = new ContentMonth($month);
+        $filters['year'] = $contentMonth->year();
+        $filters['month'] = $contentMonth->month();
+        $posts = $this->blogRegistry->filter($filters);
+        $recentPosts = $this->blogRegistry->filter([
+            'year' => $contentMonth->year(),
+            'month' => $contentMonth->month(),
+            'limit' => self::RECENT_POSTS_LIMIT,
+        ]);
+        $tags = $this->blogRegistry->tags();
+        $months = $this->blogRegistry->months();
+
+        return $this->renderer->render('blog/month.html.twig', [
+            'filters' => $filters,
+            'posts' => $posts,
+            'recentPosts' => $recentPosts,
+            'tags' => $tags,
+            'months' => $months,
+            'month' => $contentMonth,
         ]);
     }
 
@@ -106,6 +161,6 @@ final class BlogController
     {
         $filters = array_filter($request->all(), fn ($value) => $value !== '');
 
-        return $this->blogRegistry->getPosts($filters);
+        return $this->blogRegistry->filter($filters);
     }
 }

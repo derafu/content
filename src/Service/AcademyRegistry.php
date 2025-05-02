@@ -10,11 +10,13 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\Content\Controller;
+namespace Derafu\Content\Service;
+
+use Derafu\Content\Contract\AcademyRegistryInterface;
 
 /**
- * Main controller for all content types.
+ * Academy registry.
  */
-class ContentController
+class AcademyRegistry extends ContentRegistry implements AcademyRegistryInterface
 {
 }

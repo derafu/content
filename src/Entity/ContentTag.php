@@ -18,7 +18,7 @@ use Derafu\Support\Str;
 /**
  * Class that represents a content tag.
  */
-final class ContentTag implements ContentTagInterface
+class ContentTag implements ContentTagInterface
 {
     /**
      * Name of the tag.
@@ -108,6 +108,6 @@ final class ContentTag implements ContentTagInterface
      */
     public function __toString(): string
     {
-        return $this->name() . ' (' . $this->count() . ')';
+        return $this->name();
     }
 }

@@ -10,11 +10,13 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\Content\Controller;
+namespace Derafu\Content\Service;
+
+use Derafu\Content\Contract\DocsRegistryInterface;
 
 /**
- * Main controller for all content types.
+ * Docs registry.
  */
-class ContentController
+class DocsRegistry extends ContentRegistry implements DocsRegistryInterface
 {
 }

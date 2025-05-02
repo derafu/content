@@ -26,6 +26,6 @@ final class BlogTest extends TestCase
     {
         $blogRegistry = new BlogRegistry('/tmp/blog-fake-path');
 
-        $this->assertCount(0, $blogRegistry->getPosts());
+        $this->assertCount(0, $blogRegistry->all());
     }
 }

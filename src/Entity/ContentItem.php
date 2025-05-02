@@ -13,134 +13,183 @@ declare(strict_types=1);
 namespace Derafu\Content\Entity;
 
 use DateTimeImmutable;
-use Derafu\Content\Contract\ContentFileInterface;
+use Derafu\Content\Contract\ContentAuthorInterface;
+use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Support\Str;
 use InvalidArgumentException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Entity for the representation of a content file.
+ * Entity for the representation of a content.
  */
-class ContentFile implements ContentFileInterface
+class ContentItem implements ContentItemInterface
 {
     /**
-     * Path of the content file.
+     * Reading speed of the content.
+     *
+     * This is the number of words per minute expected to read the content.
+     *
+     * @var int
+     */
+    private const READING_SPEED = 200;
+
+    /**
+     * Path of the content.
      *
      * @var string
      */
     private string $path;
 
     /**
-     * Directory of the content file.
+     * Directory of the content.
      *
      * @var string
      */
     private string $directory;
 
     /**
-     * Name of the content file.
+     * Name of the content.
      *
      * @var string
      */
     private string $name;
 
     /**
-     * Extension of the content file.
+     * Extension of the content.
      *
      * @var string
      */
     private string $extension;
 
     /**
-     * Slug of the content file.
-     *
-     * @var string
-     */
-    private string $slug;
-
-    /**
-     * Data of the content file.
-     *
-     * @var string
-     */
-    private string $data;
-
-    /**
-     * Metadata of the content file.
-     *
-     * @var array
-     */
-    private array $metadata;
-
-    /**
-     * Content of the content file.
-     *
-     * This is the payload or body of the file, without the metadata.
-     *
-     * @var string
-     */
-    private string $content;
-
-    /**
-     * Summary of the content file.
-     *
-     * @var string
-     */
-    private string $summary;
-
-    /**
-     * Preview of the content file.
-     *
-     * @var string
-     */
-    private string $preview;
-
-    /**
-     * Checksum of the content file.
+     * Checksum of the content.
      *
      * @var string
      */
     private string $checksum;
 
     /**
-     * Created date of the content file.
+     * Raw content of the content.
+     *
+     * This is the whole content of the file content, including the metadata.
+     *
+     * @var string
+     */
+    private string $raw;
+
+    /**
+     * Metadata of the content.
+     *
+     * This is the metadata of the content, without the data.
+     *
+     * @var array
+     */
+    private array $metadata;
+
+    /**
+     * Data of the content.
+     *
+     * This is the data of the content, without the metadata.
+     *
+     * @var string
+     */
+    private string $data;
+
+    /**
+     * Slug of the content.
+     *
+     * @var string
+     */
+    private string $slug;
+
+    /**
+     * Title of the content.
+     *
+     * @var string
+     */
+    private string $title;
+
+    /**
+     * Summary of the content.
+     *
+     * @var string
+     */
+    private string $summary;
+
+    /**
+     * Preview of the content.
+     *
+     * @var string
+     */
+    private string $preview;
+
+    /**
+     * Created date of the content.
      *
      * @var DateTimeImmutable
      */
     private DateTimeImmutable $created;
 
     /**
-     * Modified date of the content file.
+     * Modified date of the content.
      *
      * @var DateTimeImmutable
      */
     private DateTimeImmutable $modified;
 
     /**
-     * Published date of the content file.
+     * Published date of the content.
      *
      * @var DateTimeImmutable
      */
     private DateTimeImmutable $published;
 
     /**
-     * Deprecated date of the content file.
+     * Deprecated date of the content.
      *
      * @var DateTimeImmutable|false
      */
     private DateTimeImmutable|false $deprecated;
 
     /**
-     * Tags of the content file.
+     * Tags of the content.
      *
      * @var array<ContentTag>
      */
     private array $tags;
 
     /**
+     * Image of the content.
+     *
+     * @var string|false
+     */
+    private string|false $image;
+
+    /**
+     * Author of the content.
+     *
+     * @var ContentAuthor|false
+     */
+    private ContentAuthor|false $author;
+
+    /**
+     * Time to read the content.
+     *
+     * @var int
+     */
+    private int $time;
+
+    /**
+     * Links of the content.
+     *
+     * @var array
+     */
+    private array $links;
+
+    /**
      * Constructor.
      *
-     * @param string|array $path Path of the content file.
+     * @param string|array $path Path of the content.
      */
     public function __construct(string|array $path)
     {
@@ -152,17 +201,23 @@ class ContentFile implements ContentFileInterface
                 'directory',
                 'name',
                 'extension',
-                'slug',
-                'data',
-                'metadata',
-                'content',
-                'preview',
                 'checksum',
+                'raw',
+                'metadata',
+                'data',
+                'slug',
+                'title',
+                'summary',
+                'preview',
                 'created',
                 'modified',
                 'published',
                 'deprecated',
                 'tags',
+                'image',
+                'author',
+                'time',
+                'links',
             ];
 
             foreach ($attributes as $attribute) {
@@ -173,7 +228,10 @@ class ContentFile implements ContentFileInterface
         }
 
         if (!is_string($this->path) || !is_readable($this->path)) {
-            throw new InvalidArgumentException('Path must be a string and readable.');
+            throw new InvalidArgumentException(sprintf(
+                'Path %s must be a readable file content.',
+                $this->path
+            ));
         }
     }
 
@@ -224,25 +282,25 @@ class ContentFile implements ContentFileInterface
     /**
      * {@inheritDoc}
      */
-    public function slug(): string
+    public function checksum(): string
     {
-        if (!isset($this->slug)) {
-            $this->slug = $this->metadata('slug') ?? Str::slug($this->name());
+        if (!isset($this->checksum)) {
+            $this->checksum = hash_file('sha256', $this->path());
         }
 
-        return $this->slug;
+        return $this->checksum;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function data(): string
+    public function raw(): string
     {
-        if (!isset($this->data)) {
-            $this->data = file_get_contents($this->path);
+        if (!isset($this->raw)) {
+            $this->raw = file_get_contents($this->path);
         }
 
-        return $this->data;
+        return $this->raw;
     }
 
     /**
@@ -251,7 +309,7 @@ class ContentFile implements ContentFileInterface
     public function metadata(?string $key = null, mixed $default = null): mixed
     {
         if (!isset($this->metadata)) {
-            $data = $this->data();
+            $data = $this->raw();
             if (preg_match('/^---\n(.*?)\n---\n/s', $data, $matches)) {
                 $yaml = $matches[1];
                 $this->metadata = Yaml::parse($yaml);
@@ -270,13 +328,37 @@ class ContentFile implements ContentFileInterface
     /**
      * {@inheritDoc}
      */
-    public function content(): string
+    public function data(): string
     {
-        if (!isset($this->content)) {
-            $this->content = trim(preg_replace('/^---\n(.*?)\n---\n/s', '', $this->data()));
+        if (!isset($this->data)) {
+            $this->data = trim(preg_replace('/^---\n(.*?)\n---\n/s', '', $this->raw()));
         }
 
-        return $this->content;
+        return $this->data;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function slug(): string
+    {
+        if (!isset($this->slug)) {
+            $this->slug = $this->metadata('slug') ?? Str::slug($this->name());
+        }
+
+        return $this->slug;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function title(): string
+    {
+        if (!isset($this->title)) {
+            $this->title = $this->metadata('title') ?? $this->name();
+        }
+
+        return $this->title;
     }
 
     /**
@@ -298,7 +380,7 @@ class ContentFile implements ContentFileInterface
     {
         if (!isset($this->preview)) {
 
-            $content = $this->content();
+            $content = $this->data();
 
             // Divide the content into paragraphs by double line break.
             $paragraphs = preg_split("/\n\s*\n/", $content, 2);
@@ -331,18 +413,6 @@ class ContentFile implements ContentFileInterface
         }
 
         return $this->preview;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function checksum(): string
-    {
-        if (!isset($this->checksum)) {
-            $this->checksum = hash_file('sha256', $this->path());
-        }
-
-        return $this->checksum;
     }
 
     /**
@@ -412,6 +482,76 @@ class ContentFile implements ContentFileInterface
     /**
      * {@inheritDoc}
      */
+    public function image(): ?string
+    {
+        if (!isset($this->image)) {
+            $this->image = $this->metadata()['image'] ?? false;
+        }
+
+        return $this->image ?: null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function author(): ?ContentAuthorInterface
+    {
+        if (!isset($this->author)) {
+            $author = $this->metadata()['author'] ?? null;
+
+            if (empty($author)) {
+                $this->author = false;
+            } elseif (is_string($author)) {
+                $this->author = new ContentAuthor($author);
+            } else {
+                $name = $author['name'] ?? $author[0];
+                $slug = $author['slug'] ?? $author[1] ?? null;
+                $this->author = new ContentAuthor($name, $slug);
+            }
+        }
+
+        return $this->author ?: null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function time(): int
+    {
+        if (!isset($this->time)) {
+            // Get the time from the metadata (accurate).
+            $this->time = $this->metadata('time', -1);
+
+            // If the time is not set, calculate it from the content (rough).
+            if ($this->time === -1) {
+                $content = $this->data();
+                $wordCount = str_word_count(strip_tags($content));
+                $readingSpeed = self::READING_SPEED;
+                $this->time = (int) max(1, ceil($wordCount / $readingSpeed));
+            }
+        }
+
+        return $this->time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function links(): array
+    {
+        if (!isset($this->links)) {
+            $this->links = [
+                'self' => ['href' => '/blog/' . $this->slug()],
+                'collection' => ['href' => '/blog'],
+            ];
+        }
+
+        return $this->links;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function toArray(): array
     {
         return [
@@ -419,18 +559,23 @@ class ContentFile implements ContentFileInterface
             'directory' => $this->directory,
             'name' => $this->name,
             'extension' => $this->extension,
-            'slug' => $this->slug,
+            'checksum' => $this->checksum,
+            'raw' => $this->raw,
             'data' => $this->data,
             'metadata' => $this->metadata,
-            'content' => $this->content,
+            'slug' => $this->slug,
             'summary' => $this->summary,
             'preview' => $this->preview,
-            'checksum' => $this->checksum,
             'created' => $this->created->format('Y-m-d'),
             'modified' => $this->modified->format('Y-m-d'),
             'published' => $this->published->format('Y-m-d'),
             'deprecated' => $this->deprecated ? $this->deprecated->format('Y-m-d') : null,
             'tags' => $this->tags,
+            'title' => $this->title(),
+            'author' => $this->author(),
+            'image' => $this->image(),
+            'time' => $this->time(),
+            '_links' => $this->links(),
         ];
     }
 

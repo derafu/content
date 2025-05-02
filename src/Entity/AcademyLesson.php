@@ -10,11 +10,13 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\Content\Controller;
+namespace Derafu\Content\Entity;
+
+use Derafu\Content\Contract\AcademyLessonInterface;
 
 /**
- * Main controller for all content types.
+ * Class that represents an academy lesson.
  */
-class ContentController
+class AcademyLesson extends ContentItem implements AcademyLessonInterface
 {
 }

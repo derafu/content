@@ -1,0 +1,72 @@
+{% extends 'layouts/default.html.twig' %}
+
+{% block title %}{{ blog.title | default('Blog') }}{% endblock %}
+
+{% block content %}
+
+{% block blog_header %}{% endblock %}
+
+<section id="posts" class="container my-4">
+    <div class="row">
+        <div class="col-md-8">
+            {% block blog_content %}{% endblock %}
+        </div>
+        <div class="col-md-4">
+            {% block blog_sidebar %}{% endblock %}
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Latest Posts</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for post in recentPosts %}
+                        <a href="/blog/{{ post.slug }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ post.title }}</h6>
+                            </div>
+                            <small class="text-muted">
+                                Por {{ post.author.name }} el {{ post.published | date('d/m/Y') }} • {{ post.time }} min de lectura
+                            </small>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Tags</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for tag in tags %}
+                            <a href="/blog/tag/{{ tag.slug }}" class="btn btn-outline-secondary btn-sm">
+                                {{ tag.name }}
+                                <span class="badge bg-secondary ms-1">{{ tag.count }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Archives</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for month in months %}
+                            <a href="/blog/month/{{ month.slug }}" class="btn btn-outline-secondary btn-sm">
+                                {{ month.name }}
+                                <span class="badge bg-secondary ms-1">{{ month.count }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block blog_footer %}{% endblock %}
