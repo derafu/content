@@ -1,0 +1,71 @@
+{% extends 'layouts/default.html.twig' %}
+
+{% block title %}Blog{% endblock %}
+
+{% block content %}
+
+<section id="hero">
+    <twig:block-hero
+        size="mini"
+        title="Novedades y Anuncios"
+        subtitle="Descubre lo que está pasando en nuestro blog"
+        align="center"
+    />
+</section>
+
+<section id="posts" class="container my-4">
+    <div class="row">
+        <div class="col-md-8">
+            {% for post in posts %}
+                <div class="mb-5">
+                    <twig:block-card
+                        image="{{ post.image | default(base_path ~ '/img/blog/default.webp') }}"
+                        title="{{ post.title }}"
+                        description="<div class='text-muted small mb-2'>Por {{ post.author.name }} el {{ post.published | date('d/m/Y') }} • {{ post.time }} min de lectura</div>{{ post.summary | markdown }}"
+                        buttonText="Leer más"
+                        buttonUrl="/blog/{{ post.slug }}"
+                    />
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-md-4">
+            <div class="sticky-top" style="top: 2rem;">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Últimas publicaciones</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for post in recentPosts %}
+                            <a href="/blog/{{ post.slug }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ post.title }}</h6>
+                                </div>
+                                <small class="text-muted">
+                                    Por {{ post.author.name }} el {{ post.published | date('d/m/Y') }} • {{ post.time }} min de lectura
+                                </small>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Categorías de las publicaciones</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for tagName, tag in tags %}
+                                <a href="/blog/tag/{{ tag.slug() }}" class="btn btn-outline-secondary btn-sm">
+                                    {{ tag.name() }}
+                                    <span class="badge bg-secondary ms-1">{{ tag.count() }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

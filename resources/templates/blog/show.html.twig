@@ -1,0 +1,39 @@
+{% extends 'layouts/default.html.twig' %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+
+<section id="hero">
+    <twig:block-hero
+        background="{{ post.image | default(base_path ~ '/img/blog/default.webp') }}"
+        contentBackground="true"
+        title="{{ post.title }}"
+        subtitle="{{ post.subtitle }}"
+        align="center"
+    />
+</section>
+
+<section id="post" class="container my-5">
+    <twig:block-box
+        title="{{ post.summary }}"
+        content="Por {{ post.author.name }} el {{ post.published | date('d/m/Y') }}"
+    />
+
+    {{ post.content | markdown }}
+
+    {% if post.tags %}
+        <hr class="my-5">
+        <div class="row text-muted small">
+            <div class="col-md-6">
+                Última actualización: {{ post.modified | date('d/m/Y') }}
+            </div>
+            <div class="col-md-6 text-end">
+                {{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+            </div>
+        </div>
+    {% endif %}
+
+</section>
+
+{% endblock %}

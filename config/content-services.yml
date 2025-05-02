@@ -1,0 +1,13 @@
+services:
+
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true
+
+    Derafu\Content\Controller\BlogController: ~
+
+    Derafu\Content\Contract\BlogRegistryInterface:
+        class: Derafu\Content\Service\BlogRegistry
+        arguments:
+            $path: '%kernel.project_dir%/resources/content/blog'
