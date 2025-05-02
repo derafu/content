@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace Derafu\Content\Entity;
 
 use Derafu\Content\Contract\FaqInterface;
-use Derafu\Content\Entity\ContentFile;
 
 /**
  * Class that represents a faq.

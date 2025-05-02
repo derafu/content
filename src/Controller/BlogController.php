@@ -41,7 +41,7 @@ final class BlogController
      */
     public function index(Request $request): string
     {
-        $filters = array_filter($request->all(), fn($value) => $value !== '');
+        $filters = array_filter($request->all(), fn ($value) => $value !== '');
         $posts = $this->blogRegistry->getPosts($filters);
         $tags = $this->blogRegistry->getTags();
         $recentPosts = $this->blogRegistry->getPosts(['limit' => 5]);
@@ -82,7 +82,7 @@ final class BlogController
      */
     public function tag(Request $request, string $tag): string
     {
-        $filters = array_filter($request->all(), fn($value) => $value !== '');
+        $filters = array_filter($request->all(), fn ($value) => $value !== '');
         $filters['tag'] = $tag;
         $posts = $this->blogRegistry->getPosts($filters);
         $tags = $this->blogRegistry->getTags();
@@ -104,7 +104,7 @@ final class BlogController
      */
     public function api_index(Request $request): array
     {
-        $filters = array_filter($request->all(), fn($value) => $value !== '');
+        $filters = array_filter($request->all(), fn ($value) => $value !== '');
 
         return $this->blogRegistry->getPosts($filters);
     }

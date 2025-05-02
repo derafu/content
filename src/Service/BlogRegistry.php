@@ -46,7 +46,8 @@ final class BlogRegistry implements BlogRegistryInterface
     public function __construct(private ?string $path = null)
     {
         $this->path = rtrim(
-            $path ?? __DIR__ . '/../../resources/content/blog/', '/'
+            $path ?? __DIR__ . '/../../resources/content/blog/',
+            '/'
         ) . '/';
     }
 
@@ -149,7 +150,7 @@ final class BlogRegistry implements BlogRegistryInterface
 
             // Filter by tag.
             if (!empty($filters['tag'])) {
-                if (!in_array($filters['tag'], array_map(fn($tag) => $tag->slug(), $post->tags()), true)) {
+                if (!in_array($filters['tag'], array_map(fn ($tag) => $tag->slug(), $post->tags()), true)) {
                     return false;
                 }
             }

@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace Derafu\Content\Entity;
 
 use DateTimeImmutable;
-use DateTimeInterface;
 use Derafu\Content\Contract\ContentFileInterface;
 use Derafu\Support\Str;
 use InvalidArgumentException;
@@ -106,30 +105,30 @@ class ContentFile implements ContentFileInterface
     /**
      * Created date of the content file.
      *
-     * @var DateTimeInterface
+     * @var DateTimeImmutable
      */
-    private DateTimeInterface $created;
+    private DateTimeImmutable $created;
 
     /**
      * Modified date of the content file.
      *
-     * @var DateTimeInterface
+     * @var DateTimeImmutable
      */
-    private DateTimeInterface $modified;
+    private DateTimeImmutable $modified;
 
     /**
      * Published date of the content file.
      *
-     * @var DateTimeInterface
+     * @var DateTimeImmutable
      */
-    private DateTimeInterface $published;
+    private DateTimeImmutable $published;
 
     /**
      * Deprecated date of the content file.
      *
-     * @var DateTimeInterface|false
+     * @var DateTimeImmutable|false
      */
-    private DateTimeInterface|false $deprecated;
+    private DateTimeImmutable|false $deprecated;
 
     /**
      * Tags of the content file.
@@ -177,7 +176,6 @@ class ContentFile implements ContentFileInterface
             throw new InvalidArgumentException('Path must be a string and readable.');
         }
     }
-
 
     /**
      * {@inheritDoc}
@@ -350,7 +348,7 @@ class ContentFile implements ContentFileInterface
     /**
      * {@inheritDoc}
      */
-    public function created(): DateTimeInterface
+    public function created(): DateTimeImmutable
     {
         if (!isset($this->created)) {
             $this->created = new DateTimeImmutable('@' . filectime($this->path()));
@@ -362,7 +360,7 @@ class ContentFile implements ContentFileInterface
     /**
      * {@inheritDoc}
      */
-    public function modified(): DateTimeInterface
+    public function modified(): DateTimeImmutable
     {
         if (!isset($this->modified)) {
             $this->modified = new DateTimeImmutable('@' . filemtime($this->path()));
@@ -390,7 +388,7 @@ class ContentFile implements ContentFileInterface
     /**
      * {@inheritDoc}
      */
-    public function deprecated(): ?DateTimeInterface
+    public function deprecated(): ?DateTimeImmutable
     {
         if (!isset($this->deprecated)) {
             $this->deprecated = $this->metadata('deprecated', false);
@@ -405,9 +403,7 @@ class ContentFile implements ContentFileInterface
     public function tags(): array
     {
         if (!isset($this->tags)) {
-            $this->tags = array_map(function (string $tag) {
-                return new ContentTag($tag);
-            }, $this->metadata('tags') ?? []);
+            $this->tags = array_map(fn (string $tag) => new ContentTag($tag), $this->metadata('tags') ?? []);
         }
 
         return $this->tags;

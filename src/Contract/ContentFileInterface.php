@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Contract;
 
-use DateTimeInterface;
+use DateTimeImmutable;
 use JsonSerializable;
 use Stringable;
 
@@ -104,30 +104,30 @@ interface ContentFileInterface extends JsonSerializable, Stringable
     /**
      * Get the created date of the content file.
      *
-     * @return DateTimeInterface
+     * @return DateTimeImmutable
      */
-    public function created(): DateTimeInterface;
+    public function created(): DateTimeImmutable;
 
     /**
      * Get the modified date of the content file.
      *
-     * @return DateTimeInterface
+     * @return DateTimeImmutable
      */
-    public function modified(): DateTimeInterface;
+    public function modified(): DateTimeImmutable;
 
     /**
      * Get the published date of the content file.
      *
-     * @return DateTimeInterface
+     * @return DateTimeImmutable
      */
-    public function published(): DateTimeInterface;
+    public function published(): DateTimeImmutable;
 
     /**
      * Get the deprecated date of the content file.
      *
-     * @return DateTimeInterface|null
+     * @return DateTimeImmutable|null
      */
-    public function deprecated(): ?DateTimeInterface;
+    public function deprecated(): ?DateTimeImmutable;
 
     /**
      * Get the tags of the content file.

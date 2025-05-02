@@ -14,8 +14,6 @@ namespace Derafu\Content\Entity;
 
 use Derafu\Content\Contract\BlogPostInterface;
 use Derafu\Content\Contract\ContentAuthorInterface;
-use Derafu\Content\Entity\ContentAuthor;
-use Derafu\Content\Entity\ContentFile;
 
 /**
  * Class that represents a blog post.

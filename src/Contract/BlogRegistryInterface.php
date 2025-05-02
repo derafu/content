@@ -37,7 +37,7 @@ interface BlogRegistryInterface
      * Get all tags.
      *
      * @param array $filters Filter criteria.
-     * @return array<string, BlogTagInterface>
+     * @return array<string, ContentTagInterface>
      */
     public function getTags(array $filters = []): array;
 }
