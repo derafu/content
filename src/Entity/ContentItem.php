@@ -15,6 +15,10 @@ namespace Derafu\Content\Entity;
 use DateTimeImmutable;
 use Derafu\Content\Contract\ContentAuthorInterface;
 use Derafu\Content\Contract\ContentItemInterface;
+use Derafu\Content\Storage\ContentSplFileInfo;
+use Derafu\Content\Storage\ContentSplFileObject;
+use Derafu\Content\ValueObject\ContentAuthor;
+use Derafu\Content\ValueObject\ContentTag;
 use Derafu\Support\Str;
 use InvalidArgumentException;
 use Symfony\Component\Yaml\Yaml;
@@ -34,48 +38,18 @@ class ContentItem implements ContentItemInterface
     private const READING_SPEED = 200;
 
     /**
-     * Path of the content.
+     * Representation of the content file info.
      *
-     * @var string
+     * @var ContentSplFileInfo
      */
-    private string $path;
+    private ContentSplFileInfo $info;
 
     /**
-     * Directory of the content.
+     * Representation of the content file data.
      *
-     * @var string
+     * @var ContentSplFileObject
      */
-    private string $directory;
-
-    /**
-     * Name of the content.
-     *
-     * @var string
-     */
-    private string $name;
-
-    /**
-     * Extension of the content.
-     *
-     * @var string
-     */
-    private string $extension;
-
-    /**
-     * Checksum of the content.
-     *
-     * @var string
-     */
-    private string $checksum;
-
-    /**
-     * Raw content of the content.
-     *
-     * This is the whole content of the file content, including the metadata.
-     *
-     * @var string
-     */
-    private string $raw;
+    private ContentSplFileObject $file;
 
     /**
      * Metadata of the content.
@@ -101,6 +75,13 @@ class ContentItem implements ContentItemInterface
      * @var string
      */
     private string $slug;
+
+    /**
+     * URI of the content.
+     *
+     * @var string
+     */
+    private string $uri;
 
     /**
      * Title of the content.
@@ -152,6 +133,13 @@ class ContentItem implements ContentItemInterface
     private DateTimeImmutable|false $deprecated;
 
     /**
+     * Order of the content.
+     *
+     * @var int
+     */
+    private int $order;
+
+    /**
      * Tags of the content.
      *
      * @var array<ContentTag>
@@ -168,9 +156,9 @@ class ContentItem implements ContentItemInterface
     /**
      * Author of the content.
      *
-     * @var ContentAuthor|false
+     * @var ContentAuthorInterface|false
      */
-    private ContentAuthor|false $author;
+    private ContentAuthorInterface|false $author;
 
     /**
      * Time to read the content.
@@ -180,59 +168,85 @@ class ContentItem implements ContentItemInterface
     private int $time;
 
     /**
+     * Level of the content.
+     *
+     * @var int
+     */
+    private int $level;
+
+    /**
+     * Ancestors of the content.
+     *
+     * @var array<ContentItemInterface>
+     */
+    private array $ancestors;
+
+    /**
+     * Parent of the content.
+     *
+     * @var ContentItemInterface|null
+     */
+    private ?ContentItemInterface $parent;
+
+    /**
+     * Children of the content.
+     *
+     * @var array<string,ContentItemInterface>
+     */
+    private array $children;
+
+    /**
      * Links of the content.
      *
      * @var array
      */
-    private array $links;
+    protected array $links;
 
     /**
      * Constructor.
      *
-     * @param string|array $path Path of the content.
+     * @param ContentSplFileInfo|string $info Info of the content file.
      */
-    public function __construct(string|array $path)
+    public function __construct(ContentSplFileInfo|string $info)
     {
-        if (is_string($path)) {
-            $this->path = $path;
-        } else {
-            $attributes = [
-                'path',
-                'directory',
-                'name',
-                'extension',
-                'checksum',
-                'raw',
-                'metadata',
-                'data',
-                'slug',
-                'title',
-                'summary',
-                'preview',
-                'created',
-                'modified',
-                'published',
-                'deprecated',
-                'tags',
-                'image',
-                'author',
-                'time',
-                'links',
-            ];
-
-            foreach ($attributes as $attribute) {
-                if (isset($path[$attribute])) {
-                    $this->{$attribute} = $path[$attribute];
-                }
+        if (is_string($info)) {
+            $this->info = new ContentSplFileInfo($info);
+            if (!$this->info->isFile() || !$this->info->isReadable()) {
+                throw new InvalidArgumentException(sprintf(
+                    'Path %s must be a readable file content.',
+                    $this->info->getRealPath()
+                ));
             }
+            $this->info->setFileClass(ContentSplFileObject::class);
+        } else {
+            $this->info = $info;
+        }
+    }
+
+    /**
+     * Get the info of the content.
+     *
+     * @return ContentSplFileInfo
+     */
+    protected function info(): ContentSplFileInfo
+    {
+        return $this->info;
+    }
+
+    /**
+     * Get the file of the content.
+     *
+     * @return ContentSplFileObject
+     */
+    protected function file(): ContentSplFileObject
+    {
+        if (!isset($this->file)) {
+            $file = $this->info()->openFile();
+            assert($file instanceof ContentSplFileObject);
+            $this->file = $file;
         }
 
-        if (!is_string($this->path) || !is_readable($this->path)) {
-            throw new InvalidArgumentException(sprintf(
-                'Path %s must be a readable file content.',
-                $this->path
-            ));
-        }
+        return $this->file;
     }
 
     /**
@@ -240,7 +254,7 @@ class ContentItem implements ContentItemInterface
      */
     public function path(): string
     {
-        return $this->path;
+        return $this->info()->getRealPath();
     }
 
     /**
@@ -248,11 +262,7 @@ class ContentItem implements ContentItemInterface
      */
     public function directory(): string
     {
-        if (!isset($this->directory)) {
-            $this->directory = dirname($this->path);
-        }
-
-        return $this->directory;
+        return $this->info()->getPath();
     }
 
     /**
@@ -260,11 +270,7 @@ class ContentItem implements ContentItemInterface
      */
     public function name(): string
     {
-        if (!isset($this->name)) {
-            $this->name = pathinfo($this->path, PATHINFO_FILENAME);
-        }
-
-        return $this->name;
+        return $this->info()->getBasename('.' . $this->extension());
     }
 
     /**
@@ -272,11 +278,7 @@ class ContentItem implements ContentItemInterface
      */
     public function extension(): string
     {
-        if (!isset($this->extension)) {
-            $this->extension = pathinfo($this->path, PATHINFO_EXTENSION);
-        }
-
-        return $this->extension;
+        return $this->info()->getExtension();
     }
 
     /**
@@ -284,11 +286,7 @@ class ContentItem implements ContentItemInterface
      */
     public function checksum(): string
     {
-        if (!isset($this->checksum)) {
-            $this->checksum = hash_file('sha256', $this->path());
-        }
-
-        return $this->checksum;
+        return $this->info()->getChecksum();
     }
 
     /**
@@ -296,11 +294,7 @@ class ContentItem implements ContentItemInterface
      */
     public function raw(): string
     {
-        if (!isset($this->raw)) {
-            $this->raw = file_get_contents($this->path);
-        }
-
-        return $this->raw;
+        return $this->file()->raw();
     }
 
     /**
@@ -347,6 +341,25 @@ class ContentItem implements ContentItemInterface
         }
 
         return $this->slug;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function uri(): string
+    {
+        if (!isset($this->uri)) {
+            $uriParts = [];
+            $content = $this;
+            do {
+                $uriParts[] = $content->slug();
+                $content = $content->parent();
+            } while ($content);
+
+            $this->uri = implode('/', array_reverse($uriParts));
+        }
+
+        return $this->uri;
     }
 
     /**
@@ -421,7 +434,19 @@ class ContentItem implements ContentItemInterface
     public function created(): DateTimeImmutable
     {
         if (!isset($this->created)) {
-            $this->created = new DateTimeImmutable('@' . filectime($this->path()));
+            $created = $this->metadata('created');
+
+            if ($created) {
+                if (is_string($created)) {
+                    $created = new DateTimeImmutable($created);
+                } elseif (is_int($created)) {
+                    $created = new DateTimeImmutable('@' . $created);
+                }
+            } else {
+                $created = new DateTimeImmutable('@' . $this->info()->getCTime());
+            }
+
+            $this->created = $created;
         }
 
         return $this->created;
@@ -433,7 +458,19 @@ class ContentItem implements ContentItemInterface
     public function modified(): DateTimeImmutable
     {
         if (!isset($this->modified)) {
-            $this->modified = new DateTimeImmutable('@' . filemtime($this->path()));
+            $modified = $this->metadata('modified');
+
+            if ($modified) {
+                if (is_string($modified)) {
+                    $modified = new DateTimeImmutable($modified);
+                } elseif (is_int($modified)) {
+                    $modified = new DateTimeImmutable('@' . $modified);
+                }
+            } else {
+                $modified = new DateTimeImmutable('@' . $this->info()->getMTime());
+            }
+
+            $this->modified = $modified;
         }
 
         return $this->modified;
@@ -445,11 +482,22 @@ class ContentItem implements ContentItemInterface
     public function published(): DateTimeImmutable
     {
         if (!isset($this->published)) {
-            if (preg_match('/^(\d{4}-\d{2}-\d{2})-/', $this->name(), $matches)) {
-                $this->published = new DateTimeImmutable($matches[1]);
+            $published = $this->metadata('published');
+
+            if ($published) {
+                if (is_string($published)) {
+                    $published = new DateTimeImmutable($published);
+                } elseif (is_int($published)) {
+                    $published = new DateTimeImmutable('@' . $published);
+                }
             } else {
-                $this->published = $this->created();
+                $published = preg_match('/^(\d{4}-\d{2}-\d{2})-/', $this->name(), $matches)
+                    ? new DateTimeImmutable($matches[1])
+                    : $this->created()
+                ;
             }
+
+            $this->published = $published;
         }
 
         return $this->published;
@@ -461,10 +509,37 @@ class ContentItem implements ContentItemInterface
     public function deprecated(): ?DateTimeImmutable
     {
         if (!isset($this->deprecated)) {
-            $this->deprecated = $this->metadata('deprecated', false);
+            $deprecated = $this->metadata('deprecated', false);
+
+            if ($deprecated) {
+                if (is_string($deprecated)) {
+                    $deprecated = new DateTimeImmutable($deprecated);
+                } elseif (is_int($deprecated)) {
+                    $deprecated = new DateTimeImmutable('@' . $deprecated);
+                }
+            }
+
+            $this->deprecated = $deprecated;
         }
 
         return $this->deprecated ?: null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function order(): int
+    {
+        if (!isset($this->order)) {
+            $this->order = $this->metadata('order', -1);
+
+            if ($this->order === -1) {
+                $maxEpoch = 253402300799; // 9999-12-31 23:59:59
+                $this->order = $maxEpoch - $this->published()->getTimestamp();
+            }
+        }
+
+        return $this->order;
     }
 
     /**
@@ -485,7 +560,7 @@ class ContentItem implements ContentItemInterface
     public function image(): ?string
     {
         if (!isset($this->image)) {
-            $this->image = $this->metadata()['image'] ?? false;
+            $this->image = $this->metadata('image', false);
         }
 
         return $this->image ?: null;
@@ -497,7 +572,7 @@ class ContentItem implements ContentItemInterface
     public function author(): ?ContentAuthorInterface
     {
         if (!isset($this->author)) {
-            $author = $this->metadata()['author'] ?? null;
+            $author = $this->metadata('author');
 
             if (empty($author)) {
                 $this->author = false;
@@ -537,12 +612,87 @@ class ContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
+    public function level(): int
+    {
+        if (!isset($this->level)) {
+            $this->level = $this->parent() ? $this->parent()->level() + 1 : 1;
+        }
+
+        return $this->level;
+    }
+
+    /**
+     * Get the ancestors of the content.
+     *
+     * @return array<ContentItemInterface>
+     */
+    public function ancestors(): array
+    {
+        if (!isset($this->ancestors)) {
+            $ancestors = [];
+            $content = $this;
+            while ($content = $content->parent()) {
+                $ancestors[] = $content;
+            }
+            $this->ancestors = array_reverse($ancestors);
+        }
+
+        return $this->ancestors;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setParent(ContentItemInterface $parent): static
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function parent(): ?ContentItemInterface
+    {
+        return $this->parent ?? null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function addChild(ContentItemInterface $child): static
+    {
+        if (!isset($this->children)) {
+            $this->children = [];
+        }
+
+        $child->setParent($this);
+
+        $this->children[$child->slug()] = $child;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function children(): array
+    {
+        return $this->children ?? [];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function links(): array
     {
         if (!isset($this->links)) {
+            $urlBasePath = $this->urlBasePath ?? '/content';
+
             $this->links = [
-                'self' => ['href' => '/blog/' . $this->slug()],
-                'collection' => ['href' => '/blog'],
+                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'collection' => ['href' => $urlBasePath],
             ];
         }
 
@@ -555,26 +705,22 @@ class ContentItem implements ContentItemInterface
     public function toArray(): array
     {
         return [
-            'path' => $this->path,
-            'directory' => $this->directory,
-            'name' => $this->name,
-            'extension' => $this->extension,
-            'checksum' => $this->checksum,
-            'raw' => $this->raw,
-            'data' => $this->data,
-            'metadata' => $this->metadata,
-            'slug' => $this->slug,
-            'summary' => $this->summary,
-            'preview' => $this->preview,
-            'created' => $this->created->format('Y-m-d'),
-            'modified' => $this->modified->format('Y-m-d'),
-            'published' => $this->published->format('Y-m-d'),
-            'deprecated' => $this->deprecated ? $this->deprecated->format('Y-m-d') : null,
-            'tags' => $this->tags,
+            'checksum' => $this->checksum(),
+            'slug' => $this->slug(),
+            'uri' => $this->uri(),
             'title' => $this->title(),
             'author' => $this->author(),
             'image' => $this->image(),
             'time' => $this->time(),
+            'summary' => $this->summary(),
+            'preview' => $this->preview(),
+            'tags' => $this->tags(),
+            'metadata' => $this->metadata(),
+            'data' => $this->data(),
+            'created' => $this->created()->format('Y-m-d'),
+            'modified' => $this->modified()->format('Y-m-d'),
+            'published' => $this->published()->format('Y-m-d'),
+            'deprecated' => $this->deprecated()?->format('Y-m-d'),
             '_links' => $this->links(),
         ];
     }

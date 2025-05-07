@@ -18,11 +18,30 @@ namespace Derafu\Content\Contract;
 interface ContentRegistryInterface
 {
     /**
+     * Get a content by slug.
+     *
+     * @param string $slug Slug of the content.
+     * @return ContentItemInterface
+     */
+    public function get(string $slug): ContentItemInterface;
+
+    /**
      * Get all content items.
      *
      * @return array<ContentItemInterface>
      */
     public function all(): array;
+
+    /**
+     * Walk through the items.
+     *
+     * @param callable $callback Callback.
+     * @param ContentItemInterface|null $item Item from where to start walking.
+     */
+    public function walk(
+        callable $callback,
+        ?ContentItemInterface $item = null
+    ): void;
 
     /**
      * Get content filtered by criteria.
@@ -31,14 +50,6 @@ interface ContentRegistryInterface
      * @return array<ContentItemInterface>
      */
     public function filter(array $filters = []): array;
-
-    /**
-     * Get a content by slug.
-     *
-     * @param string $slug Slug of the content.
-     * @return ContentItemInterface
-     */
-    public function get(string $slug): ContentItemInterface;
 
     /**
      * Get all tags.

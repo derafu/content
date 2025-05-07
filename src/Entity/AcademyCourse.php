@@ -19,4 +19,20 @@ use Derafu\Content\Contract\AcademyCourseInterface;
  */
 class AcademyCourse extends ContentItem implements AcademyCourseInterface
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function links(): array
+    {
+        if (!isset($this->links)) {
+            $urlBasePath = '/academy';
+
+            $this->links = [
+                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'collection' => ['href' => $urlBasePath],
+            ];
+        }
+
+        return $this->links;
+    }
 }

@@ -10,7 +10,7 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\Content\Entity;
+namespace Derafu\Content\ValueObject;
 
 use Derafu\Content\Contract\ContentTagInterface;
 use Derafu\Support\Str;

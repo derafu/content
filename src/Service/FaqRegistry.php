@@ -12,11 +12,32 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Service;
 
+use Derafu\Content\Contract\FaqInterface;
 use Derafu\Content\Contract\FaqRegistryInterface;
+use Derafu\Content\Entity\Faq;
 
 /**
  * FAQ registry.
  */
 class FaqRegistry extends ContentRegistry implements FaqRegistryInterface
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function get(string $slug): FaqInterface
+    {
+        $faq = parent::get($slug);
+
+        assert($faq instanceof FaqInterface);
+
+        return $faq;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getContentClass(): string
+    {
+        return Faq::class;
+    }
 }

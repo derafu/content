@@ -1,0 +1,33 @@
+{% extends 'layouts/docs.html.twig' %}
+
+{% block title %}{{ doc.title }}{% endblock %}
+
+{% block docs_content %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ path('docs') }}">Docs</a>
+            </li>
+            {% for ancestor in doc.ancestors %}
+                <li class="breadcrumb-item">
+                    <a href="{{ path('docs_show', {'uri': ancestor.uri}) }}">{{ ancestor.title }}</a>
+                </li>
+            {% endfor %}
+            <li class="breadcrumb-item active" aria-current="page">
+                {{ doc.title }}
+            </li>
+        </ol>
+    </nav>
+
+    {{ doc.data | markdown }}
+
+    <hr class="my-5">
+    <div class="row text-muted small">
+        <div class="col-md-6">
+            Última actualización: {{ doc.modified | date('d/m/Y') }}
+        </div>
+        <div class="col-md-6 text-end">
+            {{ doc.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+        </div>
+    </div>
+{% endblock %}

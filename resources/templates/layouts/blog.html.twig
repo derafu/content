@@ -20,7 +20,7 @@
                 </div>
                 <div class="list-group list-group-flush">
                     {% for post in recentPosts %}
-                        <a href="/blog/{{ post.slug }}" class="list-group-item list-group-item-action">
+                        <a href="{{ path('blog_show', {'uri': post.uri}) }}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ post.title }}</h6>
                             </div>
@@ -39,7 +39,7 @@
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2">
                         {% for tag in tags %}
-                            <a href="/blog/tag/{{ tag.slug }}" class="btn btn-outline-secondary btn-sm">
+                            <a href="{{ path('blog_tag', {'tag': tag.slug}) }}" class="btn btn-outline-secondary btn-sm">
                                 {{ tag.name }}
                                 <span class="badge bg-secondary ms-1">{{ tag.count }}</span>
                             </a>
@@ -55,7 +55,7 @@
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2">
                         {% for month in months %}
-                            <a href="/blog/month/{{ month.slug }}" class="btn btn-outline-secondary btn-sm">
+                            <a href="{{ path('blog_month', {'month': month.slug}) }}" class="btn btn-outline-secondary btn-sm">
                                 {{ month.name }}
                                 <span class="badge bg-secondary ms-1">{{ month.count }}</span>
                             </a>

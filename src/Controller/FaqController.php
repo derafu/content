@@ -12,9 +12,65 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Controller;
 
+use Derafu\Content\Contract\FaqRegistryInterface;
+use Derafu\Content\ValueObject\ContentTag;
+use Derafu\Http\Request;
+use Derafu\Renderer\Contract\RendererInterface;
+
 /**
  * FAQ controller.
  */
 class FaqController
 {
+    /**
+     * Constructor.
+     *
+     * @param FaqRegistryInterface $faqRegistry Faq registry.
+     * @param RendererInterface $renderer Renderer.
+     */
+    public function __construct(
+        private readonly FaqRegistryInterface $faqRegistry,
+        private readonly RendererInterface $renderer
+    ) {
+    }
+
+    /**
+     * Show action.
+     *
+     * @param string $uri URI of the FAQ.
+     * @return string
+     */
+    public function show(string $uri): string
+    {
+        return $this->renderer->render('faq/show.html.twig', [
+            'faq' => $this->faqRegistry->get($uri),
+            'faqs' => $this->faqRegistry->all(),
+            'tags' => $this->faqRegistry->tags(),
+        ]);
+    }
+
+    /**
+     * Tag action.
+     *
+     * @param Request $request Request.
+     * @param string $tag Tag.
+     * @return string
+     */
+    public function tag(Request $request, string $tag): string
+    {
+        $filters = array_filter($request->all(), fn ($value) => $value !== '');
+        $tags = $this->faqRegistry->tags();
+        $contentTag = $tags[$tag] ?? new ContentTag($tag);
+        $filters['tag'] = $contentTag->slug();
+        $faqsFiltered = $this->faqRegistry->filter($filters);
+        $faqs = $this->faqRegistry->all();
+
+        return $this->renderer->render('faq/tag.html.twig', [
+            'filters' => $filters,
+            'faqsFiltered' => $faqsFiltered,
+            'faqs' => $faqs,
+            'tags' => $tags,
+            'tag' => $contentTag,
+        ]);
+    }
 }

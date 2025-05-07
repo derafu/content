@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsContent;
 
 use Derafu\Content\Service\BlogRegistry;
+use Derafu\Content\Service\ContentLoader;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -20,6 +21,7 @@ use PHPUnit\Framework\TestCase;
  * Test for the BlogRegistry class.
  */
 #[CoversClass(BlogRegistry::class)]
+#[CoversClass(ContentLoader::class)]
 final class BlogTest extends TestCase
 {
     public function testBlogWithoutPosts(): void

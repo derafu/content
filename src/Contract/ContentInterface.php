@@ -93,6 +93,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function slug(): string;
 
     /**
+     * Get the URI of the content.
+     *
+     * @return string
+     */
+    public function uri(): string;
+
+    /**
      * Get the title of the content.
      *
      * @return string
@@ -143,6 +150,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function deprecated(): ?DateTimeImmutable;
 
     /**
+     * Get the order of the content.
+     *
+     * @return int
+     */
+    public function order(): int;
+
+    /**
      * Get the tags of the content.
      *
      * @return ContentTagInterface[]
@@ -169,6 +183,43 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * @return int
      */
     public function time(): int;
+
+    /**
+     * Get the level of the content.
+     *
+     * @return int
+     */
+    public function level(): int;
+
+    /**
+     * Set the parent of the content.
+     *
+     * @param ContentItemInterface $parent
+     * @return static
+     */
+    public function setParent(ContentItemInterface $parent): static;
+
+    /**
+     * Get the parent of the content.
+     *
+     * @return ContentItemInterface|null
+     */
+    public function parent(): ?ContentItemInterface;
+
+    /**
+     * Add a child to the content.
+     *
+     * @param ContentItemInterface $child
+     * @return static
+     */
+    public function addChild(ContentItemInterface $child): static;
+
+    /**
+     * Get the children of the content.
+     *
+     * @return ContentItemInterface[]
+     */
+    public function children(): array;
 
     /**
      * Get the links of the content.

@@ -19,4 +19,20 @@ use Derafu\Content\Contract\DocInterface;
  */
 class Doc extends ContentItem implements DocInterface
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function links(): array
+    {
+        if (!isset($this->links)) {
+            $urlBasePath = '/docs';
+
+            $this->links = [
+                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'collection' => ['href' => $urlBasePath],
+            ];
+        }
+
+        return $this->links;
+    }
 }

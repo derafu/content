@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Content\Controller;
 
 /**
- * Faq controller.
+ * Academy controller.
  */
-class FaqController
+class AcademyController
 {
 }

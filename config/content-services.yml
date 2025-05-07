@@ -5,9 +5,27 @@ services:
         autoconfigure: true
         public: true
 
+    Derafu\Content\Controller\AcademyController: ~
     Derafu\Content\Controller\BlogController: ~
+    Derafu\Content\Controller\DocsController: ~
+    Derafu\Content\Controller\FaqController: ~
+
+    Derafu\Content\Contract\AcademyRegistryInterface:
+        class: Derafu\Content\Service\AcademyRegistry
+        arguments:
+            $path: '%kernel.project_dir%/resources/content/academy'
 
     Derafu\Content\Contract\BlogRegistryInterface:
         class: Derafu\Content\Service\BlogRegistry
         arguments:
             $path: '%kernel.project_dir%/resources/content/blog'
+
+    Derafu\Content\Contract\DocsRegistryInterface:
+        class: Derafu\Content\Service\DocsRegistry
+        arguments:
+            $path: '%kernel.project_dir%/resources/content/docs'
+
+    Derafu\Content\Contract\FaqRegistryInterface:
+        class: Derafu\Content\Service\FaqRegistry
+        arguments:
+            $path: '%kernel.project_dir%/resources/content/faq'

@@ -12,11 +12,32 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Service;
 
+use Derafu\Content\Contract\DocInterface;
 use Derafu\Content\Contract\DocsRegistryInterface;
+use Derafu\Content\Entity\Doc;
 
 /**
  * Docs registry.
  */
 class DocsRegistry extends ContentRegistry implements DocsRegistryInterface
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function get(string $slug): DocInterface
+    {
+        $doc = parent::get($slug);
+
+        assert($doc instanceof DocInterface);
+
+        return $doc;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function getContentClass(): string
+    {
+        return Doc::class;
+    }
 }

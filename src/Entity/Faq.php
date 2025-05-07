@@ -34,4 +34,21 @@ class Faq extends ContentItem implements FaqInterface
     {
         return $this->data();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function links(): array
+    {
+        if (!isset($this->links)) {
+            $urlBasePath = '/faq';
+
+            $this->links = [
+                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'collection' => ['href' => $urlBasePath],
+            ];
+        }
+
+        return $this->links;
+    }
 }

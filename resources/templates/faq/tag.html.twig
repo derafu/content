@@ -1,0 +1,31 @@
+{% extends 'layouts/faq.html.twig' %}
+
+{% block title %}{{ tag.name }}{% endblock %}
+
+{% block faq_content %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('faq') }}">FAQ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Tag: {{ tag.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="list-group list-group-numbered">
+        {% for faq in faqsFiltered %}
+            <a href="{{ path('faq_show', {'uri': faq.uri}) }}" class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">{{ faq.title }}</div>
+                    {{ faq.summary | markdown }}
+                    {% if faq.ancestors | length > 0 %}
+                        <div class="text-muted small">
+                            FAQ &raquo; {{ faq.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}
+                        </div>
+                    {% endif %}
+                </div>
+                <span class="badge text-bg-primary rounded-pill">
+                    {{ faq.time }} min de lectura
+                </span>
+            </a>
+        {% endfor %}
+    </div>
+{% endblock %}

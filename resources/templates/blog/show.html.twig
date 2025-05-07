@@ -5,7 +5,7 @@
 {% block blog_header %}
     <section id="hero">
         <twig:block-hero
-            background="{{ post.image | default(base_path ~ '/img/blog/default-cover.png') }}"
+            background="{{ post.image | default(base_path ~ '/img/content/blog/default-cover.png') }}"
             contentBackground="true"
             title="{{ post.title }}"
             subtitle="{{ post.subtitle }}"
@@ -17,7 +17,7 @@
 {% block blog_content %}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ base_path }}/blog">Blog</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('blog') }}">Blog</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ post.title }}</li>
         </ol>
     </nav>
@@ -30,15 +30,13 @@
 
     {{ post.data | markdown }}
 
-    {% if post.tags %}
-        <hr class="my-5">
-        <div class="row text-muted small">
-            <div class="col-md-6">
-                Última actualización: {{ post.modified | date('d/m/Y') }}
-            </div>
-            <div class="col-md-6 text-end">
-                {{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
-            </div>
+    <hr class="my-5">
+    <div class="row text-muted small">
+        <div class="col-md-6">
+            Última actualización: {{ post.modified | date('d/m/Y') }}
         </div>
-    {% endif %}
+        <div class="col-md-6 text-end">
+            {{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+        </div>
+    </div>
 {% endblock %}

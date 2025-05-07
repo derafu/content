@@ -34,13 +34,10 @@ class BlogRegistry extends ContentRegistry implements BlogRegistryInterface
     }
 
     /**
-     * Create blog post object from file path.
-     *
-     * @param string $path
-     * @return BlogPostInterface
+     * {@inheritDoc}
      */
-    protected function createFromPath(string $path): BlogPostInterface
+    protected function getContentClass(): string
     {
-        return new BlogPost($path);
+        return BlogPost::class;
     }
 }

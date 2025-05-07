@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Content\Controller;
 
 use Derafu\Content\Contract\BlogRegistryInterface;
-use Derafu\Content\Entity\ContentMonth;
-use Derafu\Content\Entity\ContentTag;
+use Derafu\Content\ValueObject\ContentMonth;
+use Derafu\Content\ValueObject\ContentTag;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
 
@@ -68,12 +68,12 @@ class BlogController
     /**
      * Show action.
      *
-     * @param string $slug Slug of the blog post.
+     * @param string $uri URI of the blog post.
      * @return string
      */
-    public function show(string $slug): string
+    public function show(string $uri): string
     {
-        $post = $this->blogRegistry->get($slug);
+        $post = $this->blogRegistry->get($uri);
         $recentPosts = $this->blogRegistry->filter([
             'limit' => self::RECENT_POSTS_LIMIT,
         ]);

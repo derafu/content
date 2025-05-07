@@ -19,4 +19,20 @@ use Derafu\Content\Contract\BlogPostInterface;
  */
 class BlogPost extends ContentItem implements BlogPostInterface
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function links(): array
+    {
+        if (!isset($this->links)) {
+            $urlBasePath = '/blog';
+
+            $this->links = [
+                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'collection' => ['href' => $urlBasePath],
+            ];
+        }
+
+        return $this->links;
+    }
 }

@@ -13,12 +13,12 @@ declare(strict_types=1);
 namespace Derafu\Content\Service;
 
 use Derafu\Content\Contract\ContentItemInterface;
+use Derafu\Content\Contract\ContentLoaderInterface;
 use Derafu\Content\Contract\ContentMonthInterface;
 use Derafu\Content\Contract\ContentRegistryInterface;
 use Derafu\Content\Contract\ContentTagInterface;
 use Derafu\Content\Entity\ContentItem;
-use Derafu\Content\Entity\ContentMonth;
-use DirectoryIterator;
+use Derafu\Content\ValueObject\ContentMonth;
 use InvalidArgumentException;
 
 /**
@@ -26,13 +26,6 @@ use InvalidArgumentException;
  */
 class ContentRegistry implements ContentRegistryInterface
 {
-    /**
-     * Valid extensions of the content items.
-     *
-     * @var array<string>
-     */
-    protected const EXTENSIONS = ['md'];
-
     /**
      * Content items of the registry.
      *
@@ -57,48 +50,39 @@ class ContentRegistry implements ContentRegistryInterface
     /**
      * Constructor.
      *
-     * @param string|null $path Path to root directory of the content items.
+     * @param string $path Path to root directory of the content items.
+     * @param array $extensions File extensions to include.
+     * @param ContentLoaderInterface|null $loader Content loader.
      */
-    public function __construct(protected ?string $path = null)
-    {
-        $this->path = rtrim($path ?? '', '/') . '/';
+    public function __construct(
+        private string $path = '',
+        private array $extensions = ['md'],
+        private ?ContentLoaderInterface $loader = null
+    ) {
+        $this->path = rtrim($path, '/') . '/';
+        $this->loader = $loader ?? new ContentLoader();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function all(): array
+    public function get(string $uri): ContentItemInterface
     {
-        if (!isset($this->items)) {
-            $this->items = $this->load();
-        }
+        $uriParts = explode('/', $uri);
+        $n_uriParts = count($uriParts);
 
-        return $this->items;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function filter(array $filters = []): array
-    {
         $items = $this->all();
 
-        if (empty($filters)) {
-            return $items;
-        }
+        for ($i = 0; $i < $n_uriParts; $i++) {
+            $slug = $uriParts[$i];
+            if (isset($items[$slug])) {
+                $item = $items[$slug];
+                $items = $item->children();
+                if (!empty($items) && $i < $n_uriParts - 1) {
+                    continue;
+                }
 
-        return $this->applyFilters($items, $filters);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function get(string $slug): ContentItemInterface
-    {
-        foreach (self::EXTENSIONS as $extension) {
-            $path = $this->path . $slug . '.' . $extension;
-            if (file_exists($path)) {
-                return $this->createFromPath($path);
+                return $item;
             }
         }
 
@@ -111,108 +95,52 @@ class ContentRegistry implements ContentRegistryInterface
     /**
      * {@inheritDoc}
      */
-    public function tags(): array
+    public function all(): array
     {
-        if (!isset($this->tags)) {
-            $this->tags = [];
-            foreach ($this->all() as $item) {
-                foreach ($item->tags() as $tag) {
-                    if (!isset($this->tags[$tag->slug()])) {
-                        $this->tags[$tag->slug()] = $tag;
-                    }
-                    $this->tags[$tag->slug()]->increment();
-                }
-            }
-            uasort(
-                $this->tags,
-                fn ($a, $b) => $a->name() <=> $b->name()
+        if (!isset($this->items)) {
+            $this->items = $this->loader->load(
+                $this->path,
+                $this->extensions,
+                $this->getContentClass()
             );
         }
 
-        return $this->tags;
+        return $this->items;
     }
 
     /**
-     * Load all content items from filesystem.
-     *
-     * @return array<string, ContentItemInterface>
+     * {@inheritDoc}
      */
-    private function load(): array
-    {
-        $items = [];
+    public function walk(
+        callable $callback,
+        ?ContentItemInterface $item = null
+    ): void {
+        $items = $item ? [$item] : $this->all();
 
-        if (!is_dir($this->path)) {
-            return $items;
-        }
-
-        foreach (new DirectoryIterator($this->path) as $file) {
-            if ($file->isFile() && in_array($file->getExtension(), self::EXTENSIONS)) {
-                $item = $this->createFromPath($file->getPathname());
-                $items[$item->slug()] = $item;
+        foreach ($items as $current) {
+            $callback($current);
+            foreach ($current->children() as $child) {
+                $this->walk($callback, $child);
             }
         }
-
-        uasort(
-            $items,
-            fn ($a, $b) => $b->published()->getTimestamp() <=> $a->published()->getTimestamp()
-        );
-
-        return $items;
     }
 
     /**
-     * Create content object from file path.
-     *
-     * @param string $path
-     * @return ContentItemInterface
+     * {@inheritDoc}
      */
-    protected function createFromPath(string $path): ContentItemInterface
+    public function filter(array $filters = []): array
     {
-        return new ContentItem($path);
-    }
+        // If no filters are provided, return all items.
+        if (empty($filters)) {
+            return $this->all();
+        }
 
-    /**
-     * Filter items by provided filters.
-     *
-     * @param array<ContentItemInterface> $items
-     * @param array<string, mixed> $filters
-     * @return array<ContentItemInterface>
-     */
-    private function applyFilters(array $items, array $filters): array
-    {
-        // Filter items.
-        $items = array_filter($items, function ($item) use ($filters) {
-            // Filter by text (title, summary and content data).
-            if (!empty($filters['search'])) {
-                $search = mb_strtolower($filters['search']);
-                $text = mb_strtolower($item->title() . ' ' . $item->summary() . ' ' . $item->data());
-                if (!mb_strpos($text, $search)) {
-                    return false;
-                }
+        // Walk through the items and check if they match the filters.
+        $matched = [];
+        $this->walk(function (ContentItemInterface $item) use ($filters, &$matched) {
+            if ($this->matches($item, $filters)) {
+                $matched[] = $item;
             }
-
-            // Filter by author.
-            if (!empty($filters['author'])) {
-                if ($item->author()?->slug() !== $filters['author']) {
-                    return false;
-                }
-            }
-
-            // Filter by tag.
-            if (!empty($filters['tag'])) {
-                if (!in_array($filters['tag'], array_map(fn ($tag) => $tag->slug(), $item->tags()), true)) {
-                    return false;
-                }
-            }
-
-            // Filter by date.
-            if (!empty($filters['year']) && !empty($filters['month'])) {
-                if ($item->published()->format('Y-m') !== sprintf('%04d-%02d', $filters['year'], $filters['month'])) {
-                    return false;
-                }
-            }
-
-            return true;
         });
 
         // Limit items.
@@ -221,37 +149,108 @@ class ContentRegistry implements ContentRegistryInterface
             $limit = $filters['limit'];
             $offset = ($page - 1) * $limit;
 
-            return array_slice($items, $offset, $limit);
+            return array_slice($matched, $offset, $limit);
         }
 
-        // Return all items.
-        return $items;
+        // Return the matched items.
+        return $matched;
     }
 
     /**
-     * Get all months.
-     *
-     * @return array<int, ContentMonthInterface>
+     * {@inheritDoc}
+     */
+    public function tags(): array
+    {
+        if (!isset($this->tags)) {
+            $this->tags = [];
+
+            $this->walk(function (ContentItemInterface $item) {
+                foreach ($item->tags() as $tag) {
+                    $slug = $tag->slug();
+                    if (!isset($this->tags[$slug])) {
+                        $this->tags[$slug] = $tag;
+                    }
+                    $this->tags[$slug]->increment();
+                }
+            });
+
+            uasort($this->tags, fn ($a, $b) => $a->name() <=> $b->name());
+        }
+
+        return $this->tags;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function months(): array
     {
         if (!isset($this->months)) {
             $this->months = [];
 
-            foreach ($this->all() as $item) {
-                $date = $item->published()->format('Ym');
-                if (!isset($this->months[$date])) {
-                    $this->months[$date] = new ContentMonth($item->published());
+            $this->walk(function (ContentItemInterface $item) {
+                $dateKey = $item->published()->format('Ym');
+                if (!isset($this->months[$dateKey])) {
+                    $this->months[$dateKey] = new ContentMonth($item->published());
                 }
-                $this->months[$date]->increment();
-            }
+                $this->months[$dateKey]->increment();
+            });
 
-            uasort(
-                $this->months,
-                fn ($a, $b) => $a->name() <=> $b->name()
-            );
+            uasort($this->months, fn ($a, $b) => $b->slug() <=> $a->slug());
         }
 
         return $this->months;
+    }
+
+    /**
+     * Get the content class.
+     *
+     * @return string
+     */
+    protected function getContentClass(): string
+    {
+        return ContentItem::class;
+    }
+
+    /**
+     * Check if the item matches the provided filters.
+     *
+     * @param ContentItemInterface $item Item.
+     * @param array<string, mixed> $filters Filters.
+     * @return bool
+     */
+    protected function matches(ContentItemInterface $item, array $filters): bool
+    {
+        // Filter by text (title, summary and content data).
+        if (!empty($filters['search'])) {
+            $search = mb_strtolower($filters['search']);
+            $text = mb_strtolower($item->title() . ' ' . $item->summary() . ' ' . $item->data());
+            if (!mb_strpos($text, $search)) {
+                return false;
+            }
+        }
+
+        // Filter by author.
+        if (!empty($filters['author'])) {
+            if ($item->author()?->slug() !== $filters['author']) {
+                return false;
+            }
+        }
+
+        // Filter by tag.
+        if (!empty($filters['tag'])) {
+            if (!in_array($filters['tag'], array_map(fn ($tag) => $tag->slug(), $item->tags()), true)) {
+                return false;
+            }
+        }
+
+        // Filter by date.
+        if (!empty($filters['year']) && !empty($filters['month'])) {
+            if ($item->published()->format('Y-m') !== sprintf('%04d-%02d', $filters['year'], $filters['month'])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
