@@ -1,0 +1,19 @@
+{% extends 'layouts/default.html.twig' %}
+
+{% block title %}{{ course.title | default('Academy') }}{% endblock %}
+
+{% block content %}
+    {% block academy_header %}{% endblock %}
+    {% block academy_content %}{% endblock %}
+    {% block academy_footer %}{% endblock %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .fa-chevron-right.rotate-90 {
+            transform: rotate(90deg);
+            transition: transform 0.3s ease;
+        }
+    </style>
+{% endblock %}

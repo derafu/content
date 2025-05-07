@@ -5,11 +5,9 @@
 {% block blog_header %}
     <section id="hero">
         <twig:block-hero
+            size="small"
             background="{{ post.image | default(base_path ~ '/img/content/blog/default-cover.png') }}"
-            contentBackground="true"
-            title="{{ post.title }}"
-            subtitle="{{ post.subtitle }}"
-            align="center"
+            title=""
         />
     </section>
 {% endblock %}
@@ -21,6 +19,10 @@
             <li class="breadcrumb-item active" aria-current="page">{{ post.title }}</li>
         </ol>
     </nav>
+
+    {% if post.subtitle %}
+        <h1>{{ post.subtitle }}</h1>
+    {% endif %}
 
     <twig:block-quote
         quote="{{ post.summary }}"

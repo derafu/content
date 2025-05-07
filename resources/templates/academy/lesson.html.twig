@@ -1,0 +1,67 @@
+{% extends 'layouts/academy.html.twig' %}
+{% import 'academy/_nav_item.html.twig' as nav %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block academy_header %}
+    <section id="hero">
+        <twig:block-hero
+            size="small"
+            background="{{ course.image }}"
+            title="{{ course.title }}"
+            subtitle="{{ course.summary }}"
+            align="left"
+        />
+    </section>
+{% endblock %}
+
+{% block academy_content %}
+    <div class="container my-4">
+
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Barra lateral -->
+                <nav class="col-md-3 col-lg-2 d-md-block bg-light">
+                    <div class="py-3">
+                        {{ nav.render_items(course.modules, 0) }}
+                    </div>
+                </nav>
+
+                <!-- Contenido principal -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ path('academy') }}">Academy</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{{ path('academy_course', {'course': course.slug}) }}">{{ course.title }}</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                {{ module.title }}
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">
+                                {{ lesson.title }}
+                            </li>
+                        </ol>
+                    </nav>
+
+                    {{ lesson.data | markdown }}
+
+                    <hr class="my-5">
+                    <div class="row text-muted small">
+                        <div class="col-md-6">
+                            Última actualización: {{ lesson.modified | date('d/m/Y') }}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            {{ course.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+                        </div>
+                    </div>
+
+                </main>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

@@ -55,9 +55,9 @@ class ContentRegistry implements ContentRegistryInterface
      * @param ContentLoaderInterface|null $loader Content loader.
      */
     public function __construct(
-        private string $path = '',
-        private array $extensions = ['md'],
-        private ?ContentLoaderInterface $loader = null
+        protected string $path = '',
+        protected array $extensions = ['md'],
+        protected ?ContentLoaderInterface $loader = null
     ) {
         $this->path = rtrim($path, '/') . '/';
         $this->loader = $loader ?? new ContentLoader();

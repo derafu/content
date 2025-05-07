@@ -13,10 +13,22 @@ declare(strict_types=1);
 namespace Derafu\Content\Entity;
 
 use Derafu\Content\Contract\AcademyLessonInterface;
+use Derafu\Content\Contract\AcademyModuleInterface;
 
 /**
  * Class that represents an academy lesson.
  */
 class AcademyLesson extends ContentItem implements AcademyLessonInterface
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function module(): AcademyModuleInterface
+    {
+        $module = $this->parent();
+
+        assert($module instanceof AcademyModuleInterface);
+
+        return $module;
+    }
 }

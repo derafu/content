@@ -15,12 +15,21 @@ namespace Derafu\Content\Service;
 use Derafu\Content\Contract\AcademyCourseInterface;
 use Derafu\Content\Contract\AcademyRegistryInterface;
 use Derafu\Content\Entity\AcademyCourse;
+use Derafu\Content\Entity\AcademyLesson;
+use Derafu\Content\Entity\AcademyModule;
 
 /**
  * Academy registry.
  */
 class AcademyRegistry extends ContentRegistry implements AcademyRegistryInterface
 {
+    /**
+     * Content items of type AcademyCourse.
+     *
+     * @var array<string, AcademyCourseInterface>
+     */
+    private array $courses;
+
     /**
      * {@inheritDoc}
      */
@@ -36,8 +45,51 @@ class AcademyRegistry extends ContentRegistry implements AcademyRegistryInterfac
     /**
      * {@inheritDoc}
      */
-    protected function getContentClass(): string
+    public function all(): array
     {
-        return AcademyCourse::class;
+        if (!isset($this->courses)) {
+            $this->courses = $this->loader->load(
+                $this->path,
+                $this->extensions,
+                AcademyCourse::class,
+                recursive: false
+            );
+
+            foreach ($this->courses as $course) {
+                // Load modules.
+                $modulesPath = $course->directory() . '/' . $course->name() . '/';
+                $modules = $this->loader->load(
+                    $modulesPath,
+                    $this->extensions,
+                    AcademyModule::class,
+                    recursive: false
+                );
+
+                // Add modules to course.
+                if (!empty($modules)) {
+                    foreach ($modules as $module) {
+                        $course->addChild($module);
+
+                        // Load lessons.
+                        $lessonsPath = $module->directory() . '/' . $module->name() . '/';
+                        $lessons = $this->loader->load(
+                            $lessonsPath,
+                            $this->extensions,
+                            AcademyLesson::class,
+                            recursive: false
+                        );
+
+                        // Add lessons to module.
+                        if (!empty($lessons)) {
+                            foreach ($lessons as $lesson) {
+                                $module->addChild($lesson);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->courses;
     }
 }

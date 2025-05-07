@@ -38,7 +38,8 @@ class ContentSplFileObject extends SplFileObject
     public function raw(): string
     {
         if (!isset($this->raw)) {
-            $this->raw = $this->fread($this->getSize());
+            $size = $this->getSize();
+            $this->raw = $size > 0 ? $this->fread($size) : '';
         }
 
         return $this->raw;

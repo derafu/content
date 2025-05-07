@@ -26,11 +26,13 @@ interface ContentLoaderInterface
      * @param array $extensions File extensions to include.
      * @param string $class Class to use to create the
      * content item.
-     * @return array<string, ContentItemInterface>
+     * @param bool $recursive Recursively load content items.
+     * @return array<string,object>
      */
     public function load(
         string $path,
         array $extensions = ['md'],
-        string $class = ContentItem::class
+        string $class = ContentItem::class,
+        bool $recursive = true
     ): array;
 }

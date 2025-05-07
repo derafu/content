@@ -1,0 +1,44 @@
+{% macro render_items(items, level) %}
+    <ul class="nav flex-column {% if level > 0 %}ms-{{ level }}{% endif %}">
+        {% for item in items %}
+            <li class="nav-item">
+                {% set hasChildren = item.children is defined and item.children|length > 0 %}
+                {% set collapseId = 'collapse' ~ loop.index0 ~ '_' ~ level %}
+
+                {% if item.module is defined %}
+                    {% set isActive = is_active_path('academy_lesson', {'course': item.module.course.slug, 'module': item.module.slug, 'lesson': item.slug}) %}
+                {% elseif item.course is defined %}
+                    {% set isActive = is_active_path('academy_module', {'course': item.course.slug, 'module': item.slug}) %}
+                {% endif %}
+
+                {% if hasChildren %}
+                    <a class="nav-link d-flex justify-content-between align-items-center {% if isActive %}text-primary fw-bold{% endif %}"
+                       data-bs-toggle="collapse"
+                       href="#{{ collapseId }}"
+                       role="button"
+                       aria-expanded="{{ isActive ? 'true' : 'false' }}"
+                       aria-controls="{{ collapseId }}">
+                        {{ item.title }}
+                        <i class="fa-solid fa-chevron-right {% if isActive %}rotate-90{% endif %}"></i>
+                    </a>
+
+                    <div class="collapse {% if isActive %}show{% endif %}" id="{{ collapseId }}">
+                        {{ _self.render_items(item.children, level + 1) }}
+                    </div>
+                {% else %}
+                    {% if item.module is defined %}
+                        <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %}"
+                        href="{{ path('academy_lesson', {'course': item.module.course.slug, 'module': item.module.slug, 'lesson': item.slug}) }}">
+                            {{ item.title }}
+                        </a>
+                    {% elseif item.course is defined %}
+                        <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %}"
+                        href="{{ path('academy_module', {'course': item.course.slug, 'module': item.slug}) }}">
+                            {{ item.title }}
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endmacro %}

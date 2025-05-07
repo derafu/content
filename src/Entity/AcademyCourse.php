@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Entity;
 
 use Derafu\Content\Contract\AcademyCourseInterface;
+use Derafu\Content\Contract\AcademyModuleInterface;
 
 /**
  * Class that represents an academy course.
@@ -34,5 +35,20 @@ class AcademyCourse extends ContentItem implements AcademyCourseInterface
         }
 
         return $this->links;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function modules(): array
+    {
+        $modules = [];
+
+        foreach ($this->children() as $child) {
+            assert($child instanceof AcademyModuleInterface);
+            $modules[$child->slug()] = $child;
+        }
+
+        return $modules;
     }
 }

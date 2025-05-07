@@ -3,10 +3,11 @@
 {% block blog_header %}
     <section id="hero">
         <twig:block-hero
-            size="mini"
-        title="{{ blog.title | default('Insights & Updates') }}"
-        subtitle="{{ blog.subtitle | default('Thoughts, stories, and the latest from our world.') }}"
-        align="center"
+            size="small"
+            background="{{ base_path }}/img/content/blog/default-cover.png"
+            title="{{ blog.title | default('Insights & Updates') }}"
+            subtitle="{{ blog.subtitle | default('Thoughts, stories, and the latest from our world.') }}"
+            align="left"
         />
     </section>
 {% endblock %}

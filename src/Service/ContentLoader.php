@@ -29,7 +29,8 @@ class ContentLoader implements ContentLoaderInterface
     public function load(
         string $path,
         array $extensions = ['md'],
-        string $class = ContentItem::class
+        string $class = ContentItem::class,
+        bool $recursive = true
     ): array {
         $items = [];
 
@@ -60,11 +61,13 @@ class ContentLoader implements ContentLoaderInterface
                 $item = new $class($fileInfo);
 
                 // Search for children in the directory with the same name.
-                $childrenPath = $file->getPathInfo()->getRealPath() . '/' . $item->name() . '/';
-                $children = $this->load($childrenPath, $extensions, $class);
-                if (!empty($children)) {
-                    foreach ($children as $child) {
-                        $item->addChild($child);
+                if ($recursive) {
+                    $childrenPath = $item->directory() . '/' . $item->name() . '/';
+                    $children = $this->load($childrenPath, $extensions, $class);
+                    if (!empty($children)) {
+                        foreach ($children as $child) {
+                            $item->addChild($child);
+                        }
                     }
                 }
 

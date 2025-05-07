@@ -17,4 +17,17 @@ namespace Derafu\Content\Contract;
  */
 interface AcademyModuleInterface extends ContentItemInterface
 {
+    /**
+     * Get course.
+     *
+     * @return AcademyCourseInterface
+     */
+    public function course(): AcademyCourseInterface;
+
+    /**
+     * Get lessons.
+     *
+     * @return array<string, AcademyLessonInterface>
+     */
+    public function lessons(): array;
 }

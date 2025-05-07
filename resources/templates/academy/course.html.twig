@@ -1,0 +1,134 @@
+{% extends 'layouts/academy.html.twig' %}
+{% import 'academy/_nav_item.html.twig' as nav %}
+
+{% block title %}{{ course.title }}{% endblock %}
+
+{% block academy_header %}
+    <section id="hero">
+        <twig:block-hero
+            size="small"
+            background="{{ course.image }}"
+            title="{{ course.title }}"
+            subtitle="{{ course.summary }}"
+            align="left"
+        />
+    </section>
+{% endblock %}
+
+{% set tab_content_modules %}
+    {% for module in course.modules %}
+        <div class="card mb-3" id="module-{{ module.slug }}">
+            <div class="card-header">
+                <span class="card-title">{{ module.title }}</span>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for lesson in module.lessons %}
+                        <a href="{{ path('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug}) }}" class="list-group-item list-group-item-action">
+                            {{ lesson.title }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endset %}
+
+{% block academy_content %}
+    <div class="container my-4">
+
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Barra lateral -->
+                <nav class="col-md-3 col-lg-2 d-md-block bg-light">
+                    <div class="py-3">
+                        <div class="small text-muted px-3 mb-2">Modules:</div>
+                        <ul class="nav flex-column">
+                            {% for module in course.modules %}
+                                <li class="nav-item">
+                                    <a class="nav-link"
+                                        href="#module-{{ module.slug }}">
+                                        {{ module.title }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="px-3 py-3 border-top">
+                        <div class="small text-muted mb-2"># modules:</div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            {{ course.modules | length }}
+                        </div>
+                        <div class="small text-muted mb-2"># lessons:</div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            {{ course.lessons | length }}
+                        </div>
+                        <div class="small text-muted mb-2">Time to finish:</div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            {% if course.time > 60 %}
+                                {{ (course.time / 60)|number_format(0) }} hours
+                            {% endif %}
+                            {{ (course.time % 60) }} minutes
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Contenido principal -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ path('academy') }}">Academy</a>
+                            </li>
+                            {% for ancestor in course.ancestors %}
+                                <li class="breadcrumb-item">
+                                    <a href="{{ path('academy_show', {'uri': ancestor.uri}) }}">{{ ancestor.title }}</a>
+                                </li>
+                            {% endfor %}
+                            <li class="breadcrumb-item active" aria-current="page">
+                                {{ course.title }}
+                            </li>
+                        </ol>
+                    </nav>
+
+                    <twig:block-tabs
+                        :tabs="[
+                            {
+                                'id': 'modules',
+                                'title': 'Modules',
+                                'icon': 'fa-solid fa-list',
+                                'content': tab_content_modules
+                            },
+                            {
+                                'id': 'videos',
+                                'title': 'Videos',
+                                'icon': 'fa-solid fa-video',
+                                'content': tab_content_videos
+                            },
+                            {
+                                'id': 'attachments',
+                                'title': 'Attachments',
+                                'icon': 'fa-solid fa-file',
+                                'content': tab_content_attachments
+                            }
+                        ]"
+                    />
+
+                    <hr class="mb-5">
+                    <div class="row text-muted small">
+                        <div class="col-md-6">
+                            Última actualización: {{ course.modified | date('d/m/Y') }}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            {{ course.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+                        </div>
+                    </div>
+
+                </main>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

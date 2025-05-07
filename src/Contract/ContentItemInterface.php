@@ -150,6 +150,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function deprecated(): ?DateTimeImmutable;
 
     /**
+     * Get the order of the content.
+     *
+     * @return int
+     */
+    public function order(): int;
+
+    /**
      * Get the tags of the content.
      *
      * @return ContentTagInterface[]

@@ -1,0 +1,66 @@
+{% extends 'layouts/academy.html.twig' %}
+
+{% block title %}Academy{% endblock %}
+
+{% block academy_header %}
+    <section id="hero">
+        <twig:block-hero
+            size="small"
+            background="{{ base_path }}/img/content/academy/academy-cover.png"
+            title="Academy"
+            subtitle="<h3>Need to learn something?</h3>
+                <p>Here you will find courses, trainings and certifications associated with our products.</p>
+                <p>Do you want to learn about a topic? Start a course with us!</p>"
+            align="left"
+        />
+    </section>
+{% endblock %}
+
+{% block academy_content %}
+    <section id="courses" class="my-4">
+        <twig:block-title
+            container="container"
+            title="Our courses"
+            subtitle="Explore our courses and start learning today!"
+            align="left"
+        />
+
+        <div class="container">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for course in courses %}
+                    <div class="col">
+                        <div class="card h-100 shadow-sm">
+                            {% if course.image %}
+                                <a href="{{ path('academy_course', {'course': course.slug}) }}">
+                                    <img src="{{ course.image }}" class="card-img-top" alt="{{ course.title }}">
+                                </a>
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a href="{{ path('academy_course', {'course': course.slug}) }}" class="text-decoration-none">
+                                        {{ course.title }}
+                                    </a>
+                                </h5>
+                                <p class="card-text text-muted">{{ course.summary }}</p>
+                                {% for tag in course.tags %}
+                                    <a href="{{ path('academy_tag', {'tag': tag.slug}) }}" class="badge bg-secondary text-decoration-none">
+                                        {{ tag.name }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                            <div class="card-footer d-flex justify-content-between text-muted small">
+                                <span>
+                                    {% if course.time > 60 %}
+                                        {{ (course.time / 60)|number_format(0) }} hours
+                                    {% endif %}
+                                    {{ (course.time % 60) }} minutes
+                                </span>
+                                <span>{{ course.lessons|length }} lessons</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
