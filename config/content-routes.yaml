@@ -1,0 +1,79 @@
+# ------------------------------------------------------------------------------
+# Blog
+# ------------------------------------------------------------------------------
+
+blog:
+  path: /blog
+  handler: 'Derafu\Content\Controller\BlogController::index'
+
+blog_tag:
+  path: /blog/tag/{tag}
+  handler: 'Derafu\Content\Controller\BlogController::tag'
+
+blog_month:
+  path: /blog/month/{month}
+  handler: 'Derafu\Content\Controller\BlogController::month'
+
+blog_show:
+  path: /blog/{uri:.+}
+  handler: 'Derafu\Content\Controller\BlogController::show'
+
+# ------------------------------------------------------------------------------
+# Documentation
+# ------------------------------------------------------------------------------
+
+docs:
+  path: /docs
+  handler: 'Derafu\Content\Controller\DocsController::show'
+  defaults:
+    uri: index
+
+docs_tag:
+  path: /docs/tag/{tag}
+  handler: 'Derafu\Content\Controller\DocsController::tag'
+
+docs_show:
+  path: /docs/{uri:.+}
+  handler: 'Derafu\Content\Controller\DocsController::show'
+
+# ------------------------------------------------------------------------------
+# FAQ
+# ------------------------------------------------------------------------------
+
+faq:
+  path: /faq
+  handler: 'Derafu\Content\Controller\FaqController::show'
+  defaults:
+    uri: index
+
+faq_tag:
+  path: /faq/tag/{tag}
+  handler: 'Derafu\Content\Controller\FaqController::tag'
+
+faq_show:
+  path: /faq/{uri:.+}
+  handler: 'Derafu\Content\Controller\FaqController::show'
+
+# ------------------------------------------------------------------------------
+# Academy
+# ------------------------------------------------------------------------------
+
+academy:
+  path: /academy
+  handler: 'Derafu\Content\Controller\AcademyController::index'
+
+academy_tag:
+  path: /academy/tag/{tag}
+  handler: 'Derafu\Content\Controller\AcademyController::tag'
+
+academy_lesson:
+  path: /academy/{course}/{module}/{lesson}
+  handler: 'Derafu\Content\Controller\AcademyController::lesson'
+
+academy_module:
+  path: /academy/{course}/{module}
+  handler: 'Derafu\Content\Controller\AcademyController::module'
+
+academy_course:
+  path: /academy/{course}
+  handler: 'Derafu\Content\Controller\AcademyController::course'

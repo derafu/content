@@ -25,7 +25,18 @@
                 <div class="list-group">
                     {% for lesson in module.lessons %}
                         <a href="{{ path('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug}) }}" class="list-group-item list-group-item-action">
+                            {% if lesson.video %}
+                                <i class="fa-solid fa-play me-2 fa-fw"></i>
+                            {% else %}
+                                <i class="fa-solid fa-file-lines me-2 fa-fw"></i>
+                            {% endif %}
                             {{ lesson.title }}
+                            <span class="badge bg-primary-subtle float-end">
+                                {% if lesson.time > 60 %}
+                                    {{ (lesson.time / 60)|number_format(0) }} hours
+                                {% endif %}
+                                {{ (lesson.time % 60) }} minutes
+                            </span>
                         </a>
                     {% endfor %}
                 </div>

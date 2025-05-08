@@ -154,6 +154,13 @@ class ContentItem implements ContentItemInterface
     private string|false $image;
 
     /**
+     * Video of the content.
+     *
+     * @var string|false
+     */
+    private string|false $video;
+
+    /**
      * Author of the content.
      *
      * @var ContentAuthorInterface|false
@@ -569,6 +576,29 @@ class ContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
+    public function video(): ?string
+    {
+        if (!isset($this->video)) {
+            $this->video = $this->metadata('video', false);
+
+            if ($this->video) {
+                $url = parse_url($this->video);
+                if (isset($url['host']) && str_ends_with($url['host'], 'youtube.com')) {
+                    parse_str($url['query'] ?? '', $query);
+                    if (isset($query['v'])) {
+                        $videoId = $query['v'];
+                        $this->video = "https://www.youtube.com/embed/$videoId";
+                    }
+                }
+            }
+        }
+
+        return $this->video ?: null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function author(): ?ContentAuthorInterface
     {
         if (!isset($this->author)) {
@@ -711,6 +741,7 @@ class ContentItem implements ContentItemInterface
             'title' => $this->title(),
             'author' => $this->author(),
             'image' => $this->image(),
+            'video' => $this->video(),
             'time' => $this->time(),
             'summary' => $this->summary(),
             'preview' => $this->preview(),

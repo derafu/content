@@ -171,6 +171,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function image(): ?string;
 
     /**
+     * Get the main video of the content, if any.
+     *
+     * @return string|null
+     */
+    public function video(): ?string;
+
+    /**
      * Get the author of the content, if any.
      *
      * @return ContentAuthorInterface|null

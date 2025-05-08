@@ -47,6 +47,17 @@
                         </ol>
                     </nav>
 
+                    {% if lesson.video %}
+                        <div class="plyr__video-embed ratio ratio-16x9" id="player">
+                            <iframe
+                                src="{{ lesson.video }}"
+                                allowfullscreen
+                                allowtransparency
+                                allow="autoplay"
+                            ></iframe>
+                        </div>
+                    {% endif %}
+
                     {{ lesson.data | markdown }}
 
                     <hr class="my-5">
