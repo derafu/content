@@ -1,58 +1,10 @@
 # ------------------------------------------------------------------------------
-# Blog
+# Content (this group all the types of content)
 # ------------------------------------------------------------------------------
 
-blog:
-  path: /blog
-  handler: 'Derafu\Content\Controller\BlogController::index'
-
-blog_tag:
-  path: /blog/tag/{tag}
-  handler: 'Derafu\Content\Controller\BlogController::tag'
-
-blog_month:
-  path: /blog/month/{month}
-  handler: 'Derafu\Content\Controller\BlogController::month'
-
-blog_show:
-  path: /blog/{uri:.+}
-  handler: 'Derafu\Content\Controller\BlogController::show'
-
-# ------------------------------------------------------------------------------
-# Documentation
-# ------------------------------------------------------------------------------
-
-docs:
-  path: /docs
-  handler: 'Derafu\Content\Controller\DocsController::show'
-  defaults:
-    uri: index
-
-docs_tag:
-  path: /docs/tag/{tag}
-  handler: 'Derafu\Content\Controller\DocsController::tag'
-
-docs_show:
-  path: /docs/{uri:.+}
-  handler: 'Derafu\Content\Controller\DocsController::show'
-
-# ------------------------------------------------------------------------------
-# FAQ
-# ------------------------------------------------------------------------------
-
-faq:
-  path: /faq
-  handler: 'Derafu\Content\Controller\FaqController::show'
-  defaults:
-    uri: index
-
-faq_tag:
-  path: /faq/tag/{tag}
-  handler: 'Derafu\Content\Controller\FaqController::tag'
-
-faq_show:
-  path: /faq/{uri:.+}
-  handler: 'Derafu\Content\Controller\FaqController::show'
+content:
+  path: /api/content.json
+  handler: 'Derafu\Content\Controller\ContentController::api_index'
 
 # ------------------------------------------------------------------------------
 # Academy
@@ -77,3 +29,64 @@ academy_module:
 academy_course:
   path: /academy/{course}
   handler: 'Derafu\Content\Controller\AcademyController::course'
+
+
+# ------------------------------------------------------------------------------
+# Blog
+# ------------------------------------------------------------------------------
+
+blog:
+  path: /blog
+  handler: 'Derafu\Content\Controller\BlogController::index'
+
+blog_tag:
+  path: /blog/tag/{tag}
+  handler: 'Derafu\Content\Controller\BlogController::tag'
+
+blog_month:
+  path: /blog/month/{month}
+  handler: 'Derafu\Content\Controller\BlogController::month'
+
+blog_rss:
+  path: /blog/rss.xml
+  handler: 'Derafu\Content\Controller\BlogController::rss'
+
+blog_post:
+  path: /blog/{uri:.+}
+  handler: 'Derafu\Content\Controller\BlogController::show'
+
+# ------------------------------------------------------------------------------
+# Documentation
+# ------------------------------------------------------------------------------
+
+docs:
+  path: /docs
+  handler: 'Derafu\Content\Controller\DocsController::show'
+  defaults:
+    uri: index
+
+docs_tag:
+  path: /docs/tag/{tag}
+  handler: 'Derafu\Content\Controller\DocsController::tag'
+
+docs_doc:
+  path: /docs/{uri:.+}
+  handler: 'Derafu\Content\Controller\DocsController::show'
+
+# ------------------------------------------------------------------------------
+# FAQ
+# ------------------------------------------------------------------------------
+
+faq:
+  path: /faq
+  handler: 'Derafu\Content\Controller\FaqController::show'
+  defaults:
+    uri: index
+
+faq_tag:
+  path: /faq/tag/{tag}
+  handler: 'Derafu\Content\Controller\FaqController::tag'
+
+faq_question:
+  path: /faq/{uri:.+}
+  handler: 'Derafu\Content\Controller\FaqController::show'

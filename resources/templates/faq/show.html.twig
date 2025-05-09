@@ -10,7 +10,7 @@
             </li>
             {% for ancestor in faq.ancestors %}
                 <li class="breadcrumb-item">
-                    <a href="{{ path('faq_show', {'uri': ancestor.uri}) }}">{{ ancestor.title }}</a>
+                    <a href="{{ path('faq_question', {'uri': ancestor.uri}) }}">{{ ancestor.title }}</a>
                 </li>
             {% endfor %}
             <li class="breadcrumb-item active" aria-current="page">

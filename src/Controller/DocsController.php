@@ -37,16 +37,26 @@ class DocsController
     /**
      * Show action.
      *
+     * @param Request $request Request.
      * @param string $uri URI of the doc.
-     * @return string
+     * @return string|array
      */
-    public function show(string $uri): string
+    public function show(Request $request, string $uri): string|array
     {
-        return $this->renderer->render('docs/show.html.twig', [
-            'doc' => $this->docsRegistry->get($uri),
-            'docs' => $this->docsRegistry->all(),
-            'tags' => $this->docsRegistry->tags(),
-        ]);
+        $preferredFormat = $request->getPreferredFormat();
+        $uri = str_replace('.' . $preferredFormat, '', $uri);
+
+        if ($preferredFormat === 'json') {
+            return [
+                'data' => $this->docsRegistry->get($uri)->toArray(),
+            ];
+        } else {
+            return $this->renderer->render('docs/show.html.twig', [
+                'doc' => $this->docsRegistry->get($uri),
+                'docs' => $this->docsRegistry->all(),
+                'tags' => $this->docsRegistry->tags(),
+            ]);
+        }
     }
 
     /**

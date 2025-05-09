@@ -25,7 +25,7 @@
                 title="{{ post.title }}"
                 description="<div class='text-muted small mb-2'>Por {{ post.author.name }} el {{ post.published | date('d/m/Y') }} • {{ post.time }} min de lectura</div>{{ post.summary | markdown }}"
                 buttonText="Leer más"
-                buttonUrl="{{ path('blog_show', {'uri': post.uri}) }}"
+                buttonUrl="{{ path('blog_post', {'uri': post.uri}) }}"
             />
         </div>
     {% endfor %}

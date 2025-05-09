@@ -23,13 +23,40 @@ class AcademyCourse extends ContentItem implements AcademyCourseInterface
     /**
      * {@inheritDoc}
      */
+    public function type(): string
+    {
+        return 'academy';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function category(): string
+    {
+        return 'course';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function route(): object
+    {
+        return (object) [
+            'name' => $this->type() . '_' . $this->category(),
+            'params' => ['course' => $this->slug()],
+        ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function links(): array
     {
         if (!isset($this->links)) {
             $urlBasePath = '/academy';
 
             $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
                 'collection' => ['href' => $urlBasePath],
             ];
         }

@@ -22,13 +22,29 @@ class Doc extends ContentItem implements DocInterface
     /**
      * {@inheritDoc}
      */
+    public function type(): string
+    {
+        return 'docs';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function category(): string
+    {
+        return 'doc';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function links(): array
     {
         if (!isset($this->links)) {
             $urlBasePath = '/docs';
 
             $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
                 'collection' => ['href' => $urlBasePath],
             ];
         }

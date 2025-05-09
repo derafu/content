@@ -4,7 +4,7 @@
             <li class="nav-item">
                 {% set hasChildren = item.children is defined and item.children|length > 0 %}
                 {% set collapseId = 'collapse' ~ loop.index0 ~ '_' ~ level %}
-                {% set isActive = is_active_path('faq_show', {'uri': item.uri}) %}
+                {% set isActive = is_active_path('faq_question', {'uri': item.uri}) %}
 
                 {% if hasChildren %}
                     <a class="nav-link d-flex justify-content-between align-items-center {% if isActive %}text-primary fw-bold{% endif %}"
@@ -22,7 +22,7 @@
                     </div>
                 {% else %}
                     <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %}"
-                       href="{{ path('faq_show', {'uri': item.uri}) }}">
+                       href="{{ path('faq_question', {'uri': item.uri}) }}">
                         {{ item.title }}
                     </a>
                 {% endif %}

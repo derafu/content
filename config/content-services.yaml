@@ -3,12 +3,22 @@ services:
     _defaults:
         autowire: true
         autoconfigure: true
+        public: false
+
+    Derafu\Content\Controller\ContentController:
         public: true
 
-    Derafu\Content\Controller\AcademyController: ~
-    Derafu\Content\Controller\BlogController: ~
-    Derafu\Content\Controller\DocsController: ~
-    Derafu\Content\Controller\FaqController: ~
+    Derafu\Content\Controller\AcademyController:
+        public: true
+
+    Derafu\Content\Controller\BlogController:
+        public: true
+
+    Derafu\Content\Controller\DocsController:
+        public: true
+
+    Derafu\Content\Controller\FaqController:
+        public: true
 
     Derafu\Content\Contract\AcademyRegistryInterface:
         class: Derafu\Content\Service\AcademyRegistry

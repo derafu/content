@@ -16,7 +16,10 @@ use Derafu\Content\Contract\BlogRegistryInterface;
 use Derafu\Content\ValueObject\ContentMonth;
 use Derafu\Content\ValueObject\ContentTag;
 use Derafu\Http\Request;
+use Derafu\Http\Response;
 use Derafu\Renderer\Contract\RendererInterface;
+use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Enum\UrlReferenceType;
 
 /**
  * Blog controller.
@@ -33,10 +36,12 @@ class BlogController
      *
      * @param BlogRegistryInterface $blogRegistry Blog registry.
      * @param RendererInterface $renderer Renderer.
+     * @param RouterInterface $router Router.
      */
     public function __construct(
         private readonly BlogRegistryInterface $blogRegistry,
-        private readonly RendererInterface $renderer
+        private readonly RendererInterface $renderer,
+        private readonly RouterInterface $router
     ) {
     }
 
@@ -68,24 +73,40 @@ class BlogController
     /**
      * Show action.
      *
+     * @param Request $request Request.
      * @param string $uri URI of the blog post.
-     * @return string
+     * @return string|array
      */
-    public function show(string $uri): string
+    public function show(Request $request, string $uri): string|array
     {
-        $post = $this->blogRegistry->get($uri);
-        $recentPosts = $this->blogRegistry->filter([
-            'limit' => self::RECENT_POSTS_LIMIT,
-        ]);
-        $tags = $this->blogRegistry->tags();
-        $months = $this->blogRegistry->months();
+        $preferredFormat = $request->getPreferredFormat();
+        $uri = str_replace('.' . $preferredFormat, '', $uri);
 
-        return $this->renderer->render('blog/show.html.twig', [
-            'post' => $post,
-            'recentPosts' => $recentPosts,
-            'tags' => $tags,
-            'months' => $months,
-        ]);
+        $post = $this->blogRegistry->get($uri);
+
+        if ($preferredFormat === 'json') {
+            return [
+                'data' => $post->toArray(),
+            ];
+
+        } elseif ($preferredFormat === 'pdf') {
+            return $this->renderer->render('blog/show.pdf.twig', [
+                'post' => $post,
+            ]);
+        } else {
+            $recentPosts = $this->blogRegistry->filter([
+                'limit' => self::RECENT_POSTS_LIMIT,
+            ]);
+            $tags = $this->blogRegistry->tags();
+            $months = $this->blogRegistry->months();
+
+            return $this->renderer->render('blog/show.html.twig', [
+                'post' => $post,
+                'recentPosts' => $recentPosts,
+                'tags' => $tags,
+                'months' => $months,
+            ]);
+        }
     }
 
     /**
@@ -152,15 +173,39 @@ class BlogController
     }
 
     /**
-     * API index action.
+     * RSS action.
      *
      * @param Request $request Request.
-     * @return array
+     * @return Response
      */
-    public function api_index(Request $request): array
+    public function rss(Request $request): Response
     {
         $filters = array_filter($request->all(), fn ($value) => $value !== '');
+        $posts = $this->blogRegistry->filter($filters);
 
-        return $this->blogRegistry->filter($filters);
+        $response = new Response();
+        $response->withHeader('Content-Type', 'application/rss+xml; charset=UTF-8');
+
+        $xml =$this->renderer->render('blog/rss.xml.twig', [
+            'posts' => $posts,
+        ]);
+
+        $url = rtrim($this->router->generate('homepage', [], UrlReferenceType::ABSOLUTE_URL), '/');
+
+        $xml = preg_replace_callback(
+            '#<(img|a)\b[^>]*(src|href)=["\'](/[^"\']*)["\']#i',
+            function ($matches) use ($url) {
+                return preg_replace(
+                    '#(src|href)=["\']/#',
+                    $matches[2] . '="' . $url . '/',
+                    $matches[0]
+                );
+            },
+            $xml
+        );
+
+        $response->getBody()->write($xml);
+
+        return $response;
     }
 }

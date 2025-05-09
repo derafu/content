@@ -51,35 +51,107 @@ class AcademyController
     /**
      * Show course action.
      *
+     * @param Request $request Request.
      * @param string $course Course.
-     * @return string
+     * @return string|array
      */
-    public function course(string $course): string
+    public function course(Request $request, string $course): string|array
     {
-        return $this->renderer->render('academy/course.html.twig', [
-            'course' => $this->academyRegistry->get($course),
-        ]);
+        $preferredFormat = $request->getPreferredFormat();
+        $course = str_replace('.' . $preferredFormat, '', $course);
+
+        $course = $this->academyRegistry->get($course);
+
+        if ($preferredFormat === 'json') {
+            return [
+                'data' => $course->toArray(),
+            ];
+        } else {
+            return $this->renderer->render('academy/course.html.twig', [
+                'course' => $course,
+            ]);
+        }
+    }
+
+    /**
+     * Show module action.
+     *
+     * @param Request $request Request.
+     * @param string $course Course.
+     * @param string $module Module.
+     * @return string|array
+     */
+    public function module(
+        Request $request,
+        string $course,
+        string $module
+    ): string|array {
+        $preferredFormat = $request->getPreferredFormat();
+        $module = str_replace('.' . $preferredFormat, '', $module);
+
+        $course = $this->academyRegistry->get($course);
+        $module = $course->modules()[$module]
+            ?? throw new InvalidArgumentException(sprintf(
+                'Module "%s" not found.',
+                $module
+            ))
+        ;
+
+        if ($preferredFormat === 'json') {
+            return [
+                'data' => $module->toArray(),
+            ];
+        } else {
+            return $this->renderer->render('academy/module.html.twig', [
+                'course' => $course,
+                'module' => $module,
+            ]);
+        }
     }
 
     /**
      * Show lesson action.
      *
+     * @param Request $request Request.
      * @param string $course Course.
      * @param string $module Module.
      * @param string $lesson Lesson.
-     * @return string
+     * @return string|array
      */
-    public function lesson(string $course, string $module, string $lesson): string
-    {
-        $course = $this->academyRegistry->get($course);
-        $module = $course->modules()[$module] ?? throw new InvalidArgumentException('Module not found.');
-        $lesson = $module->lessons()[$lesson] ?? throw new InvalidArgumentException('Lesson not found.');
+    public function lesson(
+        Request $request,
+        string $course,
+        string $module,
+        string $lesson
+    ): string|array {
+        $preferredFormat = $request->getPreferredFormat();
+        $lesson = str_replace('.' . $preferredFormat, '', $lesson);
 
-        return $this->renderer->render('academy/lesson.html.twig', [
-            'course' => $course,
-            'module' => $module,
-            'lesson' => $lesson,
-        ]);
+        $course = $this->academyRegistry->get($course);
+        $module = $course->modules()[$module]
+            ?? throw new InvalidArgumentException(sprintf(
+                'Module "%s" not found.',
+                $module
+            ))
+        ;
+        $lesson = $module->lessons()[$lesson]
+            ?? throw new InvalidArgumentException(sprintf(
+                'Lesson "%s" not found.',
+                $lesson
+            ))
+        ;
+
+        if ($preferredFormat === 'json') {
+            return [
+                'data' => $lesson->toArray(),
+            ];
+        } else {
+            return $this->renderer->render('academy/lesson.html.twig', [
+                'course' => $course,
+                'module' => $module,
+                'lesson' => $lesson,
+            ]);
+        }
     }
 
     /**

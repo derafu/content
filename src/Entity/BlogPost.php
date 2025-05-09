@@ -22,13 +22,29 @@ class BlogPost extends ContentItem implements BlogPostInterface
     /**
      * {@inheritDoc}
      */
+    public function type(): string
+    {
+        return 'blog';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function category(): string
+    {
+        return 'post';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function links(): array
     {
         if (!isset($this->links)) {
             $urlBasePath = '/blog';
 
             $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
                 'collection' => ['href' => $urlBasePath],
             ];
         }

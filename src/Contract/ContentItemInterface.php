@@ -22,6 +22,20 @@ use Stringable;
 interface ContentItemInterface extends JsonSerializable, Stringable
 {
     /**
+     * Get the type of the content.
+     *
+     * @return string
+     */
+    public function type(): string;
+
+    /**
+     * Get the category of the content.
+     *
+     * @return string
+     */
+    public function category(): string;
+
+    /**
      * Get the path of the content.
      *
      * @return string
@@ -98,6 +112,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * @return string
      */
     public function uri(): string;
+
+    /**
+     * Get the route of the content.
+     *
+     * @return object
+     */
+    public function route(): object;
 
     /**
      * Get the title of the content.

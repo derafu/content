@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Blog of {{ url('homepage')|e('html') }}</title>
+        <link>{{ url('blog')|e('html') }}</link>
+        <atom:link href="{{ url('blog_rss') }}" rel="self" type="application/rss+xml" />
+        <description>{{ 'Insights & Updates: Thoughts, stories, and the latest from our world.'|e('html') }}</description>
+        <language>en</language>
+        <lastBuildDate>{{ "now"|date("r") }}</lastBuildDate>
+        {% for post in posts %}
+            <item>
+                <title>{{ post.title()|e('html') }}</title>
+                <link>{{ url('blog_post', { uri: post.uri() }) }}</link>
+                <guid isPermaLink="true">{{ url('blog_post', { uri: post.uri() }) }}</guid>
+                <pubDate>{{ post.published().format('r') }}</pubDate>
+                <description><![CDATA[{{ post.data()|markdown|raw }}]]></description>
+            </item>
+        {% endfor %}
+    </channel>
+</rss>

@@ -130,11 +130,6 @@ class ContentRegistry implements ContentRegistryInterface
      */
     public function filter(array $filters = []): array
     {
-        // If no filters are provided, return all items.
-        if (empty($filters)) {
-            return $this->all();
-        }
-
         // Walk through the items and check if they match the filters.
         $matched = [];
         $this->walk(function (ContentItemInterface $item) use ($filters, &$matched) {
@@ -221,6 +216,20 @@ class ContentRegistry implements ContentRegistryInterface
      */
     protected function matches(ContentItemInterface $item, array $filters): bool
     {
+        // Filter by type.
+        if (!empty($filters['type'])) {
+            if ($item->type() !== $filters['type']) {
+                return false;
+            }
+        }
+
+        // Filter by category.
+        if (!empty($filters['category'])) {
+            if ($item->category() !== $filters['category']) {
+                return false;
+            }
+        }
+
         // Filter by text (title, summary and content data).
         if (!empty($filters['search'])) {
             $search = mb_strtolower($filters['search']);

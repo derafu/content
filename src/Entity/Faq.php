@@ -22,6 +22,22 @@ class Faq extends ContentItem implements FaqInterface
     /**
      * {@inheritDoc}
      */
+    public function type(): string
+    {
+        return 'faq';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function category(): string
+    {
+        return 'question';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function question(): string
     {
         return $this->title();
@@ -44,7 +60,7 @@ class Faq extends ContentItem implements FaqInterface
             $urlBasePath = '/faq';
 
             $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->slug()],
+                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
                 'collection' => ['href' => $urlBasePath],
             ];
         }

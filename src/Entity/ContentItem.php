@@ -259,6 +259,22 @@ class ContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
+    public function type(): string
+    {
+        return $this->metadata('type', 'content');
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function category(): string
+    {
+        return $this->metadata('category', $this->type());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function path(): string
     {
         return $this->info()->getRealPath();
@@ -367,6 +383,17 @@ class ContentItem implements ContentItemInterface
         }
 
         return $this->uri;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function route(): object
+    {
+        return (object) [
+            'name' => $this->type() . '_' . $this->category(),
+            'params' => ['uri' => $this->uri()],
+        ];
     }
 
     /**
@@ -735,6 +762,8 @@ class ContentItem implements ContentItemInterface
     public function toArray(): array
     {
         return [
+            'type' => $this->type(),
+            'category' => $this->category(),
             'checksum' => $this->checksum(),
             'slug' => $this->slug(),
             'uri' => $this->uri(),

@@ -24,6 +24,53 @@ class AcademyModule extends ContentItem implements AcademyModuleInterface
     /**
      * {@inheritDoc}
      */
+    public function type(): string
+    {
+        return 'academy';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function category(): string
+    {
+        return 'module';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function route(): object
+    {
+        return (object) [
+            'name' => $this->type() . '_' . $this->category(),
+            'params' => [
+                'course' => $this->parent()->slug(),
+                'module' => $this->slug(),
+            ],
+        ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function links(): array
+    {
+        if (!isset($this->links)) {
+            $urlBasePath = '/academy';
+
+            $this->links = [
+                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
+                'collection' => ['href' => $urlBasePath],
+            ];
+        }
+
+        return $this->links;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function course(): AcademyCourseInterface
     {
         $course = $this->parent();

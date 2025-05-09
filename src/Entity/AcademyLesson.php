@@ -23,6 +23,54 @@ class AcademyLesson extends ContentItem implements AcademyLessonInterface
     /**
      * {@inheritDoc}
      */
+    public function type(): string
+    {
+        return 'academy';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function category(): string
+    {
+        return 'lesson';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function route(): object
+    {
+        return (object) [
+            'name' => $this->type() . '_' . $this->category(),
+            'params' => [
+                'course' => $this->parent()->parent()->slug(),
+                'module' => $this->parent()->slug(),
+                'lesson' => $this->slug(),
+            ],
+        ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function links(): array
+    {
+        if (!isset($this->links)) {
+            $urlBasePath = '/academy';
+
+            $this->links = [
+                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
+                'collection' => ['href' => $urlBasePath],
+            ];
+        }
+
+        return $this->links;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function module(): AcademyModuleInterface
     {
         $module = $this->parent();

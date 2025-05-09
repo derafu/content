@@ -37,16 +37,26 @@ class FaqController
     /**
      * Show action.
      *
+     * @param Request $request Request.
      * @param string $uri URI of the FAQ.
-     * @return string
+     * @return string|array
      */
-    public function show(string $uri): string
+    public function show(Request $request, string $uri): string|array
     {
-        return $this->renderer->render('faq/show.html.twig', [
-            'faq' => $this->faqRegistry->get($uri),
-            'faqs' => $this->faqRegistry->all(),
-            'tags' => $this->faqRegistry->tags(),
-        ]);
+        $preferredFormat = $request->getPreferredFormat();
+        $uri = str_replace('.' . $preferredFormat, '', $uri);
+
+        if ($preferredFormat === 'json') {
+            return [
+                'data' => $this->faqRegistry->get($uri)->toArray(),
+            ];
+        } else {
+            return $this->renderer->render('faq/show.html.twig', [
+                'faq' => $this->faqRegistry->get($uri),
+                'faqs' => $this->faqRegistry->all(),
+                'tags' => $this->faqRegistry->tags(),
+            ]);
+        }
     }
 
     /**
