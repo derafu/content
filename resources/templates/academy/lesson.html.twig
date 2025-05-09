@@ -58,7 +58,9 @@
                         </div>
                     {% endif %}
 
-                    {{ lesson.data | markdown }}
+                    {% if lesson.data %}
+                        {{ lesson.data | markdown }}
+                    {% endif %}
 
                     <hr class="my-5">
                     <div class="row text-muted small">

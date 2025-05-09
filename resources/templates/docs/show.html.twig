@@ -19,7 +19,37 @@
         </ol>
     </nav>
 
-    {{ doc.data | markdown }}
+    {% if doc.data %}
+        {{ doc.data | markdown }}
+    {% endif %}
+
+    {% if doc.metadata.iframe %}
+        <iframe src="{{ doc.metadata.iframe }}" width="100%" height="800px" allow="autoplay"></iframe>
+    {% endif %}
+
+    {% if doc.video %}
+        <div class="plyr__video-embed ratio ratio-16x9" id="player">
+            <iframe
+                src="{{ doc.video }}"
+                allowfullscreen
+                allowtransparency
+                allow="autoplay"
+            ></iframe>
+        </div>
+    {% endif %}
+
+    {% if doc.metadata.openapi %}
+        <div id="swagger-ui"></div>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@latest/swagger-ui.css">
+        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@latest/swagger-ui-bundle.js"></script>
+        <script>
+            SwaggerUIBundle({
+                url: "{{ doc.metadata.openapi }}",
+                dom_id: '#swagger-ui',
+                defaultModelsExpandDepth: -1
+            });
+        </script>
+    {% endif %}
 
     <hr class="my-5">
     <div class="row text-muted small">

@@ -19,7 +19,20 @@
         </ol>
     </nav>
 
-    {{ faq.data | markdown }}
+    {% if faq.data %}
+        {{ faq.data | markdown }}
+    {% endif %}
+
+    {% if faq.video %}
+        <div class="plyr__video-embed ratio ratio-16x9" id="player">
+            <iframe
+                src="{{ faq.video }}"
+                allowfullscreen
+                allowtransparency
+                allow="autoplay"
+            ></iframe>
+        </div>
+    {% endif %}
 
     <hr class="my-5">
     <div class="row text-muted small">

@@ -104,6 +104,10 @@
                         </ol>
                     </nav>
 
+                    {% if course.data %}
+                        {{ course.data | markdown }}
+                    {% endif %}
+
                     <twig:block-tabs
                         :tabs="[
                             {
