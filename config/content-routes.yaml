@@ -6,6 +6,10 @@ content:
   path: /api/content.json
   handler: 'Derafu\Content\Controller\ContentController::api_index'
 
+content_attachments:
+  path: /content/attachments/{type}/{uri:.+}
+  handler: 'Derafu\Content\Controller\ContentController::attachments'
+
 # ------------------------------------------------------------------------------
 # Academy
 # ------------------------------------------------------------------------------

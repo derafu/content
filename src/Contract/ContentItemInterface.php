@@ -257,6 +257,21 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function children(): array;
 
     /**
+     * Get the attachments related to the content.
+     *
+     * @return array<string,ContentAttachmentInterface>
+     */
+    public function attachments(): array;
+
+    /**
+     * Get an attachment of the content.
+     *
+     * @param string $filename Filename of the attachment to get.
+     * @return ContentAttachmentInterface|null
+     */
+    public function attachment(string $filename): ?ContentAttachmentInterface;
+
+    /**
      * Get the links of the content.
      *
      * @return array

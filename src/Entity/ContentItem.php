@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Entity;
 
 use DateTimeImmutable;
+use Derafu\Content\Contract\ContentAttachmentInterface;
 use Derafu\Content\Contract\ContentAuthorInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\Storage\ContentSplFileInfo;
@@ -201,6 +202,13 @@ class ContentItem implements ContentItemInterface
      * @var array<string,ContentItemInterface>
      */
     private array $children;
+
+    /**
+     * Attachments of the content.
+     *
+     * @var array<string,ContentAttachmentInterface>
+     */
+    private array $attachments;
 
     /**
      * Links of the content.
@@ -737,6 +745,30 @@ class ContentItem implements ContentItemInterface
     public function children(): array
     {
         return $this->children ?? [];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function attachments(): array
+    {
+        if (!isset($this->attachments)) {
+            $this->attachments = [];
+            $files = glob($this->directory() . '/' . $this->name() . '/_attachments/*');
+            foreach ($files as $file) {
+                $this->attachments[basename($file)] = new ContentAttachment($file);
+            }
+        }
+
+        return $this->attachments;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function attachment(string $filename): ?ContentAttachmentInterface
+    {
+        return $this->attachments()[$filename] ?? null;
     }
 
     /**

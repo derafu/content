@@ -16,9 +16,12 @@ use Derafu\Content\Contract\AcademyRegistryInterface;
 use Derafu\Content\Contract\BlogRegistryInterface;
 use Derafu\Content\Contract\DocsRegistryInterface;
 use Derafu\Content\Contract\FaqRegistryInterface;
+use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Request;
+use Derafu\Http\Response;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Routing\Enum\UrlReferenceType;
+use InvalidArgumentException;
 
 /**
  * Main controller for all content types.
@@ -96,5 +99,51 @@ class ContentController
             ],
             'data' => $data,
         ];
+    }
+
+    /**
+     * Attachments action.
+     *
+     * @param Request $request Request.
+     * @param string $type Type.
+     * @param string $uri Uri.
+     * @return Response
+     */
+    public function attachments(Request $request, string $type, string $uri): Response
+    {
+        $filters = [
+            ...array_filter($request->all(), fn ($value) => $value !== ''),
+            'type' => $type,
+            'uri' => $uri,
+        ];
+        $knowledge = [
+            ...$this->academyRegistry->filter($filters),
+            ...$this->blogRegistry->filter($filters),
+            ...$this->docsRegistry->filter($filters),
+            ...$this->faqRegistry->filter($filters),
+        ];
+
+        if (!isset($knowledge[0])) {
+            throw new InvalidArgumentException('Content not found.');
+        }
+
+        // Filter by attachment.
+        if (!empty($filters['attachment'])) {
+            $content = $knowledge[0];
+            $attachment = $content->attachment($filters['attachment']);
+            if (!$attachment) {
+                throw new InvalidArgumentException('Attachment for the content not found.');
+            }
+
+            $contentType = ContentType::fromFilename($attachment->path());
+
+            $response = new Response();
+            $response->asText($attachment->raw(), $contentType);
+
+            return $response;
+        }
+
+        // If no attachment is specified, throw an error.
+        throw new InvalidArgumentException('The attachment is required.');
     }
 }

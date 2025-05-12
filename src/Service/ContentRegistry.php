@@ -230,6 +230,13 @@ class ContentRegistry implements ContentRegistryInterface
             }
         }
 
+        // Filter by URI.
+        if (!empty($filters['uri'])) {
+            if ($item->uri() !== $filters['uri']) {
+                return false;
+            }
+        }
+
         // Filter by text (title, summary and content data).
         if (!empty($filters['search'])) {
             $search = mb_strtolower($filters['search']);
