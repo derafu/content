@@ -14,6 +14,7 @@ namespace Derafu\Content\Entity;
 
 use Derafu\Content\Contract\AcademyLessonInterface;
 use Derafu\Content\Contract\AcademyModuleInterface;
+use Derafu\Content\Contract\ContentAttachmentInterface;
 
 /**
  * Class that represents an academy lesson.
@@ -78,5 +79,39 @@ class AcademyLesson extends ContentItem implements AcademyLessonInterface
         assert($module instanceof AcademyModuleInterface);
 
         return $module;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function test(): string|ContentAttachmentInterface|null
+    {
+        $test = $this->metadata('test');
+
+        if ($test === null) {
+            return null;
+        }
+
+        if (str_contains($test, '?attachment=')) {
+            $attachment = explode('?attachment=', $test)[1];
+
+            return $this->attachment($attachment);
+        }
+
+        return $test;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function icon(): string
+    {
+        if ($this->video()) {
+            return 'fa-solid fa-play fa-fw';
+        } elseif ($this->test()) {
+            return 'fa-solid fa-question-circle fa-fw';
+        } else {
+            return 'fa-solid fa-file-lines fa-fw';
+        }
     }
 }

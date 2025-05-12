@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Entity;
 
 use Derafu\Content\Contract\AcademyCourseInterface;
+use Derafu\Content\Contract\AcademyLessonInterface;
 use Derafu\Content\Contract\AcademyModuleInterface;
 
 /**
@@ -20,6 +21,20 @@ use Derafu\Content\Contract\AcademyModuleInterface;
  */
 class AcademyCourse extends ContentItem implements AcademyCourseInterface
 {
+    /**
+     * Lessons of the course.
+     *
+     * @var array<string, AcademyLessonInterface>
+     */
+    private array $lessons;
+
+    /**
+     * Time of the course in minutes.
+     *
+     * @var int
+     */
+    private int $time;
+
     /**
      * {@inheritDoc}
      */
@@ -77,5 +92,74 @@ class AcademyCourse extends ContentItem implements AcademyCourseInterface
         }
 
         return $modules;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function lessons(): array
+    {
+        if (!isset($this->lessons)) {
+            $this->lessons = [];
+
+            foreach ($this->modules() as $module) {
+                foreach ($module->lessons() as $lesson) {
+                    $this->lessons[$lesson->uri()] = $lesson;
+                }
+            }
+        }
+
+        return $this->lessons;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function videos(): array
+    {
+        $videos = [];
+
+        foreach ($this->modules() as $module) {
+            foreach ($module->lessons() as $lesson) {
+                if ($lesson->video()) {
+                    $videos[] = $lesson;
+                }
+            }
+        }
+
+        return $videos;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function attachments(): array
+    {
+        $attachments = [];
+
+        foreach ($this->modules() as $module) {
+            foreach ($module->lessons() as $lesson) {
+                foreach ($lesson->attachments() as $attachment) {
+                    $attachments[] = $attachment;
+                }
+            }
+        }
+
+        return $attachments;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function time(): int
+    {
+        if (!isset($this->time)) {
+            $this->time = 0;
+            foreach ($this->modules() as $module) {
+                $this->time += $module->time();
+            }
+        }
+
+        return $this->time;
     }
 }

@@ -23,4 +23,25 @@ interface AcademyCourseInterface extends ContentItemInterface
      * @return array<AcademyModuleInterface>
      */
     public function modules(): array;
+
+    /**
+     * Lessons.
+     *
+     * @return array<AcademyLessonInterface>
+     */
+    public function lessons(): array;
+
+    /**
+     * Videos.
+     *
+     * @return array<AcademyLessonInterface>
+     */
+    public function videos(): array;
+
+    /**
+     * Attachments.
+     *
+     * @return array<ContentAttachmentInterface>
+     */
+    public function attachments(): array;
 }

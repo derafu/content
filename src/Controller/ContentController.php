@@ -135,10 +135,8 @@ class ContentController
                 throw new InvalidArgumentException('Attachment for the content not found.');
             }
 
-            $contentType = ContentType::fromFilename($attachment->path());
-
             $response = new Response();
-            $response->asText($attachment->raw(), $contentType);
+            $response->asText($attachment->raw(), $attachment->type());
 
             return $response;
         }

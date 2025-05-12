@@ -22,6 +22,13 @@ use Derafu\Content\Contract\AcademyModuleInterface;
 class AcademyModule extends ContentItem implements AcademyModuleInterface
 {
     /**
+     * Time of the module in minutes.
+     *
+     * @var int
+     */
+    private int $time;
+
+    /**
      * {@inheritDoc}
      */
     public function type(): string
@@ -93,5 +100,20 @@ class AcademyModule extends ContentItem implements AcademyModuleInterface
         }
 
         return $lessons;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function time(): int
+    {
+        if (!isset($this->time)) {
+            $this->time = 0;
+            foreach ($this->lessons() as $lesson) {
+                $this->time += $lesson->time();
+            }
+        }
+
+        return $this->time;
     }
 }

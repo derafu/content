@@ -23,4 +23,18 @@ interface AcademyLessonInterface extends ContentItemInterface
      * @return AcademyModuleInterface
      */
     public function module(): AcademyModuleInterface;
+
+    /**
+     * Get the test of the lesson.
+     *
+     * @return string|ContentAttachmentInterface|null
+     */
+    public function test(): string|ContentAttachmentInterface|null;
+
+    /**
+     * Get the icon of the lesson.
+     *
+     * @return string
+     */
+    public function icon(): string;
 }

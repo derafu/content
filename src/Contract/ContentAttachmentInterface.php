@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Contract;
 
+use Derafu\Http\Enum\ContentType;
+
 /**
  * Content attachment interface.
  */
@@ -58,4 +60,25 @@ interface ContentAttachmentInterface
      * @return string
      */
     public function raw(): string;
+
+    /**
+     * Get the type of the attachment.
+     *
+     * @return ContentType
+     */
+    public function type(): ContentType;
+
+    /**
+     * Get the size of the attachment.
+     *
+     * @return int
+     */
+    public function size(): int;
+
+    /**
+     * Get the parent of the attachment.
+     *
+     * @return ContentItemInterface
+     */
+    public function parent(): ContentItemInterface;
 }

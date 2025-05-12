@@ -15,11 +15,11 @@ function initBlogCards(container) {
 
     // Validate required parameters.
     if (!apiUrl) {
-        console.error('apiUrl is required to initialize blog cards.');
+        console.error('Attribute data-api is required to initialize blog cards.');
         return;
     }
 
-    // Fetch data from API
+    // Fetch data from API.
     fetch(apiUrl)
         .then(response => {
             if (!response.ok) {
@@ -95,5 +95,5 @@ function renderBlogCards(container, posts, basePath, readMore) {
     container.appendChild(row);
 }
 
-// Export the functions for use in other modules
+// Export the functions for use in other modules.
 export { initBlogCards, renderBlogCards };

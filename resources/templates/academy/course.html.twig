@@ -25,11 +25,7 @@
                 <div class="list-group">
                     {% for lesson in module.lessons %}
                         <a href="{{ path('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug}) }}" class="list-group-item list-group-item-action">
-                            {% if lesson.video %}
-                                <i class="fa-solid fa-play me-2 fa-fw"></i>
-                            {% else %}
-                                <i class="fa-solid fa-file-lines me-2 fa-fw"></i>
-                            {% endif %}
+                            <i class="{{ lesson.icon }} me-2"></i>
                             {{ lesson.title }}
                             <span class="badge bg-primary-subtle float-end">
                                 {% if lesson.time > 60 %}
@@ -43,6 +39,67 @@
             </div>
         </div>
     {% endfor %}
+{% endset %}
+
+{% set tab_content_videos %}
+    {% if course.videos | length > 0 %}
+        <div class="row">
+            {% for lesson in course.videos %}
+                <div class="col-md-6">
+                    <div class="card mb-3" id="lesson-{{ lesson.uri | replace({'/': '--'}) }}">
+                        <div class="card-header">
+                            <span class="card-title">{{ lesson.title }}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="ratio ratio-16x9">
+                                <iframe src="{{ lesson.video }}" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">No videos found for this course.</div>
+    {% endif %}
+{% endset %}
+
+{% set tab_content_attachments %}
+    {% if course.attachments | length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Module</th>
+                        <th scope="col">Lesson</th>
+                        <th scope="col">File</th>
+                        <th scope="col">Size</th>
+                        <th scope="col">Download</th>
+                    </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                    {% for attachment in course.attachments %}
+                        <tr>
+                            <td scope="row">{{ attachment.parent.module.title }}</td>
+                            <td>{{ attachment.parent.title }}</td>
+                            <td>
+                                <i class="{{ attachment.icon }}"></i>
+                                {{ attachment.name }}.{{ attachment.extension }}
+                            </td>
+                            <td>{{ attachment.size / 1000 }} KB</td>
+                            <td>
+                                <a href="{{ path('content_attachments', {'type': 'academy', 'uri': attachment.parent.uri}) }}?attachment={{ attachment.name }}.{{ attachment.extension }}" class="btn btn-primary" download="{{ attachment.parent.uri | replace({'/': '--' }) }}-{{ attachment.name }}.{{ attachment.extension }}" target="_blank">
+                                    <i class="fa-solid fa-download fa-fw"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">No videos found for this course.</div>
+    {% endif %}
 {% endset %}
 
 {% block academy_content %}

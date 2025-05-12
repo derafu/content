@@ -756,7 +756,7 @@ class ContentItem implements ContentItemInterface
             $this->attachments = [];
             $files = glob($this->directory() . '/' . $this->name() . '/_attachments/*');
             foreach ($files as $file) {
-                $this->attachments[basename($file)] = new ContentAttachment($file);
+                $this->attachments[basename($file)] = new ContentAttachment($file, $this);
             }
         }
 

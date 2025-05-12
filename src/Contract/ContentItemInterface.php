@@ -206,7 +206,7 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function author(): ?ContentAuthorInterface;
 
     /**
-     * Get the time required to read or watch the content.
+     * Get the time required to read or watch the content in minutes.
      *
      * @return int
      */

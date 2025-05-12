@@ -48,18 +48,28 @@
                     </nav>
 
                     {% if lesson.video %}
-                        <div class="plyr__video-embed ratio ratio-16x9" id="player">
-                            <iframe
-                                src="{{ lesson.video }}"
-                                allowfullscreen
-                                allowtransparency
-                                allow="autoplay"
-                            ></iframe>
+                        <div class="card shadow p-4">
+                            <div class="plyr__video-embed ratio ratio-16x9" id="player">
+                                <iframe
+                                    src="{{ lesson.video }}"
+                                    allowfullscreen
+                                    allowtransparency
+                                    allow="autoplay"
+                                ></iframe>
+                            </div>
                         </div>
                     {% endif %}
 
                     {% if lesson.data %}
-                        {{ lesson.data | markdown }}
+                        <div class="card shadow p-4">
+                            {{ lesson.data | markdown }}
+                        </div>
+                    {% endif %}
+
+                    {% if lesson.metadata.test %}
+                        <div class="card shadow p-4">
+                            <div id="academy-test-container" data-api="{{ lesson.metadata.test }}"></div>
+                        </div>
                     {% endif %}
 
                     <hr class="my-5">
