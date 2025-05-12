@@ -73,12 +73,18 @@ class ContentController
                 'category' => $content->category(),
                 'checksum' => $content->checksum(),
                 'uri' => $content->uri(),
-                'title' => $content->title(),
                 'link' => $this->router->generate(
                     $route->name,
                     $route->params,
                     UrlReferenceType::ABSOLUTE_URL
                 ) . '.json',
+                'image' => $content->image(),
+                'title' => $content->title(),
+                'summary' => $content->summary(),
+                'author' => $content->author(),
+                'tags' => $content->tags(),
+                'published' => $content->published()->format('Y-m-d'),
+                'time' => $content->time(),
             ];
         }
 

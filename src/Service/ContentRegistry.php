@@ -140,8 +140,8 @@ class ContentRegistry implements ContentRegistryInterface
 
         // Limit items.
         if (isset($filters['limit'])) {
-            $page = $filters['page'] ?? 1;
-            $limit = $filters['limit'];
+            $page = (int) ($filters['page'] ?? 1);
+            $limit = (int) $filters['limit'];
             $offset = ($page - 1) * $limit;
 
             return array_slice($matched, $offset, $limit);
