@@ -186,7 +186,7 @@ class BlogController
         $response = new Response();
         $response->withHeader('Content-Type', 'application/rss+xml; charset=UTF-8');
 
-        $xml =$this->renderer->render('blog/rss.xml.twig', [
+        $xml = $this->renderer->render('blog/rss.xml.twig', [
             'posts' => $posts,
         ]);
 
@@ -194,13 +194,11 @@ class BlogController
 
         $xml = preg_replace_callback(
             '#<(img|a)\b[^>]*(src|href)=["\'](/[^"\']*)["\']#i',
-            function ($matches) use ($url) {
-                return preg_replace(
-                    '#(src|href)=["\']/#',
-                    $matches[2] . '="' . $url . '/',
-                    $matches[0]
-                );
-            },
+            fn ($matches) => preg_replace(
+                '#(src|href)=["\']/#',
+                $matches[2] . '="' . $url . '/',
+                $matches[0]
+            ),
             $xml
         );
 
