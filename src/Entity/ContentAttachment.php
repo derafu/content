@@ -234,7 +234,7 @@ class ContentAttachment implements ContentAttachmentInterface
             ContentType::EVENT_STREAM => 'fa-regular fa-file-code fa-fw',
 
             // Default.
-            default => 'fa-regular fa-file fa-fw',
+            //default => 'fa-regular fa-file fa-fw',
         };
     }
 

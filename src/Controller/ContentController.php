@@ -16,7 +16,6 @@ use Derafu\Content\Contract\AcademyRegistryInterface;
 use Derafu\Content\Contract\BlogRegistryInterface;
 use Derafu\Content\Contract\DocsRegistryInterface;
 use Derafu\Content\Contract\FaqRegistryInterface;
-use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Request;
 use Derafu\Http\Response;
 use Derafu\Routing\Contract\RouterInterface;

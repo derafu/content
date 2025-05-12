@@ -140,7 +140,8 @@ class AcademyCourse extends ContentItem implements AcademyCourseInterface
         foreach ($this->modules() as $module) {
             foreach ($module->lessons() as $lesson) {
                 foreach ($lesson->attachments() as $attachment) {
-                    $attachments[] = $attachment;
+                    $key = $lesson->uri() . ':' . $attachment->name() . '.' . $attachment->extension();
+                    $attachments[$key] = $attachment;
                 }
             }
         }
