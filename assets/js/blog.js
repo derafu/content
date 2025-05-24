@@ -8,6 +8,16 @@
  * The container can have a data-read-more attribute with the text for the read more button.
  */
 function initBlogCards(container) {
+    // If no container is provided, use the default container.
+    if (container === undefined) {
+        container = document.getElementById('blog-posts');
+    }
+
+    // If no container is found, we don't do anything.
+    if (container === null) {
+        return;
+    }
+
     // Get the API URL and base path from the container.
     const apiUrl = container.dataset.api;
     const basePath = container.dataset.basePath || '';

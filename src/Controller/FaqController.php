@@ -46,13 +46,19 @@ class FaqController
         $preferredFormat = $request->getPreferredFormat();
         $uri = str_replace('.' . $preferredFormat, '', $uri);
 
+        $faq = $this->faqRegistry->get($uri);
+
         if ($preferredFormat === 'json') {
             return [
-                'data' => $this->faqRegistry->get($uri)->toArray(),
+                'data' => $faq->toArray(),
             ];
+        } elseif ($preferredFormat === 'pdf') {
+            return $this->renderer->render('faq/show.pdf.twig', [
+                'faq' => $faq,
+            ]);
         } else {
             return $this->renderer->render('faq/show.html.twig', [
-                'faq' => $this->faqRegistry->get($uri),
+                'faq' => $faq,
                 'faqs' => $this->faqRegistry->all(),
                 'tags' => $this->faqRegistry->tags(),
             ]);

@@ -62,6 +62,13 @@ class ContentItem implements ContentItemInterface
     private array $metadata;
 
     /**
+     * Default metadata.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $defaultMetadata = [];
+
+    /**
      * Data of the content.
      *
      * This is the data of the content, without the metadata.
@@ -337,7 +344,10 @@ class ContentItem implements ContentItemInterface
             $data = $this->raw();
             if (preg_match('/^---\n(.*?)\n---\n/s', $data, $matches)) {
                 $yaml = $matches[1];
-                $this->metadata = Yaml::parse($yaml);
+                $this->metadata = array_merge(
+                    $this->defaultMetadata,
+                    Yaml::parse($yaml)
+                );
             } else {
                 $this->metadata = [];
             }

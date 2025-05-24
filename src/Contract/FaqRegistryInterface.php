@@ -26,10 +26,10 @@ interface FaqRegistryInterface extends ContentRegistryInterface
     public function filter(array $filters = []): array;
 
     /**
-     * Get a FAQ by slug.
+     * Get a FAQ by URI.
      *
-     * @param string $slug Slug of the FAQ.
+     * @param string $uri URI of the FAQ.
      * @return FaqInterface
      */
-    public function get(string $slug): FaqInterface;
+    public function get(string $uri): FaqInterface;
 }

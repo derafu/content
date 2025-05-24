@@ -20,7 +20,23 @@
     </nav>
 
     {% if doc.data %}
-        {{ doc.data | markdown }}
+        {% if doc.metadata.toc %}
+            <div class="row" id="toc-content">
+                <div class="col-md-9">
+                    <div data-bs-spy="scroll" data-bs-target="#toc-navbar">
+                        {{ doc.data | markdown }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="sticky-top ps-3 py-4 border-start small">
+                        <div class="fw-bold mb-3">On this page</div>
+                        <div id="toc-navbar" class="d-flex flex-column gap-2"></div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            {{ doc.data | markdown }}
+        {% endif %}
     {% endif %}
 
     {% if doc.metadata.iframe %}
@@ -51,13 +67,41 @@
         </script>
     {% endif %}
 
-    <hr class="my-5">
-    <div class="row text-muted small">
+    <hr class="mt-5 mb-1">
+    <div class="row text-muted small mb-5">
         <div class="col-md-6">
-            Última actualización: {{ doc.modified | date('d/m/Y') }}
+            Last updated on {{ doc.modified | date('d/m/Y') }}
         </div>
         <div class="col-md-6 text-end">
             {{ doc.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
         </div>
     </div>
+
+    {% if previous or next %}
+        <div class="row my-5">
+            <div class="col-md-6">
+                {% if previous %}
+                    <a href="{{ path('docs_doc', {'uri': previous.uri}) }}" class="btn btn-outline-primary w-100 text-start d-flex flex-column justify-content-center p-2">
+                        <div class="small">
+                            <i class="fa-solid fa-chevron-left fa-fw"></i>
+                            Previous
+                        </div>
+                        {{ previous.title }}
+                    </a>
+                {% endif %}
+            </div>
+            <div class="col-md-6 text-end">
+                {% if next %}
+                    <a href="{{ path('docs_doc', {'uri': next.uri}) }}" class="btn btn-outline-primary w-100 text-end d-flex flex-column justify-content-center p-2">
+                        <div class="small">
+                            Next
+                            <i class="fa-solid fa-chevron-right fa-fw"></i>
+                        </div>
+                        {{ next.title }}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
 {% endblock %}

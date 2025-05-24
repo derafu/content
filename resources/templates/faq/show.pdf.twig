@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <style>
+            footer {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                text-align: center;
+                font-weight: bold;
+                font-size: 8pt;
+                border-top: 1px solid #000;
+                padding: 5px 0;
+                margin: 0;
+                background-color: #fff;
+            }
+        </style>
+    </head>
+    <body>
+
+        {{ faq.data | markdown }}
+
+        <footer>
+            Last updated on {{ faq.modified | date('d/m/Y') }}
+            {{ faq.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+        </footer>
+
+    </body>
+</html>

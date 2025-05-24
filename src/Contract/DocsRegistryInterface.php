@@ -26,10 +26,28 @@ interface DocsRegistryInterface extends ContentRegistryInterface
     public function filter(array $filters = []): array;
 
     /**
-     * Get a doc by slug.
+     * Get a doc by URI.
      *
-     * @param string $slug Slug of the doc.
+     * @param string $uri URI of the doc.
      * @return DocInterface
      */
-    public function get(string $slug): DocInterface;
+    public function get(string $uri): DocInterface;
+
+    /**
+     * Get the previous doc relative to the given URI.
+     *
+     * @param string $uri URI of the doc.
+     * @param array<string, mixed> $filters Filter criteria.
+     * @return DocInterface|null
+     */
+    public function previous(string $uri, array $filters = []): ?DocInterface;
+
+    /**
+     * Get the next doc relative to the given URI.
+     *
+     * @param string $uri URI of the doc.
+     * @param array<string, mixed> $filters Filter criteria.
+     * @return DocInterface|null
+     */
+    public function next(string $uri, array $filters = []): ?DocInterface;
 }

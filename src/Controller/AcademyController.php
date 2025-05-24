@@ -66,6 +66,10 @@ class AcademyController
             return [
                 'data' => $course->toArray(),
             ];
+        } elseif ($preferredFormat === 'pdf') {
+            return $this->renderer->render('academy/course.pdf.twig', [
+                'course' => $course,
+            ]);
         } else {
             return $this->renderer->render('academy/course.html.twig', [
                 'course' => $course,
@@ -101,10 +105,23 @@ class AcademyController
             return [
                 'data' => $module->toArray(),
             ];
+        } elseif ($preferredFormat === 'pdf') {
+            return $this->renderer->render('academy/module.pdf.twig', [
+                'course' => $course,
+                'module' => $module,
+            ]);
         } else {
             return $this->renderer->render('academy/module.html.twig', [
                 'course' => $course,
                 'module' => $module,
+                'previous' => $this->academyRegistry->previous(
+                    $module->uri(),
+                    ['category' => 'module'],
+                ),
+                'next' => $this->academyRegistry->next(
+                    $module->uri(),
+                    ['category' => 'module'],
+                ),
             ]);
         }
     }
@@ -145,11 +162,25 @@ class AcademyController
             return [
                 'data' => $lesson->toArray(),
             ];
+        } elseif ($preferredFormat === 'pdf') {
+            return $this->renderer->render('academy/lesson.pdf.twig', [
+                'course' => $course,
+                'module' => $module,
+                'lesson' => $lesson,
+            ]);
         } else {
             return $this->renderer->render('academy/lesson.html.twig', [
                 'course' => $course,
                 'module' => $module,
                 'lesson' => $lesson,
+                'previous' => $this->academyRegistry->previous(
+                    $lesson->uri(),
+                    ['category' => 'lesson'],
+                ),
+                'next' => $this->academyRegistry->next(
+                    $lesson->uri(),
+                    ['category' => 'lesson'],
+                ),
             ]);
         }
     }

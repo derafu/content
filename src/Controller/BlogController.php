@@ -88,7 +88,6 @@ class BlogController
             return [
                 'data' => $post->toArray(),
             ];
-
         } elseif ($preferredFormat === 'pdf') {
             return $this->renderer->render('blog/show.pdf.twig', [
                 'post' => $post,
@@ -102,6 +101,8 @@ class BlogController
 
             return $this->renderer->render('blog/show.html.twig', [
                 'post' => $post,
+                'previous' => $this->blogRegistry->previous($post->uri()),
+                'next' => $this->blogRegistry->next($post->uri()),
                 'recentPosts' => $recentPosts,
                 'tags' => $tags,
                 'months' => $months,

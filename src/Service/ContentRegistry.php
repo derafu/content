@@ -154,6 +154,42 @@ class ContentRegistry implements ContentRegistryInterface
     /**
      * {@inheritDoc}
      */
+    public function flatten(array $filters = []): array
+    {
+        return $this->filter($filters);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function previous(string $uri, array $filters = []): ?ContentItemInterface
+    {
+        $items = $this->flatten($filters);
+        $index = $this->search($uri, $items);
+        if ($index === null) {
+            return null;
+        }
+
+        return $items[$index - 1] ?? null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function next(string $uri, array $filters = []): ?ContentItemInterface
+    {
+        $items = $this->flatten($filters);
+        $index = $this->search($uri, $items);
+        if ($index === null) {
+            return null;
+        }
+
+        return $items[$index + 1] ?? null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function tags(): array
     {
         if (!isset($this->tags)) {
@@ -268,5 +304,24 @@ class ContentRegistry implements ContentRegistryInterface
         }
 
         return true;
+    }
+
+    /**
+     * Search the index of the content item in the flattened registry.
+     *
+     * @param string $uri URI of the content item.
+     * @param array<string, ContentItemInterface>|null $items Items.
+     * @return int|null
+     */
+    protected function search(string $uri, ?array $items = null): ?int
+    {
+        $items = $items ?? $this->flatten();
+
+        $filtered = array_filter($items, fn ($item) => $item->uri() === $uri);
+        if (empty($filtered)) {
+            return null;
+        }
+
+        return array_key_first($filtered);
     }
 }

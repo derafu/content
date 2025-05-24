@@ -20,6 +20,15 @@ use Derafu\Content\Contract\DocInterface;
 class Doc extends ContentItem implements DocInterface
 {
     /**
+     * Default metadata.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $defaultMetadata = [
+        'toc' => true,
+    ];
+
+    /**
      * {@inheritDoc}
      */
     public function type(): string

@@ -46,13 +46,21 @@ class DocsController
         $preferredFormat = $request->getPreferredFormat();
         $uri = str_replace('.' . $preferredFormat, '', $uri);
 
+        $doc = $this->docsRegistry->get($uri);
+
         if ($preferredFormat === 'json') {
             return [
-                'data' => $this->docsRegistry->get($uri)->toArray(),
+                'data' => $doc->toArray(),
             ];
+        } elseif ($preferredFormat === 'pdf') {
+            return $this->renderer->render('docs/show.pdf.twig', [
+                'doc' => $doc,
+            ]);
         } else {
             return $this->renderer->render('docs/show.html.twig', [
-                'doc' => $this->docsRegistry->get($uri),
+                'doc' => $doc,
+                'previous' => $this->docsRegistry->previous($doc->uri()),
+                'next' => $this->docsRegistry->next($doc->uri()),
                 'docs' => $this->docsRegistry->all(),
                 'tags' => $this->docsRegistry->tags(),
             ]);

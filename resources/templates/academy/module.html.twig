@@ -39,7 +39,7 @@
                                 <a href="{{ path('academy_course', {'course': course.slug}) }}">{{ course.title }}</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ path('academy_module', {'course': course.slug, 'module': module.slug}) }}">{{ module.title }}</a>
+                                {{ module.title }}
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">
                                 {{ lesson.title }}
@@ -47,35 +47,35 @@
                         </ol>
                     </nav>
 
-                    {% if lesson.video %}
-                        <div class="card shadow p-4">
-                            <div class="plyr__video-embed ratio ratio-16x9" id="player">
-                                <iframe
-                                    src="{{ lesson.video }}"
-                                    allowfullscreen
-                                    allowtransparency
-                                    allow="autoplay"
-                                ></iframe>
+                    <div class="card shadow p-4">
+                        {% if not module.data %}
+                            {{ ('# ' ~ module.title) | markdown }}
+                        {% endif %}
+
+                        {{ module.data | markdown }}
+
+                        <div class="card mt-4 mb-3">
+                            <div class="list-group">
+                                {% for lesson in module.lessons %}
+                                    <a href="{{ path('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug}) }}" class="list-group-item list-group-item-action">
+                                        <i class="{{ lesson.icon }} me-2"></i>
+                                        {{ lesson.title }}
+                                        <span class="badge bg-primary-subtle float-end">
+                                            {% if lesson.time > 60 %}
+                                                {{ (lesson.time / 60)|number_format(0) }} hours
+                                            {% endif %}
+                                            {{ (lesson.time % 60) }} minutes
+                                        </span>
+                                    </a>
+                                {% endfor %}
                             </div>
                         </div>
-                    {% endif %}
-
-                    {% if lesson.data %}
-                        <div class="card shadow p-4">
-                            {{ lesson.data | markdown }}
-                        </div>
-                    {% endif %}
-
-                    {% if lesson.metadata.test %}
-                        <div class="card shadow p-4">
-                            <div id="academy-test-container" data-api="{{ lesson.metadata.test }}"></div>
-                        </div>
-                    {% endif %}
+                    </div>
 
                     <hr class="mt-5 mb-1">
                     <div class="row text-muted small mb-5">
                         <div class="col-md-6">
-                            Last updated on {{ lesson.modified | date('d/m/Y') }}
+                            Last updated on {{ module.modified | date('d/m/Y') }}
                         </div>
                         <div class="col-md-6 text-end">
                             {{ course.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
@@ -86,7 +86,7 @@
                         <div class="row my-5">
                             <div class="col-md-6">
                                 {% if previous %}
-                                    <a href="{{ path('academy_lesson', {'course': previous.module.course.slug, 'module': previous.module.slug, 'lesson': previous.slug}) }}" class="btn btn-outline-primary w-100 text-start d-flex flex-column justify-content-center p-2">
+                                    <a href="{{ path('academy_module', {'course': previous.course.slug, 'module': previous.slug}) }}" class="btn btn-outline-primary w-100 text-start d-flex flex-column justify-content-center p-2">
                                         <div class="small">
                                             <i class="fa-solid fa-chevron-left fa-fw"></i>
                                             Previous
@@ -97,7 +97,7 @@
                             </div>
                             <div class="col-md-6 text-end">
                                 {% if next %}
-                                    <a href="{{ path('academy_lesson', {'course': next.module.course.slug, 'module': next.module.slug, 'lesson': next.slug}) }}" class="btn btn-outline-primary w-100 text-end d-flex flex-column justify-content-center p-2">
+                                    <a href="{{ path('academy_module', {'course': next.course.slug, 'module': next.slug}) }}" class="btn btn-outline-primary w-100 text-end d-flex flex-column justify-content-center p-2">
                                         <div class="small">
                                             Next
                                             <i class="fa-solid fa-chevron-right fa-fw"></i>

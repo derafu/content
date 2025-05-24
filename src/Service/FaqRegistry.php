@@ -24,9 +24,9 @@ class FaqRegistry extends ContentRegistry implements FaqRegistryInterface
     /**
      * {@inheritDoc}
      */
-    public function get(string $slug): FaqInterface
+    public function get(string $uri): FaqInterface
     {
-        $faq = parent::get($slug);
+        $faq = parent::get($uri);
 
         assert($faq instanceof FaqInterface);
 

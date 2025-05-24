@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Content\Service;
 
 use Derafu\Content\Contract\AcademyCourseInterface;
+use Derafu\Content\Contract\AcademyLessonInterface;
+use Derafu\Content\Contract\AcademyModuleInterface;
 use Derafu\Content\Contract\AcademyRegistryInterface;
 use Derafu\Content\Entity\AcademyCourse;
 use Derafu\Content\Entity\AcademyLesson;
@@ -33,13 +35,45 @@ class AcademyRegistry extends ContentRegistry implements AcademyRegistryInterfac
     /**
      * {@inheritDoc}
      */
-    public function get(string $slug): AcademyCourseInterface
+    public function get(string $uri): AcademyCourseInterface
     {
-        $course = parent::get($slug);
+        $course = parent::get($uri);
 
         assert($course instanceof AcademyCourseInterface);
 
         return $course;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function previous(string $uri, array $filters = []): AcademyModuleInterface|AcademyLessonInterface|null
+    {
+        $content = parent::previous($uri, $filters);
+
+        if ($content === null) {
+            return null;
+        }
+
+        assert($content instanceof AcademyModuleInterface || $content instanceof AcademyLessonInterface);
+
+        return $content;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function next(string $uri, array $filters = []): AcademyModuleInterface|AcademyLessonInterface|null
+    {
+        $content = parent::next($uri, $filters);
+
+        if ($content === null) {
+            return null;
+        }
+
+        assert($content instanceof AcademyModuleInterface || $content instanceof AcademyLessonInterface);
+
+        return $content;
     }
 
     /**

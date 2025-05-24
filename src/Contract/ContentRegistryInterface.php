@@ -18,12 +18,12 @@ namespace Derafu\Content\Contract;
 interface ContentRegistryInterface
 {
     /**
-     * Get a content by slug.
+     * Get a content by URI.
      *
-     * @param string $slug Slug of the content.
+     * @param string $uri URI of the content.
      * @return ContentItemInterface
      */
-    public function get(string $slug): ContentItemInterface;
+    public function get(string $uri): ContentItemInterface;
 
     /**
      * Get all content items.
@@ -50,6 +50,32 @@ interface ContentRegistryInterface
      * @return array<ContentItemInterface>
      */
     public function filter(array $filters = []): array;
+
+    /**
+     * Get the flattened array of items filtered by criteria.
+     *
+     * @param array<string, mixed> $filters Filter criteria.
+     * @return array<string, ContentItemInterface>
+     */
+    public function flatten(array $filters = []): array;
+
+    /**
+     * Get the previous content item relative to the given URI.
+     *
+     * @param string $uri URI of the content.
+     * @param array<string, mixed> $filters Filter criteria.
+     * @return ContentItemInterface|null
+     */
+    public function previous(string $uri, array $filters = []): ?ContentItemInterface;
+
+    /**
+     * Get the next content item relative to the given URI.
+     *
+     * @param string $uri URI of the content.
+     * @param array<string, mixed> $filters Filter criteria.
+     * @return ContentItemInterface|null
+     */
+    public function next(string $uri, array $filters = []): ?ContentItemInterface;
 
     /**
      * Get all tags.

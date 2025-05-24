@@ -24,9 +24,41 @@ class DocsRegistry extends ContentRegistry implements DocsRegistryInterface
     /**
      * {@inheritDoc}
      */
-    public function get(string $slug): DocInterface
+    public function get(string $uri): DocInterface
     {
-        $doc = parent::get($slug);
+        $doc = parent::get($uri);
+
+        assert($doc instanceof DocInterface);
+
+        return $doc;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function previous(string $uri, array $filters = []): ?DocInterface
+    {
+        $doc = parent::previous($uri, $filters);
+
+        if ($doc === null) {
+            return null;
+        }
+
+        assert($doc instanceof DocInterface);
+
+        return $doc;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function next(string $uri, array $filters = []): ?DocInterface
+    {
+        $doc = parent::next($uri, $filters);
+
+        if ($doc === null) {
+            return null;
+        }
 
         assert($doc instanceof DocInterface);
 

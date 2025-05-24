@@ -6,6 +6,16 @@
  * The container must have a data-api attribute with the API URL.
  */
 function initTestForm(container) {
+    // If no container is provided, use the default container.
+    if (container === undefined) {
+        container = document.getElementById('academy-test-container');
+    }
+
+    // If no container is found, we don't do anything.
+    if (container === null) {
+        return;
+    }
+
     // Get the API URL from the container.
     const apiUrl = container.dataset.api;
 

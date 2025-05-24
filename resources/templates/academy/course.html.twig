@@ -188,10 +188,10 @@
                         ]"
                     />
 
-                    <hr class="mb-5">
-                    <div class="row text-muted small">
+                    <hr class="mt-5 mb-1">
+                    <div class="row text-muted small mb-5">
                         <div class="col-md-6">
-                            Última actualización: {{ course.modified | date('d/m/Y') }}
+                            Last updated on {{ course.modified | date('d/m/Y') }}
                         </div>
                         <div class="col-md-6 text-end">
                             {{ course.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

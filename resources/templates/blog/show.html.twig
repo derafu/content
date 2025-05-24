@@ -45,13 +45,40 @@
         </div>
     {% endif %}
 
-    <hr class="my-5">
-    <div class="row text-muted small">
+    <hr class="mt-5 mb-1">
+    <div class="row text-muted small mb-5">
         <div class="col-md-6">
-            Última actualización: {{ post.modified | date('d/m/Y') }}
+            Last updated on {{ post.modified | date('d/m/Y') }}
         </div>
         <div class="col-md-6 text-end">
             {{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
         </div>
     </div>
+
+    {% if previous or next %}
+        <div class="row my-5">
+            <div class="col-md-6">
+                {% if previous %}
+                    <a href="{{ path('blog_post', {'uri': previous.uri}) }}" class="btn btn-outline-primary w-100 text-start d-flex flex-column justify-content-center p-2">
+                        <div class="small">
+                            <i class="fa-solid fa-chevron-left fa-fw"></i>
+                            Previous
+                        </div>
+                        <div class="text-truncate">{{ previous.title }}</div>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="col-md-6 text-end">
+                {% if next %}
+                    <a href="{{ path('blog_post', {'uri': next.uri}) }}" class="btn btn-outline-primary w-100 text-end d-flex flex-column justify-content-center p-2">
+                        <div class="small">
+                            Next
+                            <i class="fa-solid fa-chevron-right fa-fw"></i>
+                        </div>
+                        <div class="text-truncate">{{ next.title }}</div>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

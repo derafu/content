@@ -20,8 +20,8 @@
 
         <h1>{{ post.title }}</h1>
 
-        {% if post.title %}
-            <div><small><strong>{{ post.title }}</strong></small></div>
+        {% if post.subtitle %}
+            <div><small><strong>{{ post.subtitle }}</strong></small></div>
         {% endif %}
 
         <blockquote style="color: #333; font-style: italic;">{{ post.summary }}</blockquote>
@@ -40,7 +40,7 @@
         {{ post.data | markdown }}
 
         <footer>
-            Última actualización: {{ post.modified | date('d/m/Y') }}
+            Last updated on {{ post.modified | date('d/m/Y') }}
             {{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
         </footer>
 

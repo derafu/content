@@ -24,9 +24,41 @@ class BlogRegistry extends ContentRegistry implements BlogRegistryInterface
     /**
      * {@inheritDoc}
      */
-    public function get(string $slug): BlogPostInterface
+    public function get(string $uri): BlogPostInterface
     {
-        $post = parent::get($slug);
+        $post = parent::get($uri);
+
+        assert($post instanceof BlogPostInterface);
+
+        return $post;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function previous(string $uri, array $filters = []): ?BlogPostInterface
+    {
+        $post = parent::previous($uri, $filters);
+
+        if ($post === null) {
+            return null;
+        }
+
+        assert($post instanceof BlogPostInterface);
+
+        return $post;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function next(string $uri, array $filters = []): ?BlogPostInterface
+    {
+        $post = parent::next($uri, $filters);
+
+        if ($post === null) {
+            return null;
+        }
 
         assert($post instanceof BlogPostInterface);
 
