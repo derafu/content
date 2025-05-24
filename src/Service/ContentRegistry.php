@@ -170,7 +170,11 @@ class ContentRegistry implements ContentRegistryInterface
             return null;
         }
 
-        return $items[$index];
+        if (array_key_exists($index - 1, $items)) {
+            return $items[$index - 1];
+        }
+
+        return null;
     }
 
     /**
@@ -184,7 +188,11 @@ class ContentRegistry implements ContentRegistryInterface
             return null;
         }
 
-        return $items[$index];
+        if (array_key_exists($index + 1, $items)) {
+            return $items[$index + 1];
+        }
+
+        return null;
     }
 
     /**
