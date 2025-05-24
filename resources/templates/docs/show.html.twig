@@ -6,7 +6,9 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
-                <a href="{{ path('docs') }}">Docs</a>
+                <a href="{{ path('docs') }}">
+                    <i class="fa-solid fa-book fa-fw"></i>
+                </a>
             </li>
             {% for ancestor in doc.ancestors %}
                 <li class="breadcrumb-item">
@@ -20,7 +22,7 @@
     </nav>
 
     {% if doc.data %}
-        {% if doc.metadata.toc %}
+        {% if doc.metadata.show_toc %}
             <div class="row" id="toc-content">
                 <div class="col-md-9">
                     <div data-bs-spy="scroll" data-bs-target="#toc-navbar">
@@ -67,6 +69,24 @@
         </script>
     {% endif %}
 
+    {% if doc.metadata.show_children %}
+        <div class="row my-4">
+            {% for child in doc.children %}
+                <div class="col-md-4">
+                    <a href="{{ path('docs_doc', {'uri': child.uri}) }}" class="btn btn-outline-primary w-100 text-start p-4 mb-4">
+                        <div class="fw-bold mb-2">
+                            <i class="fa-solid fa-file-lines fa-fw"></i>
+                            {{ child.title }}
+                        </div>
+                        <div class="small">
+                            {{ child.summary }}
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <hr class="mt-5 mb-1">
     <div class="row text-muted small mb-5">
         <div class="col-md-6">
@@ -81,7 +101,7 @@
         <div class="row my-5">
             <div class="col-md-6">
                 {% if previous %}
-                    <a href="{{ path('docs_doc', {'uri': previous.uri}) }}" class="btn btn-outline-primary w-100 text-start d-flex flex-column justify-content-center p-2">
+                    <a href="{{ path('docs_doc', {'uri': previous.uri}) }}" class="btn btn-outline-secondary w-100 text-start d-flex flex-column justify-content-center p-2">
                         <div class="small">
                             <i class="fa-solid fa-chevron-left fa-fw"></i>
                             Previous
@@ -92,7 +112,7 @@
             </div>
             <div class="col-md-6 text-end">
                 {% if next %}
-                    <a href="{{ path('docs_doc', {'uri': next.uri}) }}" class="btn btn-outline-primary w-100 text-end d-flex flex-column justify-content-center p-2">
+                    <a href="{{ path('docs_doc', {'uri': next.uri}) }}" class="btn btn-outline-secondary w-100 text-end d-flex flex-column justify-content-center p-2">
                         <div class="small">
                             Next
                             <i class="fa-solid fa-chevron-right fa-fw"></i>

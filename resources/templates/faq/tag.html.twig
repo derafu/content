@@ -5,8 +5,14 @@
 {% block faq_content %}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ path('faq') }}">FAQ</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Tag: {{ tag.name }}</li>
+            <li class="breadcrumb-item">
+                <a href="{{ path('faq') }}">
+                    <i class="fa-solid fa-question-circle fa-fw"></i>
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Tag: {{ tag.name }}
+            </li>
         </ol>
     </nav>
 

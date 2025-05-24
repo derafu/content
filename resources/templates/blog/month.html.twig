@@ -15,8 +15,14 @@
 {% block blog_content %}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ path('blog') }}">Blog</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Month: {{ month.name }}</li>
+            <li class="breadcrumb-item">
+                <a href="{{ path('blog') }}">
+                    <i class="fa-solid fa-blog fa-fw"></i>
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Month: {{ month.name }}
+            </li>
         </ol>
     </nav>
     {% for post in posts %}

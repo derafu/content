@@ -25,7 +25,8 @@ class Doc extends ContentItem implements DocInterface
      * @var array<string, mixed>
      */
     protected array $defaultMetadata = [
-        'toc' => true,
+        'show_toc' => true,
+        'show_children' => false,
     ];
 
     /**

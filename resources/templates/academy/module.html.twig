@@ -33,7 +33,9 @@
                     <nav aria-label="breadcrumb" class="mb-4">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
-                                <a href="{{ path('academy') }}">Academy</a>
+                                <a href="{{ path('academy') }}">
+                                    <i class="fa-solid fa-graduation-cap fa-fw"></i>
+                                </a>
                             </li>
                             <li class="breadcrumb-item">
                                 <a href="{{ path('academy_course', {'course': course.slug}) }}">{{ course.title }}</a>
@@ -86,7 +88,7 @@
                         <div class="row my-5">
                             <div class="col-md-6">
                                 {% if previous %}
-                                    <a href="{{ path('academy_module', {'course': previous.course.slug, 'module': previous.slug}) }}" class="btn btn-outline-primary w-100 text-start d-flex flex-column justify-content-center p-2">
+                                    <a href="{{ path('academy_module', {'course': previous.course.slug, 'module': previous.slug}) }}" class="btn btn-outline-secondary w-100 text-start d-flex flex-column justify-content-center p-2">
                                         <div class="small">
                                             <i class="fa-solid fa-chevron-left fa-fw"></i>
                                             Previous
@@ -97,7 +99,7 @@
                             </div>
                             <div class="col-md-6 text-end">
                                 {% if next %}
-                                    <a href="{{ path('academy_module', {'course': next.course.slug, 'module': next.slug}) }}" class="btn btn-outline-primary w-100 text-end d-flex flex-column justify-content-center p-2">
+                                    <a href="{{ path('academy_module', {'course': next.course.slug, 'module': next.slug}) }}" class="btn btn-outline-secondary w-100 text-end d-flex flex-column justify-content-center p-2">
                                         <div class="small">
                                             Next
                                             <i class="fa-solid fa-chevron-right fa-fw"></i>

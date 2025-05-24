@@ -20,6 +20,16 @@ use Derafu\Content\Contract\FaqInterface;
 class Faq extends ContentItem implements FaqInterface
 {
     /**
+     * Default metadata.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $defaultMetadata = [
+        'show_toc' => false,
+        'show_children' => true,
+    ];
+
+    /**
      * {@inheritDoc}
      */
     public function type(): string

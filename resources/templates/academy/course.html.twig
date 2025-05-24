@@ -148,7 +148,9 @@
                     <nav aria-label="breadcrumb" class="mb-4">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
-                                <a href="{{ path('academy') }}">Academy</a>
+                                <a href="{{ path('academy') }}">
+                                    <i class="fa-solid fa-graduation-cap fa-fw"></i>
+                                </a>
                             </li>
                             {% for ancestor in course.ancestors %}
                                 <li class="breadcrumb-item">

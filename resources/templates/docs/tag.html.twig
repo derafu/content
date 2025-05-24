@@ -5,8 +5,14 @@
 {% block docs_content %}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ path('docs') }}">Docs</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Tag: {{ tag.name }}</li>
+            <li class="breadcrumb-item">
+                <a href="{{ path('docs') }}">
+                    <i class="fa-solid fa-book fa-fw"></i>
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Tag: {{ tag.name }}
+            </li>
         </ol>
     </nav>
 
