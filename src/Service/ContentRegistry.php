@@ -170,7 +170,7 @@ class ContentRegistry implements ContentRegistryInterface
             return null;
         }
 
-        return $items[$index - 1] ?? null;
+        return $items[$index];
     }
 
     /**
@@ -184,7 +184,7 @@ class ContentRegistry implements ContentRegistryInterface
             return null;
         }
 
-        return $items[$index + 1] ?? null;
+        return $items[$index];
     }
 
     /**
@@ -322,6 +322,6 @@ class ContentRegistry implements ContentRegistryInterface
             return null;
         }
 
-        return array_key_first($filtered);
+        return (int) array_key_first($filtered);
     }
 }

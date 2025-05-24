@@ -55,7 +55,7 @@ interface ContentRegistryInterface
      * Get the flattened array of items filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<string, ContentItemInterface>
+     * @return array<ContentItemInterface>
      */
     public function flatten(array $filters = []): array;
 

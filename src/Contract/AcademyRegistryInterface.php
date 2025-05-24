@@ -40,7 +40,7 @@ interface AcademyRegistryInterface extends ContentRegistryInterface
      * @param array<string, mixed> $filters Filter criteria.
      * @return AcademyModuleInterface|AcademyLessonInterface|null
      */
-    public function previous(string $uri, array $filters = []):AcademyModuleInterface|AcademyLessonInterface|null;
+    public function previous(string $uri, array $filters = []): AcademyModuleInterface|AcademyLessonInterface|null;
 
     /**
      * Get the next academy content relative to the given URI.
