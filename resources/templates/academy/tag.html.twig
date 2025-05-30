@@ -71,7 +71,7 @@
                             <a href="{{ path('academy_course', {'course': course.slug}) }}" class="list-group-item d-flex justify-content-between align-items-start">
                                 <div class="ms-2 me-auto">
                                     <div class="fw-bold">{{ course.title }}</div>
-                                    {{ course.summary | markdown }}
+                                    {{ course.description | markdown }}
                                     {% if course.ancestors | length > 0 %}
                                         <div class="text-muted small">
                                             academy &raquo; {{ course.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}

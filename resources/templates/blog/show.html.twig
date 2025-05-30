@@ -12,6 +12,15 @@
     </section>
 {% endblock %}
 
+{% block blog_sidebar %}
+    {% if not post.hide_table_of_contents %}
+        <div class="ps-3 py-4 border-start small mb-4">
+            <div class="fw-bold mb-3">On this page</div>
+            <div id="toc-navbar" class="d-flex flex-column gap-2"></div>
+        </div>
+    {% endif %}
+{% endblock %}
+
 {% block blog_content %}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -31,13 +40,15 @@
     {% endif %}
 
     <twig:block-quote
-        quote="{{ post.summary }}"
-        author="{{ post.author.name | default('Anonymous') }}"
-        source="{{ post.published | date('d/m/Y') }}"
+        quote="{{ post.description }}"
+        author="{{ post.authors | join(', ') }}"
+        source="{{ post.date | date('d/m/Y') }}"
     />
 
     {% if post.data %}
-        {{ post.data | markdown }}
+        <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
+            {{ post.data | markdown }}
+        </div>
     {% endif %}
 
     {% if post.video %}
@@ -53,11 +64,16 @@
 
     <hr class="mt-5 mb-1">
     <div class="row text-muted small mb-5">
-        <div class="col-md-6">
-            Last updated on {{ post.modified | date('d/m/Y') }}
-        </div>
-        <div class="col-md-6 text-end">
+        <div class="col-md-6 small">
             {{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+        </div>
+        <div class="col-md-6 small fst-italic text-end">
+            {% if plugin.options.showLastUpdateTime %}
+                Last updated on {{ post.last_update | date('d/m/Y') }}
+            {% endif %}
+            {% if plugin.options.showLastUpdateAuthor %}
+                by {{ post.authors | join(', ') }}
+            {% endif %}
         </div>
     </div>
 
@@ -65,7 +81,7 @@
         <div class="row my-5">
             <div class="col-md-6">
                 {% if previous %}
-                    <a href="{{ path('blog_post', {'uri': previous.uri}) }}" class="btn btn-outline-secondary w-100 text-start d-flex flex-column justify-content-center p-2">
+                    <a href="{{ path('blog_post', {'post': previous.uri}) }}" class="btn btn-outline-secondary w-100 text-start d-flex flex-column justify-content-center p-2">
                         <div class="small">
                             <i class="fa-solid fa-chevron-left fa-fw"></i>
                             Previous
@@ -76,7 +92,7 @@
             </div>
             <div class="col-md-6 text-end">
                 {% if next %}
-                    <a href="{{ path('blog_post', {'uri': next.uri}) }}" class="btn btn-outline-secondary w-100 text-end d-flex flex-column justify-content-center p-2">
+                    <a href="{{ path('blog_post', {'post': next.uri}) }}" class="btn btn-outline-secondary w-100 text-end d-flex flex-column justify-content-center p-2">
                         <div class="small">
                             Next
                             <i class="fa-solid fa-chevron-right fa-fw"></i>

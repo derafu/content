@@ -9,7 +9,7 @@
             size="small"
             background="{{ course.image }}"
             title="{{ course.title }}"
-            subtitle="{{ course.summary }}"
+            subtitle="{{ course.description }}"
             align="left"
         />
     </section>
@@ -88,7 +88,7 @@
                             </td>
                             <td>{{ attachment.size / 1000 }} KB</td>
                             <td>
-                                <a href="{{ path('content_attachments', {'type': 'academy', 'uri': attachment.parent.uri}) }}?attachment={{ attachment.name }}.{{ attachment.extension }}" class="btn btn-primary" download="{{ attachment.parent.uri | replace({'/': '--' }) }}-{{ attachment.name }}.{{ attachment.extension }}" target="_blank">
+                                <a href="{{ path('content_storage_download', {'type': 'academy', 'uri': attachment.parent.uri, 'attachment': attachment.name ~ '.' ~ attachment.extension}) }}" class="btn btn-primary" download="{{ attachment.parent.id }}--{{ attachment.name }}.{{ attachment.extension }}" target="_blank">
                                     <i class="fa-solid fa-download fa-fw"></i>
                                 </a>
                             </td>
@@ -98,7 +98,7 @@
             </table>
         </div>
     {% else %}
-        <div class="alert alert-info">No videos found for this course.</div>
+        <div class="alert alert-info">No attachments found for this course.</div>
     {% endif %}
 {% endset %}
 
@@ -192,11 +192,16 @@
 
                     <hr class="mt-5 mb-1">
                     <div class="row text-muted small mb-5">
-                        <div class="col-md-6">
-                            Last updated on {{ course.modified | date('d/m/Y') }}
-                        </div>
-                        <div class="col-md-6 text-end">
+                        <div class="col-md-6 small">
                             {{ course.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+                        </div>
+                        <div class="col-md-6 small fst-italic text-end">
+                            {% if plugin.options.showLastUpdateTime %}
+                                Last updated on {{ course.last_update | date('d/m/Y') }}
+                            {% endif %}
+                            {% if plugin.options.showLastUpdateAuthor %}
+                                by {{ course.authors | join(', ') }}
+                            {% endif %}
                         </div>
                     </div>
 

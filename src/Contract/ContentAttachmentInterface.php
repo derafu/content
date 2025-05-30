@@ -20,6 +20,13 @@ use Derafu\Http\Enum\ContentType;
 interface ContentAttachmentInterface
 {
     /**
+     * Get the ID of the attachment.
+     *
+     * @return string
+     */
+    public function id(): string;
+
+    /**
      * Get the path of the attachment.
      *
      * @return string

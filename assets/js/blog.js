@@ -73,8 +73,8 @@ function renderBlogCards(container, posts, basePath, readMore) {
         col.className = 'col-12 col-md-6 mb-4';
 
         // Format date.
-        const publishDate = new Date(post.published);
-        const formattedDate = publishDate.toLocaleDateString(undefined, {
+        const date = new Date(post.date);
+        const formattedDate = date.toLocaleDateString(undefined, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
@@ -87,9 +87,9 @@ function renderBlogCards(container, posts, basePath, readMore) {
                 <div class="card-body">
                     <h5 class="card-title">${post.title}</h5>
                     <div class="text-muted small mb-2">
-                        By ${post.author.name} on ${formattedDate} • ${post.time} min read
+                        By ${post.authors.map(author => author.name).join(', ')} on ${formattedDate} • ${post.time} min read
                     </div>
-                    <p class="card-text">${post.summary}</p>
+                    <p class="card-text">${post.description}</p>
                 </div>
                 <div class="card-footer bg-transparent border-top-0">
                     <a href="${basePath}/blog/${post.uri}" class="btn btn-primary w-100">${readMore}</a>

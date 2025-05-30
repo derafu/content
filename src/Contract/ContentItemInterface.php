@@ -12,12 +12,16 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Contract;
 
-use DateTimeImmutable;
+use DateTimeInterface;
 use JsonSerializable;
 use Stringable;
 
 /**
- * Interface for the representation of a content.
+ * Interface for content items.
+ *
+ * A content item is a single item of content, such as a document, a page, a
+ * blog post, etc. It's used to represent the content of a single item in the
+ * content data.
  */
 interface ContentItemInterface extends JsonSerializable, Stringable
 {
@@ -100,11 +104,11 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function data(): string;
 
     /**
-     * Get the slug of the content.
+     * The unique identifier of the content item.
      *
      * @return string
      */
-    public function slug(): string;
+    public function id(): string;
 
     /**
      * Get the URI of the content.
@@ -114,6 +118,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function uri(): string;
 
     /**
+     * Get the slug of the content.
+     *
+     * @return string
+     */
+    public function slug(): string;
+
+    /**
      * Get the route of the content.
      *
      * @return object
@@ -121,18 +132,31 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function route(): object;
 
     /**
-     * Get the title of the content.
+     * The text title of your document. Used for the page metadata and as a
+     * fallback value in multiple places (sidebar, next/previous buttons...).
+     * Automatically added at the top of your doc if it does not contain any
+     * Markdown title.
      *
      * @return string
      */
     public function title(): string;
 
     /**
-     * Get the summary of the content.
+     * The description of your document, which will become the
+     * <meta name="description" content="..."/> and
+     * <meta property="og:description" content="..."/> in <head>, used by search
+     * engines.
      *
      * @return string
      */
-    public function summary(): string;
+    public function description(): string;
+
+    /**
+     * Keywords meta tag for the document page, for search engines.
+     *
+     * @return string[]
+     */
+    public function keywords(): array;
 
     /**
      * Get the preview of the content.
@@ -143,49 +167,9 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function preview(int $maxLength = 300): string;
 
     /**
-     * Get the created date of the content.
-     *
-     * @return DateTimeImmutable
-     */
-    public function created(): DateTimeImmutable;
-
-    /**
-     * Get the modified date of the content.
-     *
-     * @return DateTimeImmutable
-     */
-    public function modified(): DateTimeImmutable;
-
-    /**
-     * Get the published date of the content.
-     *
-     * @return DateTimeImmutable
-     */
-    public function published(): DateTimeImmutable;
-
-    /**
-     * Get the deprecated date of the content.
-     *
-     * @return DateTimeImmutable|null
-     */
-    public function deprecated(): ?DateTimeImmutable;
-
-    /**
-     * Get the order of the content.
-     *
-     * @return int
-     */
-    public function order(): int;
-
-    /**
-     * Get the tags of the content.
-     *
-     * @return ContentTagInterface[]
-     */
-    public function tags(): array;
-
-    /**
-     * Get the main image of the content, if any.
+     * Cover or thumbnail image that will be used as the
+     * meta property="og:image" content="..."/> in the <head>,
+     * enhancing link previews on social media and messaging platforms.
      *
      * @return string|null
      */
@@ -199,11 +183,18 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function video(): ?string;
 
     /**
-     * Get the author of the content, if any.
+     * A list of strings to tag your content.
      *
-     * @return ContentAuthorInterface|null
+     * @return array<string, ContentTagInterface>
      */
-    public function author(): ?ContentAuthorInterface;
+    public function tags(): array;
+
+    /**
+     * The authors of the content.
+     *
+     * @return array<string, ContentAuthorInterface>
+     */
+    public function authors(): array;
 
     /**
      * Get the time required to read or watch the content in minutes.
@@ -213,11 +204,129 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function time(): int;
 
     /**
+     * Draft documents will only be available during development.
+     *
+     * @return bool
+     */
+    public function draft(): bool;
+
+    /**
+     * Unlisted documents will be available in both development and production.
+     *
+     * They will be "hidden" in production, not indexed, excluded from sitemaps,
+     * and can only be accessed by users having a direct link.
+     *
+     * @return bool
+     */
+    public function unlisted(): bool;
+
+    /**
+     * Get the created date of the content.
+     *
+     * @return DateTimeInterface
+     */
+    public function date(): DateTimeInterface;
+
+    /**
+     * The date of the last update of the content.
+     *
+     * @return DateTimeInterface
+     */
+    public function last_update(): DateTimeInterface;
+
+    /**
+     * Get the deprecated date of the content.
+     *
+     * @return DateTimeInterface|null
+     */
+    public function deprecated(): ?DateTimeInterface;
+
+    /**
      * Get the level of the content.
      *
      * @return int
      */
     public function level(): int;
+
+    /**
+     * The text used in the document next/previous buttons for this document.
+     *
+     * Options:
+     *
+     *   - `sidebar_label`
+     *   - `title`
+     *
+     * @return string
+     */
+    public function pagination_label(): string;
+
+    /**
+     * The text shown in the document sidebar for this document.
+     *
+     * @return string
+     */
+    public function sidebar_label(): string;
+
+    /**
+     * The position of the document in the sidebar.
+     *
+     * This is used to determine the order of the documents in the sidebar when
+     * the sidebar is automatically generated.
+     *
+     * @return int
+     */
+    public function sidebar_position(): int;
+
+    /**
+     * The class name of the document sidebar when it's automatically generated.
+     *
+     * @return string
+     */
+    public function sidebar_class_name(): string;
+
+    /**
+     * The custom properties of the document sidebar when it's automatically
+     * generated.
+     *
+     * @return array
+     */
+    public function sidebar_custom_props(): array;
+
+    /**
+     * Whether to hide the title at the top of the doc. It only hides a title
+     * declared through the front matter, and have no effect on a Markdown title
+     * at the top of your document.
+     *
+     * @return bool
+     */
+    public function hide_title(): bool;
+
+    /**
+     * Whether to hide the table of contents to the right.
+     *
+     * @return bool
+     */
+    public function hide_table_of_contents(): bool;
+
+    /**
+     * The minimum heading level shown in the table of contents.
+     *
+     * The value must be between 2 and 6 and lower or equal to the
+     * `toc_max_heading_level` option.
+     *
+     * @return int
+     */
+    public function toc_min_heading_level(): int;
+
+    /**
+     * The maximum heading level to include in the table of contents.
+     *
+     * The value must be between 2 and 6 and greater or equal to the
+     * `toc_min_heading_level` option.
+     *
+     * @return int
+     */
+    public function toc_max_heading_level(): int;
 
     /**
      * Get the ancestors of the content.

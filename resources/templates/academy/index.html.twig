@@ -41,7 +41,7 @@
                                         {{ course.title }}
                                     </a>
                                 </h5>
-                                <p class="card-text text-muted">{{ course.summary }}</p>
+                                <p class="card-text text-muted">{{ course.description }}</p>
                                 {% for tag in course.tags %}
                                     <a href="{{ path('academy_tag', {'tag': tag.slug}) }}" class="badge bg-secondary text-decoration-none">
                                         {{ tag.name }}

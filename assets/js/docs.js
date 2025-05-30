@@ -35,15 +35,13 @@ function initDocTOC(options = {}) {
     headings.forEach((heading) => {
         const headingId = heading.querySelector('a').id;
         const link = document.createElement('a');
-        link.href = `#${headingId}`;
 
-        link.innerHTML = '';
+        link.href = `#${headingId}`;
+        link.textContent = heading.getAttribute('toc_label') || heading.textContent;
+
         const level = parseInt(heading.tagName[1]);
-        const indent = level - config.startLevel;
-        for (let i = 0; i < indent; i++) {
-            link.innerHTML += '&nbsp;&nbsp;';
-        }
-        link.innerHTML += heading.getAttribute('toc') || heading.textContent;
+        const indent = level - config.startLevel + 1;
+        link.style.paddingLeft = `${indent * 16}px`;
 
         navbar.appendChild(link);
     });

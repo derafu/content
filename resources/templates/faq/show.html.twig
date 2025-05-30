@@ -12,7 +12,7 @@
             </li>
             {% for ancestor in faq.ancestors %}
                 <li class="breadcrumb-item">
-                    <a href="{{ path('faq_question', {'uri': ancestor.uri}) }}">{{ ancestor.title }}</a>
+                    <a href="{{ path('faq_question', {'question': ancestor.uri}) }}">{{ ancestor.title }}</a>
                 </li>
             {% endfor %}
             <li class="breadcrumb-item active" aria-current="page">
@@ -40,7 +40,7 @@
         <div class="row my-4">
             {% for child in faq.children %}
                 <div class="col-md-6">
-                    <a href="{{ path('faq_question', {'uri': child.uri}) }}" class="btn btn-outline-primary w-100 text-start p-4 mb-4">
+                    <a href="{{ path('faq_question', {'question': child.uri}) }}" class="btn btn-outline-primary w-100 text-start p-4 mb-4">
                         <div class="fw-bold">
                             <i class="fa-regular fa-question-circle fa-fw"></i>
                             {{ child.title }}
@@ -53,11 +53,16 @@
 
     <hr class="mt-5 mb-1">
     <div class="row text-muted small mb-5">
-        <div class="col-md-6">
-            Last updated on {{ faq.modified | date('d/m/Y') }}
-        </div>
-        <div class="col-md-6 text-end">
+        <div class="col-md-6 small">
             {{ faq.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+        </div>
+        <div class="col-md-6 small fst-italic text-end">
+            {% if plugin.options.showLastUpdateTime %}
+                Last updated on {{ faq.last_update | date('d/m/Y') }}
+            {% endif %}
+            {% if plugin.options.showLastUpdateAuthor %}
+                by {{ faq.authors | join(', ') }}
+            {% endif %}
         </div>
     </div>
 {% endblock %}

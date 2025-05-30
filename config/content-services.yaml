@@ -1,3 +1,17 @@
+parameters:
+    derafu.content.config:
+        title: 'Derafu Content'
+        url: 'https://www.derafu.org/content'
+        plugins:
+            academy: ~
+            api: ~
+            blog: ~
+            docs: ~
+            faq: ~
+            # pages: ~
+            # sitemap: ~
+            storage: ~
+
 services:
 
     _defaults:
@@ -5,37 +19,39 @@ services:
         autoconfigure: true
         public: false
 
-    Derafu\Content\Controller\ContentController:
-        public: true
+    Derafu\Content\Contract\ContentServiceInterface:
+        class: Derafu\Content\ContentService
 
-    Derafu\Content\Controller\AcademyController:
-        public: true
+    Derafu\Content\Contract\ContentContextInterface:
+        class: Derafu\Content\ContentContext
 
-    Derafu\Content\Controller\BlogController:
-        public: true
-
-    Derafu\Content\Controller\DocsController:
-        public: true
-
-    Derafu\Content\Controller\FaqController:
-        public: true
-
-    Derafu\Content\Contract\AcademyRegistryInterface:
-        class: Derafu\Content\Service\AcademyRegistry
+    Derafu\Content\Contract\ContentConfigInterface:
+        class: Derafu\Content\ContentConfig
         arguments:
-            $path: '%kernel.project_dir%/resources/content/academy'
+            $config: '%derafu.content.config%'
 
-    Derafu\Content\Contract\BlogRegistryInterface:
-        class: Derafu\Content\Service\BlogRegistry
-        arguments:
-            $path: '%kernel.project_dir%/resources/content/blog'
+    Derafu\Content\Contract\PluginLoaderInterface:
+        class: Derafu\Content\PluginLoader
 
-    Derafu\Content\Contract\DocsRegistryInterface:
-        class: Derafu\Content\Service\DocsRegistry
+    Derafu\Content\Contract\ContentLoaderInterface:
+        class: Derafu\Content\ContentLoader
         arguments:
-            $path: '%kernel.project_dir%/resources/content/docs'
+            $basePath: '%kernel.project_dir%'
 
-    Derafu\Content\Contract\FaqRegistryInterface:
-        class: Derafu\Content\Service\FaqRegistry
-        arguments:
-            $path: '%kernel.project_dir%/resources/content/faq'
+    Derafu\Content\Plugin\Academy\AcademyController:
+        public: true
+
+    Derafu\Content\Plugin\Api\ApiController:
+        public: true
+
+    Derafu\Content\Plugin\Blog\BlogController:
+        public: true
+
+    Derafu\Content\Plugin\Docs\DocsController:
+        public: true
+
+    Derafu\Content\Plugin\Faq\FaqController:
+        public: true
+
+    Derafu\Content\Plugin\Storage\StorageController:
+        public: true

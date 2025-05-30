@@ -21,7 +21,7 @@
         {{ doc.data | markdown }}
 
         <footer>
-            Last updated on {{ doc.modified | date('d/m/Y') }}
+            Last updated on {{ doc.last_update | date('d/m/Y') }}
             {{ doc.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
         </footer>
 

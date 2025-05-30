@@ -23,7 +23,7 @@
         {{ module.data | markdown }}
 
         <footer>
-            Last updated on {{ module.modified | date('d/m/Y') }}
+            Last updated on {{ module.last_update | date('d/m/Y') }}
             {{ module.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
         </footer>
 

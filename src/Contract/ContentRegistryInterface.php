@@ -18,7 +18,7 @@ namespace Derafu\Content\Contract;
 interface ContentRegistryInterface
 {
     /**
-     * Get a content by URI.
+     * Get a content by ID.
      *
      * @param string $uri URI of the content.
      * @return ContentItemInterface
@@ -60,7 +60,7 @@ interface ContentRegistryInterface
     public function flatten(array $filters = []): array;
 
     /**
-     * Get the previous content item relative to the given URI.
+     * Get the previous content item relative to the given ID.
      *
      * @param string $uri URI of the content.
      * @param array<string, mixed> $filters Filter criteria.
@@ -69,7 +69,7 @@ interface ContentRegistryInterface
     public function previous(string $uri, array $filters = []): ?ContentItemInterface;
 
     /**
-     * Get the next content item relative to the given URI.
+     * Get the next content item relative to the given ID.
      *
      * @param string $uri URI of the content.
      * @param array<string, mixed> $filters Filter criteria.
@@ -78,16 +78,16 @@ interface ContentRegistryInterface
     public function next(string $uri, array $filters = []): ?ContentItemInterface;
 
     /**
+     * Get all authors.
+     *
+     * @return array<string, ContentAuthorInterface>
+     */
+    public function authors(): array;
+
+    /**
      * Get all tags.
      *
      * @return array<string, ContentTagInterface>
      */
     public function tags(): array;
-
-    /**
-     * Get all months.
-     *
-     * @return array<int, ContentMonthInterface>
-     */
-    public function months(): array;
 }

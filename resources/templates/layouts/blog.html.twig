@@ -20,12 +20,12 @@
                 </div>
                 <div class="list-group list-group-flush">
                     {% for post in recentPosts %}
-                        <a href="{{ path('blog_post', {'uri': post.uri}) }}" class="list-group-item list-group-item-action">
+                        <a href="{{ path('blog_post', {'post': post.uri}) }}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ post.title }}</h6>
                             </div>
                             <small class="text-muted">
-                                Por {{ post.author.name }} el {{ post.published | date('d/m/Y') }} • {{ post.time }} min de lectura
+                                Por {{ post.authors | join(', ') }} el {{ post.date | date('d/m/Y') }} • {{ post.time }} min de lectura
                             </small>
                         </a>
                     {% endfor %}
@@ -50,14 +50,14 @@
 
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Monthly Archives</h5>
+                    <h5 class="card-title mb-0">Archives</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2">
-                        {% for month in months %}
-                            <a href="{{ path('blog_month', {'month': month.slug}) }}" class="btn btn-outline-secondary btn-sm">
-                                {{ month.name }}
-                                <span class="badge bg-secondary ms-1">{{ month.count }}</span>
+                        {% for archive in archives %}
+                            <a href="{{ path('blog_archive', {'archive': archive.slug}) }}" class="btn btn-outline-secondary btn-sm">
+                                {{ archive.name }}
+                                <span class="badge bg-secondary ms-1">{{ archive.count }}</span>
                             </a>
                         {% endfor %}
                     </div>

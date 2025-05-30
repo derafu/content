@@ -9,7 +9,7 @@
             size="small"
             background="{{ course.image }}"
             title="{{ course.title }}"
-            subtitle="{{ course.summary }}"
+            subtitle="{{ course.description }}"
             align="left"
         />
     </section>
@@ -63,9 +63,23 @@
                     {% endif %}
 
                     {% if lesson.data %}
-                        <div class="card shadow p-4">
+                        {% if not lesson.hide_table_of_contents %}
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
+                                        {{ lesson.data | markdown }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="sticky-top ps-3 py-4 border-start small">
+                                        <div class="fw-bold mb-3">On this page</div>
+                                        <div id="toc-navbar" class="d-flex flex-column gap-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
                             {{ lesson.data | markdown }}
-                        </div>
+                        {% endif %}
                     {% endif %}
 
                     {% if lesson.metadata.test %}
@@ -76,11 +90,16 @@
 
                     <hr class="mt-5 mb-1">
                     <div class="row text-muted small mb-5">
-                        <div class="col-md-6">
-                            Last updated on {{ lesson.modified | date('d/m/Y') }}
+                        <div class="col-md-6 small">
+                            {{ lesson.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
                         </div>
-                        <div class="col-md-6 text-end">
-                            {{ course.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+                        <div class="col-md-6 small fst-italic text-end">
+                            {% if plugin.options.showLastUpdateTime %}
+                                Last updated on {{ lesson.last_update | date('d/m/Y') }}
+                            {% endif %}
+                            {% if plugin.options.showLastUpdateAuthor %}
+                                by {{ lesson.authors | join(', ') }}
+                            {% endif %}
                         </div>
                     </div>
 

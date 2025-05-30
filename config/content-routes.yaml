@@ -1,14 +1,22 @@
+################################################################################
+# Routes for all the plugins with available controllers
+################################################################################
+
 # ------------------------------------------------------------------------------
-# Content (this group all the types of content)
+# Storage (need to be before the content routes)
 # ------------------------------------------------------------------------------
 
-content:
+content_storage_download:
+  path: /{type}/{uri:.+}/_attachments/{attachment:.+}
+  handler: 'Derafu\Content\Plugin\Storage\StorageController::download'
+
+# ------------------------------------------------------------------------------
+# API
+# ------------------------------------------------------------------------------
+
+content_api:
   path: /api/content.json
-  handler: 'Derafu\Content\Controller\ContentController::api_index'
-
-content_attachments:
-  path: /content/attachments/{type}/{uri:.+}
-  handler: 'Derafu\Content\Controller\ContentController::attachments'
+  handler: 'Derafu\Content\Plugin\Api\ApiController::index'
 
 # ------------------------------------------------------------------------------
 # Academy
@@ -16,23 +24,23 @@ content_attachments:
 
 academy:
   path: /academy
-  handler: 'Derafu\Content\Controller\AcademyController::index'
+  handler: 'Derafu\Content\Plugin\Academy\AcademyController::index'
 
 academy_tag:
-  path: /academy/tag/{tag}
-  handler: 'Derafu\Content\Controller\AcademyController::tag'
+  path: /academy/tags/{tag}
+  handler: 'Derafu\Content\Plugin\Academy\AcademyController::tag'
 
 academy_lesson:
   path: /academy/{course}/{module}/{lesson}
-  handler: 'Derafu\Content\Controller\AcademyController::lesson'
+  handler: 'Derafu\Content\Plugin\Academy\AcademyController::lesson'
 
 academy_module:
   path: /academy/{course}/{module}
-  handler: 'Derafu\Content\Controller\AcademyController::module'
+  handler: 'Derafu\Content\Plugin\Academy\AcademyController::module'
 
 academy_course:
   path: /academy/{course}
-  handler: 'Derafu\Content\Controller\AcademyController::course'
+  handler: 'Derafu\Content\Plugin\Academy\AcademyController::course'
 
 
 # ------------------------------------------------------------------------------
@@ -41,23 +49,23 @@ academy_course:
 
 blog:
   path: /blog
-  handler: 'Derafu\Content\Controller\BlogController::index'
+  handler: 'Derafu\Content\Plugin\Blog\BlogController::index'
 
 blog_tag:
-  path: /blog/tag/{tag}
-  handler: 'Derafu\Content\Controller\BlogController::tag'
+  path: /blog/tags/{tag}
+  handler: 'Derafu\Content\Plugin\Blog\BlogController::tag'
 
-blog_month:
-  path: /blog/month/{month}
-  handler: 'Derafu\Content\Controller\BlogController::month'
+blog_archive:
+  path: /blog/archive/{archive}
+  handler: 'Derafu\Content\Plugin\Blog\BlogController::archive'
 
 blog_rss:
   path: /blog/rss.xml
-  handler: 'Derafu\Content\Controller\BlogController::rss'
+  handler: 'Derafu\Content\Plugin\Blog\BlogController::rss'
 
 blog_post:
-  path: /blog/{uri:.+}
-  handler: 'Derafu\Content\Controller\BlogController::show'
+  path: /blog/{post:.+}
+  handler: 'Derafu\Content\Plugin\Blog\BlogController::show'
 
 # ------------------------------------------------------------------------------
 # Documentation
@@ -65,17 +73,17 @@ blog_post:
 
 docs:
   path: /docs
-  handler: 'Derafu\Content\Controller\DocsController::show'
+  handler: 'Derafu\Content\Plugin\Docs\DocsController::show'
   defaults:
-    uri: index
+    doc: index
 
 docs_tag:
-  path: /docs/tag/{tag}
-  handler: 'Derafu\Content\Controller\DocsController::tag'
+  path: /docs/tags/{tag}
+  handler: 'Derafu\Content\Plugin\Docs\DocsController::tag'
 
 docs_doc:
-  path: /docs/{uri:.+}
-  handler: 'Derafu\Content\Controller\DocsController::show'
+  path: /docs/{doc:.+}
+  handler: 'Derafu\Content\Plugin\Docs\DocsController::show'
 
 # ------------------------------------------------------------------------------
 # FAQ
@@ -83,14 +91,14 @@ docs_doc:
 
 faq:
   path: /faq
-  handler: 'Derafu\Content\Controller\FaqController::show'
+  handler: 'Derafu\Content\Plugin\Faq\FaqController::show'
   defaults:
-    uri: index
+    question: index
 
 faq_tag:
-  path: /faq/tag/{tag}
-  handler: 'Derafu\Content\Controller\FaqController::tag'
+  path: /faq/tags/{tag}
+  handler: 'Derafu\Content\Plugin\Faq\FaqController::tag'
 
 faq_question:
-  path: /faq/{uri:.+}
-  handler: 'Derafu\Content\Controller\FaqController::show'
+  path: /faq/{question:.+}
+  handler: 'Derafu\Content\Plugin\Faq\FaqController::show'

@@ -21,7 +21,7 @@
         {{ faq.data | markdown }}
 
         <footer>
-            Last updated on {{ faq.modified | date('d/m/Y') }}
+            Last updated on {{ faq.last_update | date('d/m/Y') }}
             {{ faq.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
         </footer>
 

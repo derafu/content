@@ -21,6 +21,13 @@ use Stringable;
 interface ContentAuthorInterface extends JsonSerializable, Stringable
 {
     /**
+     * Get the ID of the author.
+     *
+     * @return string
+     */
+    public function id(): string;
+
+    /**
      * Get the name of the author.
      *
      * @return string

@@ -24,7 +24,7 @@
             <div><small><strong>{{ post.subtitle }}</strong></small></div>
         {% endif %}
 
-        <blockquote style="color: #333; font-style: italic;">{{ post.summary }}</blockquote>
+        <blockquote style="color: #333; font-style: italic;">{{ post.description }}</blockquote>
 
         <table style="width: 100%; text-align: center;">
             <tr>
@@ -32,15 +32,15 @@
                 <th>Fecha</th>
             </tr>
             <tr>
-                <td>{{ post.author.name | default('Anonymous') }}</td>
-                <td>{{ post.published | date('d/m/Y') }}</td>
+                <td>{{ post.authors | join(', ') }}</td>
+                <td>{{ post.date | date('d/m/Y') }}</td>
             </tr>
         </table>
 
         {{ post.data | markdown }}
 
         <footer>
-            Last updated on {{ post.modified | date('d/m/Y') }}
+            Last updated on {{ post.last_update | date('d/m/Y') }}
             {{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
         </footer>
 

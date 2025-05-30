@@ -21,6 +21,13 @@ use Stringable;
 interface ContentTagInterface extends JsonSerializable, Stringable
 {
     /**
+     * Get the ID of the tag.
+     *
+     * @return string
+     */
+    public function id(): string;
+
+    /**
      * Get the name of the tag.
      *
      * @return string

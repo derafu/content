@@ -12,7 +12,7 @@
                 <title>{{ post.title()|e('html') }}</title>
                 <link>{{ url('blog_post', { uri: post.uri() }) }}</link>
                 <guid isPermaLink="true">{{ url('blog_post', { uri: post.uri() }) }}</guid>
-                <pubDate>{{ post.published().format('r') }}</pubDate>
+                <pubDate>{{ post.date().format('r') }}</pubDate>
                 <description><![CDATA[{{ post.data()|markdown|raw }}]]></description>
             </item>
         {% endfor %}

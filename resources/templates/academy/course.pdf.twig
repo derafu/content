@@ -23,7 +23,7 @@
         {{ course.data | markdown }}
 
         <footer>
-            Last updated on {{ course.modified | date('d/m/Y') }}
+            Last updated on {{ course.last_update | date('d/m/Y') }}
             {{ course.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
         </footer>
 
