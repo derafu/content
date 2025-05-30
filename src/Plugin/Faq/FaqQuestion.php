@@ -23,6 +23,18 @@ class FaqQuestion extends AbstractContentItem implements FaqQuestionInterface
     /**
      * {@inheritDoc}
      */
+    protected array $metadataSchema = [
+        '__allowUndefinedKeys' => true,
+        'hide_table_of_contents' => [
+            'types' => 'bool',
+            'required' => true,
+            'default' => true,
+        ],
+    ];
+
+    /**
+     * {@inheritDoc}
+     */
     public function type(): string
     {
         return 'faq';

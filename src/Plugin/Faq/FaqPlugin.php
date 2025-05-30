@@ -97,7 +97,7 @@ class FaqPlugin extends AbstractContentPlugin implements ContentPluginInterface
         'showLastUpdateAuthor' => [
             'types' => 'bool',
             'required' => true,
-            'default' => true,
+            'default' => false,
         ],
 
         // Whether to show the last update time.

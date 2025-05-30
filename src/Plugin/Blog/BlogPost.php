@@ -23,6 +23,18 @@ class BlogPost extends AbstractContentItem implements BlogPostInterface
     /**
      * {@inheritDoc}
      */
+    protected array $metadataSchema = [
+        '__allowUndefinedKeys' => true,
+        'hide_table_of_contents' => [
+            'types' => 'bool',
+            'required' => true,
+            'default' => true,
+        ],
+    ];
+
+    /**
+     * {@inheritDoc}
+     */
     public function type(): string
     {
         return 'blog';
