@@ -17,11 +17,14 @@ use DateTimeInterface;
 use Derafu\Config\Options;
 use Derafu\Content\ContentAttachment;
 use Derafu\Content\ContentAuthor;
+use Derafu\Content\ContentHtmlTag;
+use Derafu\Content\ContentHtmlTags;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\ContentSplFileObject;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentAttachmentInterface;
 use Derafu\Content\Contract\ContentAuthorInterface;
+use Derafu\Content\Contract\ContentHtmlTagsInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Support\Str;
 use InvalidArgumentException;
@@ -237,9 +240,9 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * Sidebar class name of the content.
      *
-     * @var string
+     * @var string|false
      */
-    private string $sidebar_class_name;
+    private string|false $sidebar_class_name;
 
     /**
      * Sidebar custom props of the content.
@@ -720,7 +723,11 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function date(): DateTimeInterface
     {
         if (!isset($this->date)) {
-            $date = $this->metadata('date');
+            $date =
+                $this->metadata('date')
+                ?? $this->metadata('created') // TODO: Remove this in the future.
+                ?? null
+            ;
 
             if ($date) {
                 if (is_string($date)) {
@@ -805,7 +812,10 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function pagination_label(): string
     {
         if (!isset($this->pagination_label)) {
-            $this->pagination_label = $this->metadata('pagination_label', 'title');
+            $this->pagination_label =
+                $this->metadata('pagination_label')
+                ?? $this->title()
+            ;
         }
 
         return $this->pagination_label;
@@ -847,13 +857,13 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
-    public function sidebar_class_name(): string
+    public function sidebar_class_name(): ?string
     {
         if (!isset($this->sidebar_class_name)) {
-            $this->sidebar_class_name = $this->metadata('sidebar_class_name');
+            $this->sidebar_class_name = $this->metadata('sidebar_class_name', false);
         }
 
-        return $this->sidebar_class_name;
+        return $this->sidebar_class_name ?: null;
     }
 
     /**
@@ -862,7 +872,10 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function sidebar_custom_props(): array
     {
         if (!isset($this->sidebar_custom_props)) {
-            $this->sidebar_custom_props = $this->metadata('sidebar_custom_props', []);
+            $this->sidebar_custom_props =
+                $this->metadata('sidebar_custom_props')?->all()
+                ?? []
+            ;
         }
 
         return $this->sidebar_custom_props;
@@ -1016,6 +1029,86 @@ abstract class AbstractContentItem implements ContentItemInterface
         }
 
         return $this->links;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * By default this method adds the following HTML tags to the head of the
+     * page:
+     *
+     *   - <meta name="description" content="..."/> and <meta property="og:description" content="..."/>
+     *   - <meta property="og:image" content="..."/>
+     *   - <meta name="keywords" content="...">
+     *   - <meta name="author" content="...">
+     */
+    public function htmlTags(): ContentHtmlTagsInterface
+    {
+        $htmlTags = new ContentHtmlTags();
+
+        // <meta name="description" content="..."/> and <meta property="og:description" content="..."/>
+        if ($this->description()) {
+            $htmlTags->addHeadTag(new ContentHtmlTag('meta', [
+                'name' => 'description',
+                'content' => $this->description(),
+            ]));
+            $htmlTags->addHeadTag(new ContentHtmlTag('meta', [
+                'property' => 'og:description',
+                'content' => $this->description(),
+            ]));
+        }
+
+        // <meta property="og:image" content="..."/>
+        if ($this->image()) {
+            $htmlTags->addHeadTag(new ContentHtmlTag('meta', [
+                'property' => 'og:image',
+                'content' => $this->image(),
+            ]));
+        }
+
+        // <meta name="keywords" content="...">
+        if ($this->keywords() || $this->tags()) {
+            $htmlTags->addHeadTag(new ContentHtmlTag('meta', [
+                'name' => 'keywords',
+                'content' => implode(
+                    ', ',
+                    array_merge(
+                        $this->keywords(),
+                        array_map(fn ($tag) => $tag->name(), $this->tags())
+                    )
+                ),
+            ]));
+        }
+
+        // <meta name="author" content="...">
+        if ($this->authors() || $this->tags()) {
+            $htmlTags->addHeadTag(new ContentHtmlTag('meta', [
+                'name' => 'author',
+                'content' => implode(',', array_map(fn ($author) => $author->name(), $this->authors())),
+            ]));
+        }
+
+        return $htmlTags;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function allowed(): bool
+    {
+        if (!$this->draft()) {
+            return true;
+        }
+
+        if (isset($_SERVER['APP_ENV']) && $_SERVER['APP_ENV'] === 'dev') {
+            return true;
+        }
+
+        if (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] === 'localhost') {
+            return true;
+        }
+
+        return false;
     }
 
     /**

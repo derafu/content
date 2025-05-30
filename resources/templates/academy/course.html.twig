@@ -163,6 +163,13 @@
                         </ol>
                     </nav>
 
+                    {% if course.deprecated %}
+                        <div class="alert alert-warning">
+                            <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
+                            This course is deprecated since {{ course.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+                        </div>
+                    {% endif %}
+
                     {% if course.data %}
                         {{ course.data | markdown }}
                     {% endif %}
@@ -210,4 +217,19 @@
         </div>
 
     </div>
+{% endblock %}
+
+{% block custom_head %}
+    {{ parent() }}
+    {{ course.htmlTags().headTagsToHtml() | raw }}
+{% endblock %}
+
+{% block custom_body_top %}
+    {{ parent() }}
+    {{ course.htmlTags().preBodyTagsToHtml() | raw }}
+{% endblock %}
+
+{% block custom_body_bottom %}
+    {{ parent() }}
+    {{ course.htmlTags().postBodyTagsToHtml() | raw }}
 {% endblock %}

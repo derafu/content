@@ -12,13 +12,17 @@
                 {% endif %}
 
                 {% if hasChildren %}
-                    <a class="nav-link d-flex justify-content-between align-items-center {% if isActive %}text-primary fw-bold{% endif %}"
-                       data-bs-toggle="collapse"
-                       href="#{{ collapseId }}"
-                       role="button"
-                       aria-expanded="{{ isActive ? 'true' : 'false' }}"
-                       aria-controls="{{ collapseId }}">
-                        {{ item.title }}
+                    <a class="nav-link d-flex justify-content-between align-items-center {% if isActive %}text-primary fw-bold{% endif %} {{ item.sidebar_class_name }}"
+                        data-bs-toggle="collapse"
+                        href="#{{ collapseId }}"
+                        role="button"
+                        aria-expanded="{{ isActive ? 'true' : 'false' }}"
+                        aria-controls="{{ collapseId }}"
+                        {% for key, value in item.sidebar_custom_props %}
+                            {{ key }}="{{ value }}"
+                        {% endfor %}
+                    >
+                        {{ item.sidebar_label }}
                         <i class="fa-solid fa-chevron-right {% if isActive %}rotate-90{% endif %}"></i>
                     </a>
 
@@ -27,14 +31,22 @@
                     </div>
                 {% else %}
                     {% if item.module is defined %}
-                        <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %}"
-                        href="{{ path('academy_lesson', {'course': item.module.course.slug, 'module': item.module.slug, 'lesson': item.slug}) }}">
-                            {{ item.title }}
+                        <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %} {{ item.sidebar_class_name }}"
+                            href="{{ path('academy_lesson', {'course': item.module.course.slug, 'module': item.module.slug, 'lesson': item.slug}) }}"
+                            {% for key, value in item.sidebar_custom_props %}
+                                {{ key }}="{{ value }}"
+                            {% endfor %}
+                        >
+                            {{ item.sidebar_label }}
                         </a>
                     {% elseif item.course is defined %}
-                        <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %}"
-                        href="{{ path('academy_module', {'course': item.course.slug, 'module': item.slug}) }}">
-                            {{ item.title }}
+                        <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %} {{ item.sidebar_class_name }}"
+                            href="{{ path('academy_module', {'course': item.course.slug, 'module': item.slug}) }}"
+                            {% for key, value in item.sidebar_custom_props %}
+                                {{ key }}="{{ value }}"
+                            {% endfor %}
+                        >
+                            {{ item.sidebar_label }}
                         </a>
                     {% endif %}
                 {% endif %}

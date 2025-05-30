@@ -49,11 +49,20 @@
                         </ol>
                     </nav>
 
-                    {% if not module.data %}
-                        {{ ('# ' ~ module.title) | markdown }}
+                    {% if module.deprecated %}
+                        <div class="alert alert-warning">
+                            <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
+                            This module is deprecated since {{ module.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+                        </div>
                     {% endif %}
 
-                    {{ module.data | markdown }}
+                    {% if not module.data %}
+                        {{ ('# ' ~ module.title) | markdown }}
+                    {% else %}
+
+                    {% if module.data %}
+                        {{ module.data | markdown }}
+                    {% endif %}
 
                     <div class="card mt-4 mb-3">
                         <div class="list-group">
@@ -96,7 +105,7 @@
                                             <i class="fa-solid fa-chevron-left fa-fw"></i>
                                             Previous
                                         </div>
-                                        <div class="text-truncate">{{ previous.title }}</div>
+                                        <div class="text-truncate">{{ previous.pagination_label }}</div>
                                     </a>
                                 {% endif %}
                             </div>
@@ -107,7 +116,7 @@
                                             Next
                                             <i class="fa-solid fa-chevron-right fa-fw"></i>
                                         </div>
-                                        <div class="text-truncate">{{ next.title }}</div>
+                                        <div class="text-truncate">{{ next.pagination_label }}</div>
                                     </a>
                                 {% endif %}
                             </div>
@@ -118,4 +127,19 @@
         </div>
 
     </div>
+{% endblock %}
+
+{% block custom_head %}
+    {{ parent() }}
+    {{ module.htmlTags().headTagsToHtml() | raw }}
+{% endblock %}
+
+{% block custom_body_top %}
+    {{ parent() }}
+    {{ module.htmlTags().preBodyTagsToHtml() | raw }}
+{% endblock %}
+
+{% block custom_body_bottom %}
+    {{ parent() }}
+    {{ module.htmlTags().postBodyTagsToHtml() | raw }}
 {% endblock %}

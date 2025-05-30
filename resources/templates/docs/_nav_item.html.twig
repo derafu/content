@@ -7,13 +7,17 @@
                 {% set isActive = is_active_path('docs_doc', {'doc': item.uri}) %}
 
                 {% if hasChildren %}
-                    <a class="nav-link d-flex justify-content-between align-items-center {% if isActive %}text-primary fw-bold{% endif %}"
-                       data-bs-toggle="collapse"
-                       href="#{{ collapseId }}"
-                       role="button"
-                       aria-expanded="{{ isActive ? 'true' : 'false' }}"
-                       aria-controls="{{ collapseId }}">
-                        {{ item.title }}
+                    <a class="nav-link d-flex justify-content-between align-items-center {% if isActive %}text-primary fw-bold{% endif %} {{ item.sidebar_class_name }}"
+                        data-bs-toggle="collapse"
+                        href="#{{ collapseId }}"
+                        role="button"
+                        aria-expanded="{{ isActive ? 'true' : 'false' }}"
+                        aria-controls="{{ collapseId }}"
+                        {% for key, value in item.sidebar_custom_props %}
+                            {{ key }}="{{ value }}"
+                        {% endfor %}
+                    >
+                        {{ item.sidebar_label }}
                         <i class="fa-solid fa-chevron-right {% if isActive %}rotate-90{% endif %}"></i>
                     </a>
 
@@ -21,9 +25,13 @@
                         {{ _self.render_items(item.children, level + 1) }}
                     </div>
                 {% else %}
-                    <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %}"
-                       href="{{ path('docs_doc', {'doc': item.uri}) }}">
-                        {{ item.title }}
+                    <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %} {{ item.sidebar_class_name }}"
+                        href="{{ path('docs_doc', {'doc': item.uri}) }}"
+                        {% for key, value in item.sidebar_custom_props %}
+                            {{ key }}="{{ value }}"
+                        {% endfor %}
+                    >
+                        {{ item.sidebar_label }}
                     </a>
                 {% endif %}
             </li>

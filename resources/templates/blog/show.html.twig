@@ -16,7 +16,7 @@
     {% if not post.hide_table_of_contents %}
         <div class="ps-3 py-4 border-start small mb-4">
             <div class="fw-bold mb-3">On this page</div>
-            <div id="toc-navbar" class="d-flex flex-column gap-2"></div>
+            <div id="toc-navbar" class="d-flex flex-column gap-2" data-toc-min-heading-level="{{ post.toc_min_heading_level }}" data-toc-max-heading-level="{{ post.toc_max_heading_level }}"></div>
         </div>
     {% endif %}
 {% endblock %}
@@ -44,6 +44,13 @@
         author="{{ post.authors | join(', ') }}"
         source="{{ post.date | date('d/m/Y') }}"
     />
+
+    {% if post.deprecated %}
+        <div class="alert alert-warning">
+            <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
+            This post is deprecated since {{ post.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+        </div>
+    {% endif %}
 
     {% if post.data %}
         <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
@@ -86,7 +93,7 @@
                             <i class="fa-solid fa-chevron-left fa-fw"></i>
                             Previous
                         </div>
-                        <div class="text-truncate">{{ previous.title }}</div>
+                        <div class="text-truncate">{{ previous.pagination_label }}</div>
                     </a>
                 {% endif %}
             </div>
@@ -97,10 +104,25 @@
                             Next
                             <i class="fa-solid fa-chevron-right fa-fw"></i>
                         </div>
-                        <div class="text-truncate">{{ next.title }}</div>
+                        <div class="text-truncate">{{ next.pagination_label }}</div>
                     </a>
                 {% endif %}
             </div>
         </div>
     {% endif %}
+{% endblock %}
+
+{% block custom_head %}
+    {{ parent() }}
+    {{ post.htmlTags().headTagsToHtml() | raw }}
+{% endblock %}
+
+{% block custom_body_top %}
+    {{ parent() }}
+    {{ post.htmlTags().preBodyTagsToHtml() | raw }}
+{% endblock %}
+
+{% block custom_body_bottom %}
+    {{ parent() }}
+    {{ post.htmlTags().postBodyTagsToHtml() | raw }}
 {% endblock %}

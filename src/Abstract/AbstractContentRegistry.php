@@ -84,6 +84,14 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
                 continue;
             }
 
+            if (!$item->allowed()) {
+                throw new InvalidArgumentException(sprintf(
+                    'Content item with URI "%s" (slug: %s) is not allowed.',
+                    $uri,
+                    $slug
+                ));
+            }
+
             return $item;
         }
 
@@ -272,6 +280,18 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
      */
     protected function matches(ContentItemInterface $item, array $filters): bool
     {
+        // Check if the item is allowed.
+        if (!$item->allowed()) {
+            return false;
+        }
+
+        // Filter by unlisted.
+        if (empty($filters['id']) && empty($filters['uri'])) {
+            if ($item->unlisted()) {
+                return false;
+            }
+        }
+
         // Filter by type.
         if (!empty($filters['type'])) {
             if ($item->type() !== $filters['type']) {

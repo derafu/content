@@ -25,6 +25,15 @@ function initDocTOC(options = {}) {
         return;
     }
 
+    const minHeadingLevel = navbar.getAttribute('data-toc-min-heading-level');
+    const maxHeadingLevel = navbar.getAttribute('data-toc-max-heading-level');
+    if (minHeadingLevel !== null) {
+        config.startLevel = parseInt(minHeadingLevel);
+    }
+    if (maxHeadingLevel !== null) {
+        config.endLevel = parseInt(maxHeadingLevel);
+    }
+
     const selector = Array.from(
         { length: config.endLevel - config.startLevel + 1 },
         (_, i) => `h${i + config.startLevel}`

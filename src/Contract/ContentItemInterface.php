@@ -251,11 +251,6 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     /**
      * The text used in the document next/previous buttons for this document.
      *
-     * Options:
-     *
-     *   - `sidebar_label`
-     *   - `title`
-     *
      * @return string
      */
     public function pagination_label(): string;
@@ -280,9 +275,9 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     /**
      * The class name of the document sidebar when it's automatically generated.
      *
-     * @return string
+     * @return string|null
      */
-    public function sidebar_class_name(): string;
+    public function sidebar_class_name(): ?string;
 
     /**
      * The custom properties of the document sidebar when it's automatically
@@ -296,6 +291,8 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * Whether to hide the title at the top of the doc. It only hides a title
      * declared through the front matter, and have no effect on a Markdown title
      * at the top of your document.
+     *
+     * NOTE: For now this option is not used.
      *
      * @return bool
      */
@@ -386,6 +383,20 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * @return array
      */
     public function links(): array;
+
+    /**
+     * Get the HTML tags of the content.
+     *
+     * @return ContentHtmlTagsInterface
+     */
+    public function htmlTags(): ContentHtmlTagsInterface;
+
+    /**
+     * Check if the item is allowed.
+     *
+     * @return bool
+     */
+    public function allowed(): bool;
 
     /**
      * Get the content as an array.
