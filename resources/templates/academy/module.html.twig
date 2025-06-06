@@ -56,13 +56,13 @@
                         </div>
                     {% endif %}
 
-                    {% if not module.data %}
-                        {{ ('# ' ~ module.title) | markdown }}
-                    {% else %}
-
-                    {% if module.data %}
-                        {{ module.data | markdown }}
-                    {% endif %}
+                    <div class="derafu-content derafu-content-academy derafu-content-academy-module">
+                        {% if not module.data %}
+                            {{ ('# ' ~ module.title) | markdown }}
+                        {% else %}
+                            {{ module.data | markdown }}
+                        {% endif %}
+                    </div>
 
                     <div class="card mt-4 mb-3">
                         <div class="list-group">

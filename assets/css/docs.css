@@ -1,9 +1,0 @@
-#toc-navbar a {
-    padding-left: 1em;
-    text-decoration: none;
-    border-left: 2px solid transparent;
-}
-
-#toc-navbar a.active, #toc-navbar a:hover {
-    border-left: 2px solid var(--bs-secondary);
-}

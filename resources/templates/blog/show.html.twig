@@ -35,39 +35,43 @@
         </ol>
     </nav>
 
-    {% if post.subtitle %}
-        <h1>{{ post.subtitle }}</h1>
-    {% endif %}
+    <div class="derafu-content derafu-content-blog">
 
-    <twig:block-quote
-        quote="{{ post.description }}"
-        author="{{ post.authors | join(', ') }}"
-        source="{{ post.date | date('d/m/Y') }}"
-    />
+        {% if post.subtitle %}
+            <h1>{{ post.subtitle }}</h1>
+        {% endif %}
 
-    {% if post.deprecated %}
-        <div class="alert alert-warning">
-            <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-            This post is deprecated since {{ post.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
-        </div>
-    {% endif %}
+        <twig:block-quote
+            content="{{ post.description }}"
+            author="{{ post.authors | join(', ') }}"
+            note="{{ post.date | date('d/m/Y') }}"
+        />
 
-    {% if post.data %}
-        <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
-            {{ post.data | markdown }}
-        </div>
-    {% endif %}
+        {% if post.deprecated %}
+            <div class="alert alert-warning">
+                <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
+                This post is deprecated since {{ post.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+            </div>
+        {% endif %}
 
-    {% if post.video %}
-        <div class="plyr__video-embed ratio ratio-16x9" id="player">
-            <iframe
-                src="{{ post.video }}"
-                allowfullscreen
-                allowtransparency
-                allow="autoplay"
-            ></iframe>
-        </div>
-    {% endif %}
+        {% if post.data %}
+            <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
+                {{ post.data | markdown }}
+            </div>
+        {% endif %}
+
+        {% if post.video %}
+            <div class="plyr__video-embed ratio ratio-16x9" id="player">
+                <iframe
+                    src="{{ post.video }}"
+                    allowfullscreen
+                    allowtransparency
+                    allow="autoplay"
+                ></iframe>
+            </div>
+        {% endif %}
+
+    </div>
 
     <hr class="mt-5 mb-1">
     <div class="row text-muted small mb-5">

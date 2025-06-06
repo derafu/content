@@ -1,0 +1,21 @@
+#toc-navbar a {
+    padding-left: 1em;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+}
+
+#toc-navbar a.active, #toc-navbar a:hover {
+    border-left: 2px solid var(--bs-secondary);
+}
+
+.derafu-content p:has(> img) {
+    text-align: center;
+}
+
+.derafu-content img {
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    margin: 20px 0;
+}

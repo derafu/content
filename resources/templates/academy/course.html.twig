@@ -7,10 +7,10 @@
     <section id="hero">
         <twig:block-hero
             size="small"
+            align="left"
             background="{{ course.image }}"
             title="{{ course.title }}"
             subtitle="{{ course.description }}"
-            align="left"
         />
     </section>
 {% endblock %}
@@ -171,7 +171,9 @@
                     {% endif %}
 
                     {% if course.data %}
-                        {{ course.data | markdown }}
+                        <div class="derafu-content derafu-content-academy derafu-content-academy-course">
+                            {{ course.data | markdown }}
+                        </div>
                     {% endif %}
 
                     <twig:block-tabs
