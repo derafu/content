@@ -1,7 +1,7 @@
 parameters:
     derafu.content.config:
         title: 'Derafu Content'
-        url: 'https://www.derafu.org/content'
+        url: 'https://www.derafu.dev/content'
         plugins:
             academy: ~
             api: ~
