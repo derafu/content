@@ -68,6 +68,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function extension(): string;
 
     /**
+     * Check if the content is a Markdown file.
+     *
+     * @return bool
+     */
+    public function isMarkdown(): bool;
+
+    /**
      * Calculate the checksum of the file content.
      *
      * @return string

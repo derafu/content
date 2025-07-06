@@ -59,6 +59,20 @@ abstract class AbstractContentItem implements ContentItemInterface
     private ContentSplFileObject $file;
 
     /**
+     * Name of the content.
+     *
+     * @var string
+     */
+    private string $name;
+
+    /**
+     * Extension of the content.
+     *
+     * @var string
+     */
+    private string $extension;
+
+    /**
      * Raw content of the content.
      *
      * @var string
@@ -382,7 +396,11 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     public function name(): string
     {
-        return $this->info()->getBasename('.' . $this->extension());
+        if (!isset($this->name)) {
+            $this->name = $this->info()->getBasename('.' . $this->extension());
+        }
+
+        return $this->name;
     }
 
     /**
@@ -390,7 +408,28 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     public function extension(): string
     {
-        return $this->info()->getExtension();
+        if (!isset($this->extension)) {
+            $extension = $this->info()->getExtension();
+
+            if ($extension === 'twig') {
+                $basename = $this->info()->getBasename();
+                if (str_ends_with($basename, '.html.twig')) {
+                    $extension = 'html.twig';
+                }
+            }
+
+            $this->extension = $extension;
+        }
+
+        return $this->extension;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function isMarkdown(): bool
+    {
+        return $this->extension() === 'md' || $this->extension() === 'markdown';
     }
 
     /**

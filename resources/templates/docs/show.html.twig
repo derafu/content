@@ -21,6 +21,18 @@
         </ol>
     </nav>
 
+    {% if doc.metadata.show_title or doc.metadata.show_description %}
+        {% set auxMarkdown = '' %}
+        {% if doc.metadata.show_title %}
+            {% set auxMarkdown = auxMarkdown ~ '# ' ~ doc.title ~ "\n" %}
+        {% endif %}
+        {% if doc.metadata.show_description %}
+            {% set auxMarkdown = auxMarkdown ~ doc.description ~ "\n" %}
+        {% endif %}
+        {{ auxMarkdown | markdown }}
+        <div class="mb-4"></div>
+    {% endif %}
+
     {% if doc.deprecated %}
         <div class="alert alert-warning">
             <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
@@ -34,7 +46,11 @@
                 <div class="row">
                     <div class="col-md-9">
                         <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
-                            {{ doc.data | markdown }}
+                            {% if doc.isMarkdown %}
+                                {{ doc.data | markdown }}
+                            {% else %}
+                                {{ doc.data | twig }}
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -45,7 +61,11 @@
                     </div>
                 </div>
             {% else %}
-                {{ doc.data | markdown }}
+                {% if doc.isMarkdown %}
+                    {{ doc.data | markdown }}
+                {% else %}
+                    {{ doc.data | twig }}
+                {% endif %}
             {% endif %}
         </div>
     {% endif %}
@@ -93,6 +113,16 @@
                     </a>
                 </div>
             {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if doc.metadata.show_source %}
+        <div class="position-relative my-5 rounded overflow-hidden border">
+            <div class="bg-dark text-white px-3 py-2 border-bottom small font-monospace">
+                <i class="fa-solid fa-file-lines fa-fw me-2"></i>
+                {{ doc.name ~ '.' ~ doc.extension }}
+            </div>
+            <pre class="m-0 rounded-0"><code class="line-numbers {{ doc.isMarkdown ? 'language-markdown' : 'language-twig' }}">{{ doc.data | trim | e }}</code></pre>
         </div>
     {% endif %}
 
