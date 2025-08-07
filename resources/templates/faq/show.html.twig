@@ -22,14 +22,14 @@
     </nav>
 
     {% if faq.deprecated %}
-        <div class="alert alert-warning">
+        <div class="alert alert-warning mb-4">
             <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
             This FAQ is deprecated since {{ faq.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
         </div>
     {% endif %}
 
     {% if faq.data %}
-        <div class="derafu-content derafu-content-faq">
+        <div class="derafu-content derafu-content-faq mb-4">
             {% if not faq.hide_table_of_contents %}
                 <div class="row">
                     <div class="col-md-9">
@@ -51,7 +51,7 @@
     {% endif %}
 
     {% if faq.video %}
-        <div class="plyr__video-embed ratio ratio-16x9" id="player">
+        <div class="plyr__video-embed ratio ratio-16x9 mb-4" id="player">
             <iframe
                 src="{{ faq.video }}"
                 allowfullscreen
@@ -62,7 +62,7 @@
     {% endif %}
 
     {% if faq.metadata.show_children %}
-        <div class="row my-4">
+        <div class="row mb-4">
             {% for child in faq.children %}
                 <div class="col-md-6">
                     <a href="{{ path('faq_question', {'question': child.uri}) }}" class="btn btn-outline-primary w-100 text-start p-4 mb-4">
