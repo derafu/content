@@ -102,3 +102,15 @@ faq_tag:
 faq_question:
   path: /faq/{question:.+}
   handler: 'Derafu\Content\Plugin\Faq\FaqController::show'
+
+# ------------------------------------------------------------------------------
+# Search
+# ------------------------------------------------------------------------------
+
+search:
+  path: /search
+  handler: 'Derafu\Content\Plugin\Search\SearchController::index'
+
+search_api:
+  path: /api/search.json
+  handler: 'Derafu\Content\Plugin\Search\SearchController::api_index'

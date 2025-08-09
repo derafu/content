@@ -1,7 +1,7 @@
 parameters:
     derafu.content.config:
         title: 'Derafu Content'
-        url: 'https://www.derafu.dev/content'
+        url: 'https://www.derafu.dev'
         plugins:
             academy: ~
             api: ~
@@ -9,6 +9,7 @@ parameters:
             docs: ~
             faq: ~
             # pages: ~
+            # search: ~
             # sitemap: ~
             storage: ~
 
@@ -51,6 +52,9 @@ services:
         public: true
 
     Derafu\Content\Plugin\Faq\FaqController:
+        public: true
+
+    Derafu\Content\Plugin\Search\SearchController:
         public: true
 
     Derafu\Content\Plugin\Storage\StorageController:

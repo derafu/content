@@ -1,0 +1,192 @@
+{% extends 'layouts/default.html.twig' %}
+
+{% block title %}Search{% endblock %}
+
+{% block content %}
+<twig:block-hero
+    size="small"
+    background="/img/content/search/search-cover.png"
+    title="Search Content"
+    subtitle="Find what you need on our platform."
+    align="left"
+/>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <!-- Search Form -->
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-4">
+                    <form action="{{ path('search') }}" method="GET" role="search">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fa-solid fa-search text-muted"></i>
+                            </span>
+                            <input
+                                type="search"
+                                class="form-control border-start-0 ps-0"
+                                name="q"
+                                placeholder="What are you looking for?"
+                                value="{{ query }}"
+                                required
+                                autocomplete="off"
+                            >
+                            <button class="btn btn-primary px-4" type="submit">
+                                <i class="fa-solid fa-search me-2"></i>
+                                Search
+                            </button>
+                        </div>
+
+                        <!-- Search suggestions -->
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fa-solid fa-lightbulb me-1"></i>
+                                We will help you find what you need: courses, articles, documentation, frequently asked questions.
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results section (if there's a search query) -->
+
+    {% if query %}
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-10">
+            <div class="d-flex align-items-center mb-4">
+                <h2 class="h4 mb-0 me-3">
+                    Results for: <span class="text-primary">"{{ query }}"</span>
+                </h2>
+                <div class="badge bg-light text-dark">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    Real-time search
+                </div>
+            </div>
+
+            <!-- Search results -->
+            {% if results is defined and results|length > 0 %}
+                {% for result in results %}
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="flex-grow-1">
+                                    <h3 class="card-title h5 mb-2">
+                                        <a href="{{ result.url }}" class="text-decoration-none text-dark" target="_blank">
+                                            {{ result.title }}
+                                        </a>
+                                    </h3>
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        {% if result.type == 'blog' %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fa-solid fa-blog me-1"></i>
+                                                Blog
+                                            </span>
+                                        {% elseif result.type == 'docs' %}
+                                            <span class="badge bg-info">
+                                                <i class="fa-solid fa-book me-1"></i>
+                                                Documentation
+                                            </span>
+                                        {% elseif result.type == 'academy' %}
+                                            <span class="badge bg-primary">
+                                                <i class="fa-solid fa-graduation-cap me-1"></i>
+                                                Academy
+                                            </span>
+                                        {% elseif result.type == 'faq' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fa-solid fa-question-circle me-1"></i>
+                                                FAQ
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">
+                                                <i class="fa-solid fa-file me-1"></i>
+                                                {{ result.type|title }}
+                                            </span>
+                                        {% endif %}
+
+                                        {% if result.score is defined %}
+                                            <small class="text-success">
+                                                <i class="fa-solid fa-bullseye me-1"></i>
+                                                {{ (result.score * 100)|round(1) }}% relevance
+                                            </small>
+                                        {% endif %}
+
+                                        {% if result.modified is defined %}
+                                            <small class="text-muted">
+                                                <i class="fa-regular fa-calendar me-1"></i>
+                                                {{ result.modified|date('d/m/Y') }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <a href="{{ result.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="fa-solid fa-external-link-alt me-1"></i>
+                                        View
+                                    </a>
+                                </div>
+                            </div>
+
+                            {% if result.data is defined and result.data %}
+                                <p class="card-text text-muted mb-3">
+                                    {{ result.data|length > 200 ? result.data|slice(0, 200) ~ '...' : result.data }}
+                                </p>
+                            {% endif %}
+
+                            {% if result.url is defined %}
+                                <a href="{{ result.url }}" class="small text-muted" target="_blank">
+                                    <i class="fa-solid fa-link me-1"></i>
+                                    {{ result.url }}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- Results statistics -->
+                <div class="card border-0 bg-light mt-4">
+                    <div class="card-body text-center py-3">
+                        <small class="text-muted">
+                            <i class="fa-solid fa-search me-1"></i>
+                            Found <strong>{{ results|length }}</strong> result{{ results|length != 1 ? 's' : '' }}
+                            for "<strong>{{ query }}</strong>"
+                        </small>
+                    </div>
+                </div>
+            {% else %}
+                <!-- No results -->
+                <div class="card border-0">
+                    <div class="card-body text-center py-5">
+                        <i class="fa-solid fa-search text-muted mb-3" style="font-size: 2rem;"></i>
+                        <h4 class="text-muted mb-3">No results found</h4>
+                        <p class="text-muted mb-4">
+                            We couldn't find content matching "<strong>{{ query }}</strong>"
+                        </p>
+
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="alert alert-light border">
+                                    <h6 class="alert-heading">
+                                        <i class="fa-solid fa-lightbulb me-2"></i>
+                                        Suggestions to improve your search:
+                                    </h6>
+                                    <ul class="mb-0 text-start">
+                                        <li>Check the spelling of words.</li>
+                                        <li>Try more general terms.</li>
+                                        <li>Use different keywords.</li>
+                                        <li>Try synonyms.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
