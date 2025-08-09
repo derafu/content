@@ -29,13 +29,15 @@
         "derafu/renderer": "dev-main",
         "derafu/support": "dev-main",
         "derafu/config": "dev-main",
-        "derafu/http": "dev-main"
+        "derafu/http": "dev-main",
+        "psr/http-client": "^1.0"
     },
     "require-dev": {
         "ext-xdebug": "*",
         "friendsofphp/php-cs-fixer": "^3.63",
         "phpstan/phpstan": "^1.12",
-        "phpunit/phpunit": "^11.4"
+        "phpunit/phpunit": "^11.4",
+        "guzzlehttp/guzzle": "^7.9"
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",
