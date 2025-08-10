@@ -78,6 +78,7 @@ class SearchController
     public function llm_query(Request $request): array
     {
         $query = $request->query('q', '');
+        $html = $request->query('html', false);
 
         if (empty($query)) {
             throw new InvalidArgumentException('Query is required.', 400);
@@ -94,7 +95,12 @@ class SearchController
             'choices' => [
                 [
                     'delta' => [
-                        'content' => $llmResponse,
+                        'content' => $html
+                            ? $this->renderer->render('search/llm-response.html.twig', [
+                                'content' => $llmResponse,
+                            ])
+                            : $llmResponse
+                        ,
                     ],
                 ],
             ],

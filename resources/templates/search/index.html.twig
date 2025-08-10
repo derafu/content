@@ -231,7 +231,7 @@ async function generateLLMResponse(query, targetElementId) {
     targetElement.style.display = 'block';
 
     try {
-        const response = await fetch(`${LLM_PROXY_URL}?q=${encodeURIComponent(query)}`, {
+        const response = await fetch(`${LLM_PROXY_URL}?q=${encodeURIComponent(query)}&html=1`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -259,7 +259,7 @@ async function generateLLMResponse(query, targetElementId) {
                         <h5 class="mb-0">AI Assistant</h5>
                     </div>
                     <div class="ai-response-content">
-                        ${content.replace(/\n/g, '<br>')}
+                        ${content.replace(/\n/g, '')}
                     </div>
                 </div>
                 <div class="card-footer">
