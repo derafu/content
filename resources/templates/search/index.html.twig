@@ -53,6 +53,13 @@
     <!-- Results section (if there's a search query) -->
 
     {% if query %}
+
+    <div class="row justify-content-center my-5">
+        <div class="col-lg-10">
+            <div id="llm-response">HELLO</div>
+        </div>
+    </div>
+
     <div class="row justify-content-center mt-5">
         <div class="col-lg-10">
             <div class="d-flex align-items-center mb-4">
@@ -189,4 +196,108 @@
     {% endif %}
 </div>
 
+{% endblock %}
+
+{% block javascripts %}
+<script>
+// Configuration for LLM proxy endpoint.
+const LLM_PROXY_URL = "{{ path('search_llm_query') }}";
+
+// Generate LLM response for search queries.
+async function generateLLMResponse(query, targetElementId) {
+    const targetElement = document.getElementById(targetElementId);
+
+    if (!targetElement) {
+        console.error('Target element not found.');
+        return;
+    }
+
+    // Clear previous content and show loading state.
+    targetElement.innerHTML = `
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">AI Assistant</h5>
+                        <small class="text-muted">Generating response for your search...</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    targetElement.style.display = 'block';
+
+    try {
+        const response = await fetch(`${LLM_PROXY_URL}?q=${encodeURIComponent(query)}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        const content = data.choices?.[0]?.delta?.content || 'No response generated.';
+
+        // Update the display with the response.
+        targetElement.innerHTML = `
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-robot text-primary me-2"></i>
+                        <h5 class="mb-0">AI Assistant</h5>
+                    </div>
+                    <div class="ai-response-content">
+                        ${content.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span class="text-muted small">
+                        <i class="fa-solid fa-exclamation-triangle text-warning me-1"></i>
+                        IA responses can be inaccurate.
+                    </span>
+                </div>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error generating LLM response:', error);
+        targetElement.innerHTML = `
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-exclamation-triangle text-warning me-2"></i>
+                        <h5 class="mb-0">AI Assistant</h5>
+                    </div>
+                    <div class="alert alert-warning mb-0">
+                        <strong>Unable to generate AI response.</strong><br>
+                        <small class="text-muted">Error: ${error.message}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Get the search query from Twig template.
+const searchQuery = "{{ query|e('js') }}"; // Escape for JavaScript.
+
+// Initialize LLM response when page loads.
+document.addEventListener('DOMContentLoaded', function() {
+    if (searchQuery && searchQuery.trim() !== '') {
+        generateLLMResponse(searchQuery, 'llm-response');
+    }
+});
+</script>
 {% endblock %}

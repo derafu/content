@@ -70,6 +70,38 @@ class SearchController
     }
 
     /**
+     * LLM proxy endpoint to handle Open WebUI requests.
+     *
+     * @param Request $request Request.
+     * @return array JSON response.
+     */
+    public function llm_query(Request $request): array
+    {
+        $query = $request->query('q', '');
+
+        if (empty($query)) {
+            throw new InvalidArgumentException('Query is required.', 400);
+        }
+
+        $plugin = $this->contentService->plugin('search');
+        assert($plugin instanceof SearchPlugin);
+
+        $llm = $plugin->llm();
+
+        $llmResponse = $llm->query($query);
+
+        return [
+            'choices' => [
+                [
+                    'delta' => [
+                        'content' => $llmResponse,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Search the content.
      *
      * @param string $query Query.

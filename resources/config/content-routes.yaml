@@ -114,3 +114,7 @@ search:
 search_api:
   path: /api/search.json
   handler: 'Derafu\Content\Plugin\Search\SearchController::api_index'
+
+search_llm_query:
+  path: /api/search/llm.json
+  handler: 'Derafu\Content\Plugin\Search\SearchController::llm_query'

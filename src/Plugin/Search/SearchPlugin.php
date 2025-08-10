@@ -52,6 +52,23 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
             'types' => 'string',
             'required' => false,
         ],
+
+        // LLM configuration.
+        'llm_url' => [
+            'types' => 'string',
+            'required' => false,
+        ],
+
+        'llm_model' => [
+            'types' => 'string',
+            'required' => false,
+            'default' => 'libredte',
+        ],
+
+        'llm_api_key' => [
+            'types' => 'string',
+            'required' => false,
+        ],
     ];
 
     /**
@@ -60,6 +77,13 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
      * @var SearchEngine
      */
     private SearchEngine $engine;
+
+    /**
+     * LLM client for AI responses.
+     *
+     * @var SearchLlm
+     */
+    private SearchLlm $llm;
 
     /**
      * Get the engine for the search.
@@ -77,6 +101,24 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
         }
 
         return $this->engine;
+    }
+
+    /**
+     * Get the LLM client for AI responses.
+     *
+     * @return SearchLlm|null
+     */
+    public function llm(): ?SearchLlm
+    {
+        if (!isset($this->llm) && isset($this->options['llm_url'])) {
+            $this->llm = new SearchLlm(
+                $this->options['llm_url'],
+                $this->options['llm_model'] ?? 'libredte',
+                $this->options['llm_api_key'] ?? null
+            );
+        }
+
+        return $this->llm ?? null;
     }
 
     /**
