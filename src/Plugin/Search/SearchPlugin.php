@@ -66,7 +66,7 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
         ],
 
         'llm_api_key' => [
-            'types' => 'string',
+            'types' => ['string', 'null'],
             'required' => false,
         ],
     ];
