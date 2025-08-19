@@ -93,7 +93,8 @@
             SwaggerUIBundle({
                 url: "{{ doc.metadata.openapi }}",
                 dom_id: '#swagger-ui',
-                defaultModelsExpandDepth: -1
+                defaultModelsExpandDepth: -1,
+                deepLinking: true,
             });
         </script>
     {% endif %}
