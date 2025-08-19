@@ -45,6 +45,13 @@ abstract class AbstractContentItem implements ContentItemInterface
     private const READING_SPEED = 200;
 
     /**
+     * Minimum length of the content for indexing.
+     *
+     * @var int
+     */
+    private const MIN_CONTENT_LENGTH_FOR_INDEXING = 100;
+
+    /**
      * Representation of the content file info.
      *
      * @var ContentSplFileInfo
@@ -219,9 +226,23 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * Deprecated date of the content.
      *
-     * @var DateTimeInterface|false
+     * @var DateTimeInterface|bool
      */
-    private DateTimeInterface|false $deprecated;
+    private DateTimeInterface|bool $deprecated;
+
+    /**
+     * Is the content indexable?
+     *
+     * @var bool
+     */
+    private bool $indexable;
+
+    /**
+     * Is the content searchable?
+     *
+     * @var bool
+     */
+    private bool $searchable;
 
     /**
      * Level of the content.
@@ -824,6 +845,8 @@ abstract class AbstractContentItem implements ContentItemInterface
                     $deprecated = new DateTime($deprecated);
                 } elseif (is_int($deprecated)) {
                     $deprecated = new DateTime('@' . $deprecated);
+                } elseif ($deprecated === true) {
+                    $deprecated = new DateTime('@' . $this->info()->getMTime());
                 }
             }
 
@@ -831,6 +854,45 @@ abstract class AbstractContentItem implements ContentItemInterface
         }
 
         return $this->deprecated ?: null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function indexable(): bool
+    {
+        if (!isset($this->indexable)) {
+            $indexable = $this->metadata('indexable');
+
+            if ($indexable === null) {
+                $this->indexable = !($this->draft() || $this->unlisted() || $this->deprecated());
+                if ($this->indexable && mb_strlen($this->data()) < self::MIN_CONTENT_LENGTH_FOR_INDEXING) {
+                    $this->indexable = false;
+                }
+            } else {
+                $this->indexable = $indexable;
+            }
+        }
+
+        return $this->indexable;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function searchable(): bool
+    {
+        if (!isset($this->searchable)) {
+            $searchable = $this->metadata('searchable');
+
+            if ($searchable === null) {
+                $this->searchable = !($this->draft() || $this->unlisted() || $this->deprecated());
+            } else {
+                $this->searchable = $searchable;
+            }
+        }
+
+        return $this->searchable;
     }
 
     /**
@@ -1176,6 +1238,8 @@ abstract class AbstractContentItem implements ContentItemInterface
             'date' => $this->date()->format('Y-m-d'),
             'last_update' => $this->last_update()->format('Y-m-d'),
             'deprecated' => $this->deprecated()?->format('Y-m-d'),
+            'indexable' => $this->indexable(),
+            'searchable' => $this->searchable(),
             'metadata' => $this->metadata(),
             'data' => $this->data(),
             '_links' => $this->links(),

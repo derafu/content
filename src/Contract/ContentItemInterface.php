@@ -249,6 +249,20 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function deprecated(): ?DateTimeInterface;
 
     /**
+     * Check if the content is indexable.
+     *
+     * @return bool
+     */
+    public function indexable(): bool;
+
+    /**
+     * Check if the content is searchable.
+     *
+     * @return bool
+     */
+    public function searchable(): bool;
+
+    /**
      * Get the level of the content.
      *
      * @return int

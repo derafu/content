@@ -357,6 +357,20 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             }
         }
 
+        // Filter by indexable.
+        if (isset($filters['indexable'])) {
+            if ($item->indexable() !== (bool) $filters['indexable']) {
+                return false;
+            }
+        }
+
+        // Filter by searchable.
+        if (isset($filters['searchable'])) {
+            if ($item->searchable() !== (bool) $filters['searchable']) {
+                return false;
+            }
+        }
+
         return true;
     }
 
