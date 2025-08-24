@@ -2,7 +2,7 @@
     "name": "derafu/content",
     "description": "Derafu: Content - Where knowledge becomes product",
     "type": "library",
-    "homepage": "https://www.derafu.dev/docs/data/content",
+    "homepage": "https://www.derafu.dev/docs/ui/content",
     "license": "MIT",
     "authors": [
         {
