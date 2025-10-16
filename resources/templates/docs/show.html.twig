@@ -89,6 +89,14 @@
         <div id="swagger-ui" class="mb-4"></div>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@latest/swagger-ui.css">
         <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@latest/swagger-ui-bundle.js"></script>
+        <style>
+            /* Remove the text-shadow that causes the blurry effect */
+            #swagger-ui code[class*=language-],
+            #swagger-ui pre[class*=language-] {
+                text-shadow: none !important;
+                color: #ffffff !important;
+            }
+        </style>
         <script>
             SwaggerUIBundle({
                 url: "{{ doc.metadata.openapi }}",
