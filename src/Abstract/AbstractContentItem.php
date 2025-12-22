@@ -196,6 +196,13 @@ abstract class AbstractContentItem implements ContentItemInterface
     private int $time;
 
     /**
+     * Time formatted of the content.
+     *
+     * @var string
+     */
+    private string $time_formatted;
+
+    /**
      * Draft of the content.
      *
      * @var bool
@@ -751,6 +758,32 @@ abstract class AbstractContentItem implements ContentItemInterface
         }
 
         return $this->time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function time_formatted(): string
+    {
+        if (!isset($this->time_formatted)) {
+            $time = $this->time();
+            $hours = floor($time / 60);
+            $minutes = $time % 60;
+
+            $this->time_formatted = '';
+
+            if ($hours) {
+                $this->time_formatted .= $hours . ' h';
+            }
+
+            if ($minutes) {
+                $this->time_formatted .= ' ' . $minutes . ' m';
+            }
+
+            $this->time_formatted = trim($this->time_formatted);
+        }
+
+        return $this->time_formatted;
     }
 
     /**

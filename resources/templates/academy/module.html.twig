@@ -71,10 +71,7 @@
                                     <i class="{{ lesson.icon }} me-2"></i>
                                     {{ lesson.title }}
                                     <span class="badge bg-primary-subtle float-end">
-                                        {% if lesson.time > 60 %}
-                                            {{ (lesson.time / 60)|number_format(0) }} hours
-                                        {% endif %}
-                                        {{ (lesson.time % 60) }} minutes
+                                        {{ lesson.time_formatted }}
                                     </span>
                                 </a>
                             {% endfor %}

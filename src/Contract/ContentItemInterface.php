@@ -211,6 +211,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function time(): int;
 
     /**
+     * Get the time required to read or watch the content in a formatted string.
+     *
+     * @return string
+     */
+    public function time_formatted(): string;
+
+    /**
      * Draft documents will only be available during development.
      *
      * @return bool

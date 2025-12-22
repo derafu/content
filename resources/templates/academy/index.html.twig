@@ -50,10 +50,7 @@
                             </div>
                             <div class="card-footer d-flex justify-content-between text-muted small">
                                 <span>
-                                    {% if course.time > 60 %}
-                                        {{ (course.time / 60)|number_format(0) }} hours
-                                    {% endif %}
-                                    {{ (course.time % 60) }} minutes
+                                    {{ course.time_formatted }}
                                 </span>
                                 <span>{{ course.lessons|length }} lessons</span>
                             </div>
