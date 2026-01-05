@@ -18,7 +18,7 @@
     </head>
     <body>
 
-        {{ faq.data | markdown }}
+        {{ faq.data | markdown(has_twig: faq.has_twig) }}
 
         <footer>
             Last updated on {{ faq.last_update | date('d/m/Y') }}

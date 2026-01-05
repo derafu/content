@@ -20,7 +20,7 @@
 
         <h1>{{ module.title }}</h1>
 
-        {{ module.data | markdown }}
+        {{ module.data | markdown(has_twig: module.has_twig) }}
 
         <footer>
             Last updated on {{ module.last_update | date('d/m/Y') }}

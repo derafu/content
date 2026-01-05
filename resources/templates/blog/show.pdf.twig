@@ -37,7 +37,7 @@
             </tr>
         </table>
 
-        {{ post.data | markdown }}
+        {{ post.data | markdown(has_twig: post.has_twig) }}
 
         <footer>
             Last updated on {{ post.last_update | date('d/m/Y') }}

@@ -20,7 +20,7 @@
 
         <h1>{{ course.title }}</h1>
 
-        {{ course.data | markdown }}
+        {{ course.data | markdown(has_twig: course.has_twig) }}
 
         <footer>
             Last updated on {{ course.last_update | date('d/m/Y') }}

@@ -112,6 +112,13 @@ abstract class AbstractContentItem implements ContentItemInterface
     private string $data;
 
     /**
+     * Indicate if the content data has Twig code.
+     *
+     * @var bool
+     */
+    private bool $has_twig;
+
+    /**
      * URI of the content.
      *
      * @var string
@@ -515,6 +522,21 @@ abstract class AbstractContentItem implements ContentItemInterface
         }
 
         return $this->data;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function has_twig(): bool
+    {
+        if (!isset($this->has_twig)) {
+            $this->has_twig = $this->metadata('has_twig')
+                // Supported by default Twig components.
+                ?? str_contains($this->data(), '<twig:')
+            ;
+        }
+
+        return $this->has_twig;
     }
 
     /**
@@ -1275,6 +1297,7 @@ abstract class AbstractContentItem implements ContentItemInterface
             'searchable' => $this->searchable(),
             'metadata' => $this->metadata(),
             'data' => $this->data(),
+            'has_twig' => $this->has_twig(),
             '_links' => $this->links(),
         ];
     }

@@ -47,7 +47,7 @@
                     <div class="col-md-9">
                         <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
                             {% if doc.isMarkdown %}
-                                {{ doc.data | markdown }}
+                                {{ doc.data | markdown(has_twig: doc.has_twig) }}
                             {% else %}
                                 {{ doc.data | twig }}
                             {% endif %}
@@ -62,7 +62,7 @@
                 </div>
             {% else %}
                 {% if doc.isMarkdown %}
-                    {{ doc.data | markdown }}
+                    {{ doc.data | markdown(has_twig: doc.has_twig) }}
                 {% else %}
                     {{ doc.data | twig }}
                 {% endif %}

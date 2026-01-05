@@ -18,7 +18,7 @@
     </head>
     <body>
 
-        {{ lesson.data | markdown }}
+        {{ lesson.data | markdown(has_twig: lesson.has_twig) }}
 
         <footer>
             Last updated on {{ lesson.last_update | date('d/m/Y') }}

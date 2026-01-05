@@ -166,7 +166,7 @@
 
                     {% if course.data %}
                         <div class="derafu-content derafu-content-academy derafu-content-academy-course">
-                            {{ course.data | markdown }}
+                            {{ course.data | markdown(has_twig: course.has_twig) }}
                         </div>
                     {% endif %}
 

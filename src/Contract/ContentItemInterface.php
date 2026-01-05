@@ -111,6 +111,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function data(): string;
 
     /**
+     * Check if the content data has Twig code.
+     *
+     * @return bool
+     */
+    public function has_twig(): bool;
+
+    /**
      * The unique identifier of the content item.
      *
      * @return string

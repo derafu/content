@@ -56,7 +56,7 @@
 
         {% if post.data %}
             <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
-                {{ post.data | markdown }}
+                {{ post.data | markdown(has_twig: post.has_twig) }}
             </div>
         {% endif %}
 

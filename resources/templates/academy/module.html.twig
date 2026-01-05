@@ -60,7 +60,7 @@
                         {% if not module.data %}
                             {{ ('# ' ~ module.title) | markdown }}
                         {% else %}
-                            {{ module.data | markdown }}
+                            {{ module.data | markdown(has_twig: module.has_twig) }}
                         {% endif %}
                     </div>
 

@@ -75,7 +75,7 @@
                                 <div class="row">
                                     <div class="col-md-9">
                                         <div data-bs-spy="scroll" data-bs-target="#toc-navbar" id="toc-content">
-                                            {{ lesson.data | markdown }}
+                                            {{ lesson.data | markdown(has_twig: lesson.has_twig) }}
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -86,7 +86,7 @@
                                     </div>
                                 </div>
                             {% else %}
-                                {{ lesson.data | markdown }}
+                                {{ lesson.data | markdown(has_twig: lesson.has_twig) }}
                             {% endif %}
                         </div>
                     {% endif %}

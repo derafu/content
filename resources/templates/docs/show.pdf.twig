@@ -18,7 +18,7 @@
     </head>
     <body>
 
-        {{ doc.data | markdown }}
+        {{ doc.data | markdown(has_twig: doc.has_twig) }}
 
         <footer>
             Last updated on {{ doc.last_update | date('d/m/Y') }}
