@@ -1256,7 +1256,7 @@ abstract class AbstractContentItem implements ContentItemInterface
             return true;
         }
 
-        if (isset($_SERVER['APP_ENV']) && $_SERVER['APP_ENV'] === 'dev') {
+        if (isset($_SERVER['APP_ENV']) && $_SERVER['APP_ENV'] === 'local') {
             return true;
         }
 
