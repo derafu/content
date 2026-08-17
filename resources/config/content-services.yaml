@@ -8,6 +8,7 @@ parameters:
             blog: ~
             docs: ~
             faq: ~
+            # mcp: ~
             # pages: ~
             # search: ~
             # sitemap: ~
@@ -52,6 +53,9 @@ services:
         public: true
 
     Derafu\Content\Plugin\Faq\FaqController:
+        public: true
+
+    Derafu\Content\Plugin\Mcp\McpController:
         public: true
 
     Derafu\Content\Plugin\Search\SearchController:

@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Search;
 
+use Derafu\Content\Plugin\Search\Exception\SearchUpstreamException;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Client\ClientInterface as HttpClientInterface;
-use RuntimeException;
 use Throwable;
 
 /**
@@ -73,46 +73,77 @@ class SearchEngine
      *
      * @param string $query The search query to execute.
      * @return array<mixed> The search results from the engine.
-     * @throws RuntimeException If the HTTP request fails or response is invalid.
+     * @throws SearchUpstreamException If the HTTP request fails or the
+     * response is invalid.
      */
     public function query(string $query): array
     {
         $url = $this->resolveUrl($query);
 
         try {
-            // Create PSR-7 request.
             $request = new Request('GET', $url, [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
             ]);
 
-            // Send request using PSR-18 client.
             $response = $this->httpClient->sendRequest($request);
-
-            $responseBody = $response->getBody()->getContents();
-            $decodedResponse = json_decode($responseBody, true);
-
-            if ($decodedResponse === null) {
-                throw new RuntimeException(
-                    'Invalid JSON response from search engine.'
-                );
-            }
-
-            if (!isset($decodedResponse['results'])) {
-                throw new RuntimeException(
-                    'Response does not contain results field.'
-                );
-            }
-
-            return $decodedResponse['results'];
-
         } catch (Throwable $e) {
-            throw new RuntimeException(
-                "HTTP request failed: {$e->getMessage()}.",
-                $e->getCode(),
-                $e
-            );
+            throw new SearchUpstreamException(sprintf(
+                'The search engine at "%s" could not be reached: %s.',
+                $url,
+                $e->getMessage()
+            ), $e);
         }
+
+        $responseBody = $response->getBody()->getContents();
+
+        if ($response->getStatusCode() !== 200) {
+            $detail = $this->extractErrorDetail($responseBody);
+
+            throw new SearchUpstreamException(sprintf(
+                'The search engine at "%s" returned HTTP %d%s.',
+                $url,
+                $response->getStatusCode(),
+                $detail !== null ? sprintf(': %s', $detail) : ''
+            ));
+        }
+
+        $decodedResponse = json_decode($responseBody, true);
+
+        if (!is_array($decodedResponse) || !isset($decodedResponse['results'])) {
+            throw new SearchUpstreamException(sprintf(
+                'The search engine at "%s" returned a response without a '
+                    . '"results" field.',
+                $url
+            ));
+        }
+
+        return $decodedResponse['results'];
+    }
+
+    /**
+     * Extract a human-readable error detail from the response body of a
+     * failed request, trying common error response shapes.
+     *
+     * @param string $responseBody Raw response body.
+     * @return string|null The extracted detail, or null if none could be
+     * extracted.
+     */
+    private function extractErrorDetail(string $responseBody): ?string
+    {
+        $errorData = json_decode($responseBody, true);
+
+        if (!is_array($errorData)) {
+            return null;
+        }
+
+        foreach (['error', 'detail', 'message'] as $key) {
+            if (isset($errorData[$key]) && is_string($errorData[$key])) {
+                return $errorData[$key];
+            }
+        }
+
+        return null;
     }
 
     /**

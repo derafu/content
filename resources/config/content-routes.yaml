@@ -19,6 +19,15 @@ content_api:
   handler: 'Derafu\Content\Plugin\Api\ApiController::index'
 
 # ------------------------------------------------------------------------------
+# MCP (Model Context Protocol)
+# ------------------------------------------------------------------------------
+
+content_mcp:
+  path: /api/mcp
+  handler: 'Derafu\Content\Plugin\Mcp\McpController::handle'
+  methods: [POST, DELETE, OPTIONS]
+
+# ------------------------------------------------------------------------------
 # Academy
 # ------------------------------------------------------------------------------
 

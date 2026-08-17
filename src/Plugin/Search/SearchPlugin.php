@@ -14,6 +14,7 @@ namespace Derafu\Content\Plugin\Search;
 
 use Derafu\Content\Abstract\AbstractPlugin;
 use Derafu\Content\Contract\PluginInterface;
+use Derafu\Content\Plugin\Search\Contract\LlmClientInterface;
 
 /**
  * Plugin that provides a middleware for the search engine of the content
@@ -69,6 +70,17 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
             'types' => ['string', 'null'],
             'required' => false,
         ],
+
+        // Path of the chat completions endpoint, appended to "llm_url".
+        //
+        // Defaults to the standard path used by OpenAI, OpenRouter and most
+        // OpenAI-compatible providers. Self-hosted Open WebUI instances use
+        // "/api/chat/completions" instead and need to override this.
+        'llm_completions_path' => [
+            'types' => 'string',
+            'required' => false,
+            'default' => '/v1/chat/completions',
+        ],
     ];
 
     /**
@@ -81,9 +93,9 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
     /**
      * LLM client for AI responses.
      *
-     * @var SearchLlm
+     * @var LlmClientInterface
      */
-    private SearchLlm $llm;
+    private LlmClientInterface $llm;
 
     /**
      * Get the engine for the search.
@@ -106,15 +118,16 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
     /**
      * Get the LLM client for AI responses.
      *
-     * @return SearchLlm|null
+     * @return LlmClientInterface|null
      */
-    public function llm(): ?SearchLlm
+    public function llm(): ?LlmClientInterface
     {
         if (!isset($this->llm) && isset($this->options['llm_url'])) {
-            $this->llm = new SearchLlm(
+            $this->llm = new OpenAiCompatibleLlmClient(
                 $this->options['llm_url'],
                 $this->options['llm_model'] ?? 'libredte',
-                $this->options['llm_api_key'] ?? null
+                $this->options['llm_api_key'] ?? null,
+                $this->options['llm_completions_path'] ?? '/v1/chat/completions'
             );
         }
 

@@ -37,7 +37,12 @@
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^13.2",
-        "guzzlehttp/guzzle": "^7.15"
+        "guzzlehttp/guzzle": "^7.15",
+        "mcp/sdk": "^0.7"
+    },
+    "suggest": {
+        "guzzlehttp/guzzle": "Required by the \"search\" plugin (or any psr/http-client implementation) to query the search engine and LLM backend.",
+        "mcp/sdk": "Required to enable the \"mcp\" plugin (Model Context Protocol server)."
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",
@@ -49,5 +54,10 @@
         "build": "npm run build"
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
 }
