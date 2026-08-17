@@ -32,12 +32,10 @@ class StoragePlugin extends AbstractPlugin implements PluginInterface
 
         $knowledge = [];
         foreach ($plugins as $plugin) {
-            if ($plugin instanceof ContentPluginInterface) {
-                $knowledge = [
-                    ...$knowledge,
-                    ...$plugin->registry()->filter($filters),
-                ];
-            }
+            $knowledge = [
+                ...$knowledge,
+                ...$plugin->registry()->filter($filters),
+            ];
         }
 
         return $knowledge;

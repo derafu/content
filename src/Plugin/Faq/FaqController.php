@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Faq;
 
+use Derafu\Content\Abstract\AbstractContentController;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
@@ -20,7 +21,7 @@ use Derafu\Renderer\Contract\RendererInterface;
 /**
  * FAQ controller.
  */
-class FaqController
+class FaqController extends AbstractContentController
 {
     /**
      * Constructor.
@@ -46,27 +47,25 @@ class FaqController
         $plugin = $this->contentService->plugin('faq');
         assert($plugin instanceof FaqPlugin);
 
-        $preferredFormat = $request->getPreferredFormat();
-        $uri = str_replace('.' . $preferredFormat, '', $question);
+        $format = $this->getPreferredFormat($request);
+        $uri = str_replace('.' . $format, '', $question);
 
         $faq = $plugin->registry()->get($uri);
 
-        if ($preferredFormat === 'json') {
+        if ($format === 'json') {
             return [
                 'data' => $faq->toArray(),
             ];
-        } elseif ($preferredFormat === 'pdf') {
-            return $this->renderer->render('faq/show.pdf.twig', [
-                'plugin' => $plugin,
-                'faq' => $faq,
-            ]);
         } else {
-            return $this->renderer->render('faq/show.html.twig', [
-                'plugin' => $plugin,
-                'faq' => $faq,
-                'faqs' => $plugin->registry()->all(),
-                'tags' => $plugin->registry()->tags(),
-            ]);
+            return $this->renderer->render(
+                'faq/show.' . $format . '.twig',
+                [
+                    'plugin' => $plugin,
+                    'faq' => $faq,
+                    'faqs' => $plugin->registry()->all(),
+                    'tags' => $plugin->registry()->tags(),
+                ]
+            );
         }
     }
 

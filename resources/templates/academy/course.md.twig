@@ -1,0 +1,8 @@
+# {{ course.title }}
+
+{{ course.data | raw }}
+
+---
+
+Last updated on {{ course.last_update | date('d/m/Y') }}
+{{ course.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

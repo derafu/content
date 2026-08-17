@@ -63,10 +63,6 @@ class ContentAuthor implements ContentAuthorInterface
      */
     public function slug(): string
     {
-        if (!isset($this->slug)) {
-            $this->slug = Str::slug($this->name);
-        }
-
         return $this->slug;
     }
 

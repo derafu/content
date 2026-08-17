@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Blog;
 
+use Derafu\Content\Abstract\AbstractContentController;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
@@ -23,7 +24,7 @@ use Derafu\Routing\Enum\UrlReferenceType;
 /**
  * Blog controller.
  */
-class BlogController
+class BlogController extends AbstractContentController
 {
     /**
      * Constructor.
@@ -80,20 +81,15 @@ class BlogController
         $plugin = $this->contentService->plugin('blog');
         assert($plugin instanceof BlogPlugin);
 
-        $preferredFormat = $request->getPreferredFormat();
-        $uri = str_replace('.' . $preferredFormat, '', $post);
+        $format = $this->getPreferredFormat($request);
+        $uri = str_replace('.' . $format, '', $post);
 
         $post = $plugin->registry()->get($uri);
 
-        if ($preferredFormat === 'json') {
+        if ($format === 'json') {
             return [
                 'data' => $post->toArray(),
             ];
-        } elseif ($preferredFormat === 'pdf') {
-            return $this->renderer->render('blog/show.pdf.twig', [
-                'plugin' => $plugin,
-                'post' => $post,
-            ]);
         } else {
             $recentPosts = $plugin->registry()->filter([
                 'limit' => $plugin->options()->get('blogSidebarCount'),
@@ -101,15 +97,18 @@ class BlogController
             $tags = $plugin->registry()->tags();
             $archives = $plugin->registry()->archives();
 
-            return $this->renderer->render('blog/show.html.twig', [
-                'plugin' => $plugin,
-                'post' => $post,
-                'previous' => $plugin->registry()->previous($post->uri()),
-                'next' => $plugin->registry()->next($post->uri()),
-                'recentPosts' => $recentPosts,
-                'tags' => $tags,
-                'archives' => $archives,
-            ]);
+            return $this->renderer->render(
+                'blog/show.' . $format . '.twig',
+                [
+                    'plugin' => $plugin,
+                    'post' => $post,
+                    'previous' => $plugin->registry()->previous($post->uri()),
+                    'next' => $plugin->registry()->next($post->uri()),
+                    'recentPosts' => $recentPosts,
+                    'tags' => $tags,
+                    'archives' => $archives,
+                ]
+            );
         }
     }
 

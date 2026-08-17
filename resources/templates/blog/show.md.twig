@@ -1,0 +1,14 @@
+---
+title: "{{ post.title }}"
+subtitle: "{{ post.subtitle }}"
+description: "{{ post.description }}"
+authors: "{{ post.authors | join(', ') }}"
+date: "{{ post.date | date('d/m/Y') }}"
+---
+
+{{ post.data | raw }}
+
+---
+
+Last updated on {{ post.last_update | date('d/m/Y') }}
+{{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

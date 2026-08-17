@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Docs;
 
+use Derafu\Content\Abstract\AbstractContentController;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
@@ -20,7 +21,7 @@ use Derafu\Renderer\Contract\RendererInterface;
 /**
  * Docs controller.
  */
-class DocsController
+class DocsController extends AbstractContentController
 {
     /**
      * Constructor.
@@ -46,29 +47,27 @@ class DocsController
         $plugin = $this->contentService->plugin('docs');
         assert($plugin instanceof DocsPlugin);
 
-        $preferredFormat = $request->getPreferredFormat();
-        $uri = str_replace('.' . $preferredFormat, '', $doc);
+        $format = $this->getPreferredFormat($request);
+        $uri = str_replace('.' . $format, '', $doc);
 
         $doc = $plugin->registry()->get($uri);
 
-        if ($preferredFormat === 'json') {
+        if ($format === 'json') {
             return [
                 'data' => $doc->toArray(),
             ];
-        } elseif ($preferredFormat === 'pdf') {
-            return $this->renderer->render('docs/show.pdf.twig', [
-                'plugin' => $plugin,
-                'doc' => $doc,
-            ]);
         } else {
-            return $this->renderer->render('docs/show.html.twig', [
-                'plugin' => $plugin,
-                'doc' => $doc,
-                'previous' => $plugin->registry()->previous($doc->uri()),
-                'next' => $plugin->registry()->next($doc->uri()),
-                'docs' => $plugin->registry()->all(),
-                'tags' => $plugin->registry()->tags(),
-            ]);
+            return $this->renderer->render(
+                'docs/show.' . $format . '.twig',
+                [
+                    'plugin' => $plugin,
+                    'doc' => $doc,
+                    'previous' => $plugin->registry()->previous($doc->uri()),
+                    'next' => $plugin->registry()->next($doc->uri()),
+                    'docs' => $plugin->registry()->all(),
+                    'tags' => $plugin->registry()->tags(),
+                ]
+            );
         }
     }
 

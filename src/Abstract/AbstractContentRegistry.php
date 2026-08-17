@@ -66,8 +66,12 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
      */
     public function get(string $uri): ContentItemInterface
     {
+        // Remove file extension if present (handles any extension at the end)
+        $uriWithoutExtension = preg_replace('/\.[^\/.]+$/', '', $uri);
+
         // The id has implicitly the hierarchy of the content item.
-        $uriParts = explode('/', $uri);
+        $uriParts = explode('/', $uriWithoutExtension);
+
         $n_uriParts = count($uriParts);
 
         $items = $this->all();
@@ -93,6 +97,13 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             }
 
             return $item;
+        }
+
+        if (empty($slug)) {
+            throw new InvalidArgumentException(sprintf(
+                'Content item with URI "%s" not found.',
+                $uri
+            ));
         }
 
         throw new InvalidArgumentException(sprintf(

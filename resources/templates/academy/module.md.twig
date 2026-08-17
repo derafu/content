@@ -1,0 +1,7 @@
+# {{ module.title }}
+
+{{ module.data | raw }}
+
+---
+Last updated on {{ module.last_update | date('d/m/Y') }}
+{{ module.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

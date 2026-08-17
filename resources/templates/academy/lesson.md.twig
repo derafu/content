@@ -1,0 +1,5 @@
+{{ lesson.data | raw }}
+
+---
+Last updated on {{ lesson.last_update | date('d/m/Y') }}
+{{ lesson.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

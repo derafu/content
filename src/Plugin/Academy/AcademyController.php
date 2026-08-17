@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Academy;
 
+use Derafu\Content\Abstract\AbstractContentController;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
@@ -21,7 +22,7 @@ use InvalidArgumentException;
 /**
  * Academy controller.
  */
-class AcademyController
+class AcademyController extends AbstractContentController
 {
     /**
      * Constructor.
@@ -64,25 +65,23 @@ class AcademyController
         $plugin = $this->contentService->plugin('academy');
         assert($plugin instanceof AcademyPlugin);
 
-        $preferredFormat = $request->getPreferredFormat();
-        $course = str_replace('.' . $preferredFormat, '', $course);
+        $format = $this->getPreferredFormat($request);
+        $course = str_replace('.' . $format, '', $course);
 
         $course = $plugin->registry()->get($course);
 
-        if ($preferredFormat === 'json') {
+        if ($format === 'json') {
             return [
                 'data' => $course->toArray(),
             ];
-        } elseif ($preferredFormat === 'pdf') {
-            return $this->renderer->render('academy/course.pdf.twig', [
-                'plugin' => $plugin,
-                'course' => $course,
-            ]);
         } else {
-            return $this->renderer->render('academy/course.html.twig', [
-                'plugin' => $plugin,
-                'course' => $course,
-            ]);
+            return $this->renderer->render(
+                'academy/course.' . $format . '.twig',
+                [
+                    'plugin' => $plugin,
+                    'course' => $course,
+                ]
+            );
         }
     }
 
@@ -102,8 +101,8 @@ class AcademyController
         $plugin = $this->contentService->plugin('academy');
         assert($plugin instanceof AcademyPlugin);
 
-        $preferredFormat = $request->getPreferredFormat();
-        $module = str_replace('.' . $preferredFormat, '', $module);
+        $format = $this->getPreferredFormat($request);
+        $module = str_replace('.' . $format, '', $module);
 
         $course = $plugin->registry()->get($course);
         $module = $course->modules()[$module]
@@ -113,30 +112,27 @@ class AcademyController
             ))
         ;
 
-        if ($preferredFormat === 'json') {
+        if ($format === 'json') {
             return [
                 'data' => $module->toArray(),
             ];
-        } elseif ($preferredFormat === 'pdf') {
-            return $this->renderer->render('academy/module.pdf.twig', [
-                'plugin' => $plugin,
-                'course' => $course,
-                'module' => $module,
-            ]);
         } else {
-            return $this->renderer->render('academy/module.html.twig', [
-                'plugin' => $plugin,
-                'course' => $course,
-                'module' => $module,
-                'previous' => $plugin->registry()->previous(
-                    $module->uri(),
-                    ['category' => 'module'],
-                ),
-                'next' => $plugin->registry()->next(
-                    $module->uri(),
-                    ['category' => 'module'],
-                ),
-            ]);
+            return $this->renderer->render(
+                'academy/module.' . $format . '.twig',
+                [
+                    'plugin' => $plugin,
+                    'course' => $course,
+                    'module' => $module,
+                    'previous' => $plugin->registry()->previous(
+                        $module->uri(),
+                        ['category' => 'module'],
+                    ),
+                    'next' => $plugin->registry()->next(
+                        $module->uri(),
+                        ['category' => 'module'],
+                    ),
+                ]
+            );
         }
     }
 
@@ -158,8 +154,8 @@ class AcademyController
         $plugin = $this->contentService->plugin('academy');
         assert($plugin instanceof AcademyPlugin);
 
-        $preferredFormat = $request->getPreferredFormat();
-        $lesson = str_replace('.' . $preferredFormat, '', $lesson);
+        $format = $this->getPreferredFormat($request);
+        $lesson = str_replace('.' . $format, '', $lesson);
 
         $course = $plugin->registry()->get($course);
         $module = $course->modules()[$module]
@@ -175,32 +171,28 @@ class AcademyController
             ))
         ;
 
-        if ($preferredFormat === 'json') {
+        if ($format === 'json') {
             return [
                 'data' => $lesson->toArray(),
             ];
-        } elseif ($preferredFormat === 'pdf') {
-            return $this->renderer->render('academy/lesson.pdf.twig', [
-                'plugin' => $plugin,
-                'course' => $course,
-                'module' => $module,
-                'lesson' => $lesson,
-            ]);
         } else {
-            return $this->renderer->render('academy/lesson.html.twig', [
-                'plugin' => $plugin,
-                'course' => $course,
-                'module' => $module,
-                'lesson' => $lesson,
-                'previous' => $plugin->registry()->previous(
-                    $lesson->uri(),
-                    ['category' => 'lesson'],
-                ),
-                'next' => $plugin->registry()->next(
-                    $lesson->uri(),
-                    ['category' => 'lesson'],
-                ),
-            ]);
+            return $this->renderer->render(
+                'academy/lesson.' . $format . '.twig',
+                [
+                    'plugin' => $plugin,
+                    'course' => $course,
+                    'module' => $module,
+                    'lesson' => $lesson,
+                    'previous' => $plugin->registry()->previous(
+                        $lesson->uri(),
+                        ['category' => 'lesson'],
+                    ),
+                    'next' => $plugin->registry()->next(
+                        $lesson->uri(),
+                        ['category' => 'lesson'],
+                    ),
+                ]
+            );
         }
     }
 

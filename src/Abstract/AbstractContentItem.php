@@ -340,7 +340,7 @@ abstract class AbstractContentItem implements ContentItemInterface
      *
      * @var ContentItemInterface|null
      */
-    private ?ContentItemInterface $parent;
+    private ?ContentItemInterface $parent = null;
 
     /**
      * Children of the content.

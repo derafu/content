@@ -1,0 +1,5 @@
+{{ doc.data | raw }}
+
+---
+Last updated on {{ doc.last_update | date('d/m/Y') }}
+{{ doc.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
