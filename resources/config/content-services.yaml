@@ -58,7 +58,13 @@ services:
     Derafu\Content\Plugin\Mcp\McpController:
         public: true
 
+    Derafu\Content\Plugin\Pages\PagesController:
+        public: true
+
     Derafu\Content\Plugin\Search\SearchController:
+        public: true
+
+    Derafu\Content\Plugin\Sitemap\SitemapController:
         public: true
 
     Derafu\Content\Plugin\Storage\StorageController:

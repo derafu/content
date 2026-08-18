@@ -1,0 +1,23 @@
+{% extends 'layouts/default.html.twig' %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+
+<section id="pages" class="container my-4">
+
+    {% if not page.hide_title %}
+        <h1>{{ page.title }}</h1>
+    {% endif %}
+
+    <div class="derafu-content derafu-content-pages mb-4">
+        {% if page.isMarkdown %}
+            {{ page.data | markdown(has_twig: page.has_twig) }}
+        {% else %}
+            {{ page.data | twig }}
+        {% endif %}
+    </div>
+
+</section>
+
+{% endblock %}

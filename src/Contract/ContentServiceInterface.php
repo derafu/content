@@ -38,4 +38,14 @@ interface ContentServiceInterface
      * @return PluginInterface
      */
     public function plugin(string $name): PluginInterface;
+
+    /**
+     * Get the content of every content plugin (Academy, Blog, Docs, FAQ,
+     * Pages, etc.), merged into a single flat list.
+     *
+     * @param array<string, mixed> $filters Filters, same as
+     * ContentRegistryInterface::filter().
+     * @return array<ContentItemInterface>
+     */
+    public function allContent(array $filters = []): array;
 }

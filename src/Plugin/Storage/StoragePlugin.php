@@ -13,31 +13,12 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Storage;
 
 use Derafu\Content\Abstract\AbstractPlugin;
-use Derafu\Content\Contract\ContentItemInterface;
-use Derafu\Content\Contract\ContentPluginInterface;
 use Derafu\Content\Contract\PluginInterface;
 
+/**
+ * Plugin that serves attachment downloads for any content item (see
+ * StorageController). It has no options and no state of its own.
+ */
 class StoragePlugin extends AbstractPlugin implements PluginInterface
 {
-    /**
-     * Get the knowledge of the content website.
-     *
-     * @param array<ContentPluginInterface> $plugins Plugins.
-     * @param array<string, mixed> $filters Filters.
-     * @return array<ContentItemInterface>
-     */
-    public function knowledge(array $plugins, array $filters = []): array
-    {
-        $filters = array_filter($filters, fn ($value) => $value !== '');
-
-        $knowledge = [];
-        foreach ($plugins as $plugin) {
-            $knowledge = [
-                ...$knowledge,
-                ...$plugin->registry()->filter($filters),
-            ];
-        }
-
-        return $knowledge;
-    }
 }

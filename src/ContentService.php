@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content;
 
 use Derafu\Content\Contract\ContentContextInterface;
+use Derafu\Content\Contract\ContentPluginInterface;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Contract\PluginInterface;
 use Derafu\Content\Contract\PluginLoaderInterface;
@@ -77,5 +78,25 @@ class ContentService implements ContentServiceInterface
         }
 
         return $this->plugins[$name];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function allContent(array $filters = []): array
+    {
+        $filters = array_filter($filters, fn ($value) => $value !== '');
+
+        $knowledge = [];
+        foreach ($this->plugins() as $plugin) {
+            if ($plugin instanceof ContentPluginInterface) {
+                $knowledge = [
+                    ...$knowledge,
+                    ...$plugin->registry()->filter($filters),
+                ];
+            }
+        }
+
+        return $knowledge;
     }
 }

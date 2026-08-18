@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Pages;
 
 use Derafu\Content\Abstract\AbstractContentRegistry;
+use Derafu\Content\Plugin\Pages\Contract\PagesPageInterface;
 use Derafu\Content\Plugin\Pages\Contract\PagesRegistryInterface;
 
 /**
@@ -20,6 +21,50 @@ use Derafu\Content\Plugin\Pages\Contract\PagesRegistryInterface;
  */
 class PagesRegistry extends AbstractContentRegistry implements PagesRegistryInterface
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function get(string $uri): PagesPageInterface
+    {
+        $page = parent::get($uri);
+
+        assert($page instanceof PagesPageInterface);
+
+        return $page;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function previous(string $uri, array $filters = []): ?PagesPageInterface
+    {
+        $page = parent::previous($uri, $filters);
+
+        if ($page === null) {
+            return null;
+        }
+
+        assert($page instanceof PagesPageInterface);
+
+        return $page;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function next(string $uri, array $filters = []): ?PagesPageInterface
+    {
+        $page = parent::next($uri, $filters);
+
+        if ($page === null) {
+            return null;
+        }
+
+        assert($page instanceof PagesPageInterface);
+
+        return $page;
+    }
+
     /**
      * {@inheritDoc}
      */

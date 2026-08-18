@@ -13,33 +13,13 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Api;
 
 use Derafu\Content\Abstract\AbstractPlugin;
-use Derafu\Content\Contract\ContentItemInterface;
-use Derafu\Content\Contract\ContentPluginInterface;
 use Derafu\Content\Contract\PluginInterface;
 
+/**
+ * Plugin that exposes the content of every content plugin as a single JSON
+ * feed (see ApiController). It has no options and no state of its own; the
+ * aggregation lives in ContentService::allContent().
+ */
 class ApiPlugin extends AbstractPlugin implements PluginInterface
 {
-    /**
-     * Get the knowledge of the content website.
-     *
-     * @param array<string, PluginInterface> $plugins Plugins.
-     * @param array<string, mixed> $filters Filters.
-     * @return array<ContentItemInterface>
-     */
-    public function knowledge(array $plugins, array $filters = []): array
-    {
-        $filters = array_filter($filters, fn ($value) => $value !== '');
-
-        $knowledge = [];
-        foreach ($plugins as $plugin) {
-            if ($plugin instanceof ContentPluginInterface) {
-                $knowledge = [
-                    ...$knowledge,
-                    ...$plugin->registry()->filter($filters),
-                ];
-            }
-        }
-
-        return $knowledge;
-    }
 }

@@ -113,6 +113,24 @@ faq_question:
   handler: 'Derafu\Content\Plugin\Faq\FaqController::show'
 
 # ------------------------------------------------------------------------------
+# Pages
+#
+# Registered under a "/pages" prefix on purpose: its {page:.+} pattern is a
+# catch-all, and the router tries routes with parameters (this one included)
+# before it tries file-based routes (e.g. Derafu\Routing\Parser\FileSystemParser,
+# used for standalone Twig pages in templates/pages/ by the website itself). A
+# catch-all with no prefix would shadow every one of those file-based pages,
+# since the router would never get to ask the file-system parser about a URI
+# this route already claims. See the "Pages" plugin documentation for how to
+# register it without a prefix instead, if that trade-off is acceptable for a
+# given website.
+# ------------------------------------------------------------------------------
+
+pages_page:
+  path: /pages/{page:.+}
+  handler: 'Derafu\Content\Plugin\Pages\PagesController::show'
+
+# ------------------------------------------------------------------------------
 # Search
 # ------------------------------------------------------------------------------
 
@@ -127,3 +145,12 @@ search_api:
 search_llm_query:
   path: /api/search/llm.json
   handler: 'Derafu\Content\Plugin\Search\SearchController::llm_query'
+
+# ------------------------------------------------------------------------------
+# Sitemap
+# ------------------------------------------------------------------------------
+
+sitemap:
+  path: /sitemap.xml
+  handler: 'Derafu\Content\Plugin\Sitemap\SitemapController::index'
+  methods: [GET]

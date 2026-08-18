@@ -39,7 +39,7 @@ class ListTagsTool
      * @return array<int, array<string, mixed>>
      */
     public function __invoke(
-        #[Schema(enum: ['academy', 'blog', 'docs', 'faq'])]
+        #[Schema(enum: ['academy', 'blog', 'docs', 'faq', 'pages'])]
         string $source
     ): array {
         $plugin = ContentSourceResolver::resolve($this->contentService, $source);

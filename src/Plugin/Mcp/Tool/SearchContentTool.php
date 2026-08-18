@@ -46,7 +46,7 @@ class SearchContentTool
      */
     public function __invoke(
         string $query,
-        #[Schema(enum: ['academy', 'blog', 'docs', 'faq'])]
+        #[Schema(enum: ['academy', 'blog', 'docs', 'faq', 'pages'])]
         ?string $source = null,
         int $limit = 10
     ): array {

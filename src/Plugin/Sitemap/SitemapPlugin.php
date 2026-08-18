@@ -15,6 +15,10 @@ namespace Derafu\Content\Plugin\Sitemap;
 use Derafu\Content\Abstract\AbstractPlugin;
 use Derafu\Content\Contract\PluginInterface;
 
+/**
+ * Plugin that exposes an XML sitemap of every indexable content item (see
+ * SitemapController). It has no options and no state of its own.
+ */
 class SitemapPlugin extends AbstractPlugin implements PluginInterface
 {
 }

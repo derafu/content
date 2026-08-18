@@ -39,13 +39,10 @@ class ApiController
      */
     public function index(Request $request): array
     {
-        $plugin = $this->contentService->plugin('api');
-        assert($plugin instanceof ApiPlugin);
+        // Ensure the plugin is enabled.
+        $this->contentService->plugin('api');
 
-        $knowledge = $plugin->knowledge(
-            $this->contentService->plugins(),
-            $request->all()
-        );
+        $knowledge = $this->contentService->allContent($request->all());
 
         $data = [];
 

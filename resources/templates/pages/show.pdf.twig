@@ -1,0 +1,11 @@
+<html>
+    <body>
+
+        {% if page.isMarkdown %}
+            {{ page.data | markdown(has_twig: page.has_twig) }}
+        {% else %}
+            {{ page.data | twig }}
+        {% endif %}
+
+    </body>
+</html>

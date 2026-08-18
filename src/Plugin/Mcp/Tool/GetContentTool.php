@@ -47,7 +47,7 @@ class GetContentTool
      * @return array<string, mixed>
      */
     public function __invoke(
-        #[Schema(enum: ['academy', 'blog', 'docs', 'faq'])]
+        #[Schema(enum: ['academy', 'blog', 'docs', 'faq', 'pages'])]
         string $source,
         string $uri
     ): array {

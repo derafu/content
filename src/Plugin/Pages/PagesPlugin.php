@@ -94,8 +94,8 @@ class PagesPlugin extends AbstractContentPlugin implements ContentPluginInterfac
         $this->registry = new PagesRegistry(
             $contentLoader,
             $this->options['path'],
-            $this->options['include'],
-            $this->options['exclude']
+            $this->options['include']->all(),
+            $this->options['exclude']->all()
         );
 
         $items = $this->registry->all();
