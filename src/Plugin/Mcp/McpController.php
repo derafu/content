@@ -22,6 +22,9 @@ use Derafu\Http\Request;
 use Derafu\Routing\Contract\RouterInterface;
 use Mcp\Server;
 use Mcp\Server\Session\FileSessionStore;
+use Mcp\Server\Transport\Http\Middleware\CorsMiddleware;
+use Mcp\Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware;
+use Mcp\Server\Transport\Http\Middleware\ProtocolVersionMiddleware;
 use Mcp\Server\Transport\StreamableHttpTransport;
 use Psr\Http\Message\ResponseInterface;
 
@@ -64,9 +67,44 @@ class McpController
 
         $server = $this->buildServer($plugin);
 
-        $transport = new StreamableHttpTransport($request);
+        // StreamableHttpTransport's default middleware stack rejects any
+        // Host/Origin outside ['localhost', '127.0.0.1', '[::1]'] (DNS
+        // rebinding protection meant for locally-run MCP servers) and no
+        // longer sets Access-Control-Allow-Origin at all. Both are wrong
+        // for this plugin's public-by-design content API: the real site
+        // host has to be explicitly allowed, and CORS restored to '*' so
+        // browser-based MCP clients can reach it, same as any other public
+        // read endpoint this package serves (get_content, list_content, etc.
+        // carry no credentials, so a wildcard origin is safe here).
+        $transport = new StreamableHttpTransport($request, middleware: [
+            new CorsMiddleware(['*']),
+            new DnsRebindingProtectionMiddleware($this->allowedHosts()),
+            new ProtocolVersionMiddleware(),
+        ]);
 
         return $server->run($transport);
+    }
+
+    /**
+     * Hosts allowed to reach this MCP server: the site's own configured
+     * host (from ContentConfig::url()) plus the local dev/test hosts the
+     * SDK allows by default, so local development keeps working unchanged.
+     *
+     * @return list<string>
+     */
+    private function allowedHosts(): array
+    {
+        $configuredHost = parse_url(
+            $this->contentService->context()->config()->url(),
+            PHP_URL_HOST
+        );
+
+        return array_values(array_unique(array_filter([
+            $configuredHost,
+            'localhost',
+            '127.0.0.1',
+            '[::1]',
+        ])));
     }
 
     /**

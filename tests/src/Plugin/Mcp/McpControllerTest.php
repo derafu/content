@@ -46,6 +46,7 @@ use Derafu\Routing\Enum\UrlReferenceType;
 use Derafu\Routing\Exception\RouteNotFoundException;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\FixtureHttpServer;
+use Derafu\TestsContent\Support\FixturePluginLoader;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -115,15 +116,17 @@ final class McpControllerTest extends TestCase
      * tool.
      * @return McpController
      */
-    private function buildController(bool $askEnabled): McpController
+    private function buildController(bool $askEnabled, string $url = 'http://localhost'): McpController
     {
+        $context = ContentFixtures::contentContext(url: $url);
+
         $docsPlugin = new DocsPlugin(
-            ContentFixtures::contentContext(),
+            $context,
             ['path' => 'docs']
         );
         $docsPlugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
 
-        $mcpPlugin = new McpPlugin(ContentFixtures::contentContext(), [
+        $mcpPlugin = new McpPlugin($context, [
             'session_path' => sys_get_temp_dir() . '/derafu-content-mcp-tests-' . uniqid(),
             'ask' => ['enabled' => $askEnabled],
         ]);
@@ -134,7 +137,7 @@ final class McpControllerTest extends TestCase
         ];
 
         if ($askEnabled) {
-            $plugins['search'] = new SearchPlugin(ContentFixtures::contentContext(), [
+            $plugins['search'] = new SearchPlugin($context, [
                 'url' => self::$searchServer->url() . '/?scenario=results_ok&text=%s',
                 'llm_url' => self::$searchServer->url(),
                 'llm_model' => 'fixture-model',
@@ -142,7 +145,7 @@ final class McpControllerTest extends TestCase
             ]);
         }
 
-        $contentService = ContentFixtures::contentService($plugins);
+        $contentService = new ContentService($context, new FixturePluginLoader($plugins));
 
         return new McpController($contentService, $this->fakeRouter());
     }
@@ -151,8 +154,12 @@ final class McpControllerTest extends TestCase
      * @return array{0: array<string,mixed>, 1: string} The decoded JSON-RPC
      * response body and the Mcp-Session-Id header.
      */
-    private function callMcp(array $payload, ?string $sessionId = null, ?McpController $controller = null): array
-    {
+    private function callMcp(
+        array $payload,
+        ?string $sessionId = null,
+        ?McpController $controller = null,
+        string $requestUrl = 'http://localhost/api/mcp'
+    ): array {
         $headers = [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json, text/event-stream',
@@ -163,7 +170,7 @@ final class McpControllerTest extends TestCase
 
         $request = new Request(
             'POST',
-            'http://localhost/api/mcp',
+            $requestUrl,
             $headers,
             json_encode($payload, JSON_THROW_ON_ERROR)
         );
@@ -176,7 +183,7 @@ final class McpControllerTest extends TestCase
         ];
     }
 
-    private function initialize(?McpController $controller = null): string
+    private function initialize(?McpController $controller = null, string $requestUrl = 'http://localhost/api/mcp'): string
     {
         [, $sessionId] = $this->callMcp([
             'jsonrpc' => '2.0',
@@ -187,7 +194,7 @@ final class McpControllerTest extends TestCase
                 'capabilities' => [],
                 'clientInfo' => ['name' => 'phpunit', 'version' => '0.0.0'],
             ],
-        ], null, $controller);
+        ], null, $controller, $requestUrl);
 
         $this->assertNotSame('', $sessionId);
 
@@ -416,6 +423,66 @@ final class McpControllerTest extends TestCase
 
         $this->assertTrue($body['result']['isError']);
         $this->assertStringContainsString('Model not found', $body['result']['content'][0]['text']);
+    }
+
+    /**
+     * The exact bug found this session: StreamableHttpTransport's default
+     * middleware only allows Host/Origin in ['localhost', '127.0.0.1',
+     * '[::1]'] (DNS rebinding protection meant for locally-run MCP
+     * servers), which silently rejected every real request to the live
+     * production site — completely masked in this test suite because
+     * every request here already targets "localhost". This pins the fix:
+     * a request whose Host matches the site's own configured url() must
+     * be allowed too.
+     */
+    public function testRequestFromTheConfiguredSiteHostIsAllowed(): void
+    {
+        $controller = $this->buildController(askEnabled: false, url: 'https://www.libredte.cl');
+
+        $sessionId = $this->initialize($controller, 'https://www.libredte.cl/api/mcp');
+
+        [$body] = $this->callMcp([
+            'jsonrpc' => '2.0',
+            'id' => 12,
+            'method' => 'tools/list',
+        ], $sessionId, $controller, 'https://www.libredte.cl/api/mcp');
+
+        $this->assertArrayHasKey('result', $body);
+        $this->assertArrayNotHasKey('error', $body);
+    }
+
+    /**
+     * The DNS rebinding protection itself must still work for a genuinely
+     * unrelated host — the fix widens the allowlist to the site's own
+     * configured host, it must not disable the protection altogether.
+     */
+    public function testRequestFromAnUntrustedHostIsRejected(): void
+    {
+        $controller = $this->buildController(askEnabled: false, url: 'https://www.libredte.cl');
+
+        $request = new Request(
+            'POST',
+            'http://evil.example.com/api/mcp',
+            [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json, text/event-stream',
+            ],
+            json_encode([
+                'jsonrpc' => '2.0',
+                'id' => 13,
+                'method' => 'initialize',
+                'params' => [
+                    'protocolVersion' => '2025-06-18',
+                    'capabilities' => [],
+                    'clientInfo' => ['name' => 'phpunit', 'version' => '0.0.0'],
+                ],
+            ], JSON_THROW_ON_ERROR)
+        );
+
+        $response = $controller->handle($request);
+
+        $this->assertSame(403, $response->getStatusCode());
+        $this->assertStringContainsString('Invalid Host header', (string) $response->getBody());
     }
 
     private function fakeRouter(): RouterInterface
