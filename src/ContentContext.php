@@ -71,8 +71,8 @@ class ContentContext implements ContentContextInterface
     /**
      * {@inheritDoc}
      */
-    public function cache(): CacheItemPoolInterface
+    public function cache(): ?CacheItemPoolInterface
     {
-        return $this->cache;
+        return $this->config->cacheEnabled() ? $this->cache : null;
     }
 }

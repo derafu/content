@@ -28,9 +28,10 @@ interface ContentContextInterface
 
     /**
      * Get the cache pool used to avoid re-scanning and re-parsing the
-     * content on every request.
+     * content on every request, or `null` when the content cache is
+     * disabled via configuration.
      *
-     * @return CacheItemPoolInterface
+     * @return CacheItemPoolInterface|null
      */
-    public function cache(): CacheItemPoolInterface;
+    public function cache(): ?CacheItemPoolInterface;
 }

@@ -102,6 +102,13 @@ interface ContentConfigInterface
     public function i18n(): array;
 
     /**
+     * Get whether the content cache is enabled.
+     *
+     * @return bool
+     */
+    public function cacheEnabled(): bool;
+
+    /**
      * Get the custom fields of the content website.
      *
      * @return array<string, mixed>

@@ -145,6 +145,21 @@ class ContentConfig implements ContentConfigInterface
                 '__allowUndefinedKeys' => true,
             ],
         ],
+
+        // Cache of the content website.
+        'cache' => [
+            'types' => 'array',
+            'required' => false,
+            'schema' => [
+                // Whether the content cache is enabled.
+                'enabled' => [
+                    'types' => 'boolean',
+                    'required' => false,
+                    'default' => true,
+                ],
+                '__allowUndefinedKeys' => true,
+            ],
+        ],
     ];
 
     /**
@@ -251,6 +266,14 @@ class ContentConfig implements ContentConfigInterface
     public function i18n(): array
     {
         return $this->config->get('i18n')->all();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function cacheEnabled(): bool
+    {
+        return $this->config->get('cache.enabled');
     }
 
     /**

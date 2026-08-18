@@ -66,4 +66,17 @@ final class ContentContextTest extends TestCase
 
         $this->assertSame($cache, $context->cache());
     }
+
+    public function testCacheReturnsNullWhenDisabledInConfig(): void
+    {
+        $context = new ContentContext(new ContentConfig([
+            'title' => 'Fixture',
+            'url' => 'http://localhost',
+            'cache' => [
+                'enabled' => false,
+            ],
+        ]), new ArrayAdapter());
+
+        $this->assertNull($context->cache());
+    }
 }
