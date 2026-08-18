@@ -554,13 +554,101 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
-    public function data(): string
+    public function data(array $options = []): string
     {
         if (!isset($this->data)) {
             $this->data = trim(preg_replace('/^---\n(.*?)\n---\n/s', '', $this->raw()));
         }
 
-        return $this->data;
+        $assetBaseUrl = $options['asset_base_url'] ?? null;
+        $linkBaseUrl = $options['link_base_url'] ?? null;
+
+        if ($assetBaseUrl === null && $linkBaseUrl === null) {
+            return $this->data;
+        }
+
+        return $this->resolveMarkdownUrls($this->data, $assetBaseUrl, $linkBaseUrl);
+    }
+
+    /**
+     * Resolves a single root-relative path ("/img/foo.png") against a base
+     * URL. Anything that is not root-relative (already absolute, protocol-
+     * relative "//...", or $baseUrl not given) is returned unchanged.
+     *
+     * @param string|null $path Path to resolve.
+     * @param string|null $baseUrl Base URL to resolve against.
+     * @return string|null
+     */
+    private function resolveUrl(?string $path, ?string $baseUrl): ?string
+    {
+        if ($path === null || $path === '' || $baseUrl === null) {
+            return $path;
+        }
+
+        if (!str_starts_with($path, '/') || str_starts_with($path, '//')) {
+            return $path;
+        }
+
+        return rtrim($baseUrl, '/') . $path;
+    }
+
+    /**
+     * Rewrites root-relative image/link references in a Markdown body to
+     * absolute URLs, so the body stays self-contained when consumed outside
+     * this website's own pages (a raw .md export, a JSON API response, an
+     * MCP tool result, a search index entry) — none of which have a
+     * "current page origin" to resolve a root-relative path against.
+     *
+     * Only Markdown syntax (![]()/[]()) and plain HTML attributes
+     * (src=""/href="") are covered. Custom Twig component attributes (e.g.
+     * <twig:block-hero background="/...">) are not rewritten — a known,
+     * accepted limitation.
+     *
+     * $assetBaseUrl and $linkBaseUrl are independent on purpose: a renderer
+     * that resolves images itself from the local filesystem (see the PDF
+     * engine) should leave asset references untouched and resolve only
+     * links, or this rewrite would make it fetch images over the network
+     * instead of reading them locally.
+     *
+     * @param string $markdown Markdown body to rewrite.
+     * @param string|null $assetBaseUrl Base URL for image references.
+     * @param string|null $linkBaseUrl Base URL for link references.
+     * @return string
+     */
+    private function resolveMarkdownUrls(
+        string $markdown,
+        ?string $assetBaseUrl,
+        ?string $linkBaseUrl
+    ): string {
+        if ($assetBaseUrl !== null) {
+            $markdown = preg_replace_callback(
+                '/!\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/',
+                fn (array $m) => '![' . $m[1] . '](' . $this->resolveUrl($m[2], $assetBaseUrl) . $m[3] . ')',
+                $markdown
+            );
+
+            $markdown = preg_replace_callback(
+                '/\bsrc="([^"]+)"/',
+                fn (array $m) => 'src="' . $this->resolveUrl($m[1], $assetBaseUrl) . '"',
+                $markdown
+            );
+        }
+
+        if ($linkBaseUrl !== null) {
+            $markdown = preg_replace_callback(
+                '/(?<!!)\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/',
+                fn (array $m) => '[' . $m[1] . '](' . $this->resolveUrl($m[2], $linkBaseUrl) . $m[3] . ')',
+                $markdown
+            );
+
+            $markdown = preg_replace_callback(
+                '/\bhref="([^"]+)"/',
+                fn (array $m) => 'href="' . $this->resolveUrl($m[1], $linkBaseUrl) . '"',
+                $markdown
+            );
+        }
+
+        return $markdown;
     }
 
     /**
@@ -679,7 +767,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
-    public function preview(int $maxLength = 300): string
+    public function preview(int $maxLength = 300, array $options = []): string
     {
         if (!isset($this->preview)) {
 
@@ -715,25 +803,32 @@ abstract class AbstractContentItem implements ContentItemInterface
             }
         }
 
-        return $this->preview;
+        $assetBaseUrl = $options['asset_base_url'] ?? null;
+        $linkBaseUrl = $options['link_base_url'] ?? null;
+
+        if ($assetBaseUrl === null && $linkBaseUrl === null) {
+            return $this->preview;
+        }
+
+        return $this->resolveMarkdownUrls($this->preview, $assetBaseUrl, $linkBaseUrl);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function image(): ?string
+    public function image(array $options = []): ?string
     {
         if (!isset($this->image)) {
             $this->image = $this->metadata('image', false);
         }
 
-        return $this->image ?: null;
+        return $this->resolveUrl($this->image ?: null, $options['asset_base_url'] ?? null);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function video(): ?string
+    public function video(array $options = []): ?string
     {
         if (!isset($this->video)) {
             $this->video = $this->metadata('video', false);
@@ -750,7 +845,7 @@ abstract class AbstractContentItem implements ContentItemInterface
             }
         }
 
-        return $this->video ?: null;
+        return $this->resolveUrl($this->video ?: null, $options['asset_base_url'] ?? null);
     }
 
     /**

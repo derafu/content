@@ -80,6 +80,7 @@ class AcademyController extends AbstractContentController
                 [
                     'plugin' => $plugin,
                     'course' => $course,
+                    'full' => (bool) $request->query('full'),
                 ]
             );
         }
@@ -131,6 +132,7 @@ class AcademyController extends AbstractContentController
                         $module->uri(),
                         ['category' => 'module'],
                     ),
+                    'full' => (bool) $request->query('full'),
                 ]
             );
         }

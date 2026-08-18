@@ -1,0 +1,216 @@
+{#
+    Macros for the "full" PDF export (?full=1): dump a content item
+    together with its whole descendant tree into ONE PDF — Academy
+    course → modules → lessons, or Docs/FAQ → children recursively —
+    each node on its own page with a <tocentry> feeding the
+    <tocpagebreak> table of contents that pdf/_layout.pdf.twig inserts
+    at the front when it receives a non-empty `pdf_full_html`.
+
+    Only used by the four templates whose content has a natural tree
+    (academy/course, academy/module, docs/show, faq/show). Leaf types
+    (academy/lesson, blog/show, pages/show) have no children to dump, so
+    they never set `full` and never import this file.
+#}
+
+{#
+    Front cover for the "full" export: just the root item's title,
+    description, image and meta — no body, no <tocentry> — rendered once,
+    before the <tocpagebreak> that pdf/_layout.pdf.twig inserts right
+    after it. The root's own content becomes chapter 1 of the tree below,
+    where its title appears again as a heading — the same convention a
+    printed book follows with its title page vs. Chapter 1.
+#}
+{#
+    Renders a frontmatter "video" (a YouTube URL, already rewritten to its
+    embed form by AbstractContentItem::video()) as something a static PDF
+    can actually show: a clickable YouTube thumbnail linking to the real
+    watch page. Non-YouTube URLs fall back to a plain text link, since
+    there is no universal thumbnail convention to rely on for those.
+#}
+{% macro video(item) %}
+    {% set videoUrl = item.video %}
+    {% if videoUrl %}
+        <div class="pdf-video">
+            {% if 'youtube.com/embed/' in videoUrl %}
+                {% set videoId = videoUrl | split('/') | last %}
+                <a href="https://www.youtube.com/watch?v={{ videoId }}">
+                    <img src="https://img.youtube.com/vi/{{ videoId }}/hqdefault.jpg" alt="Video: {{ item.title }}">
+                </a>
+                <div class="pdf-video-caption">
+                    &#9654; <a href="https://www.youtube.com/watch?v={{ videoId }}">Watch video</a>
+                </div>
+            {% else %}
+                <div class="pdf-video-caption">
+                    &#9654; <a href="{{ videoUrl }}">Watch video: {{ videoUrl }}</a>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{#
+    Renders a lesson's self-assessment test ("quiz", AcademyLesson::test())
+    as something a static PDF can show: the questions with checkbox-style
+    options first (to answer on paper), then an "Answers" section — on
+    its own page — with the correct option(s) and explanation for each
+    question, mirroring a real printed test booklet.
+
+    Safe to call on ANY item, not just lessons: "item.test is defined"
+    no-ops for content types that have no test() method at all (docs,
+    faq, courses, modules), so section() below can call this
+    unconditionally for every node of a "full" export tree.
+#}
+{% macro test(item) %}
+    {% if item.test is defined and item.test %}
+        {% set test = item.test %}
+        <div class="pdf-test">
+            <h2>{{ test.title }}</h2>
+            {% if test.description %}
+                <p class="pdf-test-description">{{ test.description }}</p>
+            {% endif %}
+            {% for question in test.questions %}
+                <div class="pdf-test-question">
+                    <div class="pdf-test-question-text">{{ loop.index }}. {{ question.text }}</div>
+                    {% for option in question.options %}
+                        <div class="pdf-test-option">&#9633; {{ option.text }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="pdf-test-answers" style="page-break-before: always;">
+            <h2>Answers</h2>
+            {% for question in test.questions %}
+                <div class="pdf-test-answer">
+                    <div class="pdf-test-answer-question">{{ loop.index }}. {{ question.text }}</div>
+                    <div class="pdf-test-answer-correct">
+                        &#10003; {{ question.correctOptions | map(option => option.text) | join(', ') }}
+                    </div>
+                    {% if question.explanation %}
+                        <div class="pdf-test-answer-explanation">{{ question.explanation }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro cover(item, kind) %}
+    {% import _self as m %}
+    {% if kind %}
+        <div class="pdf-breadcrumb">{{ kind }}</div>
+    {% endif %}
+
+    <div class="pdf-title">{{ item.title }}</div>
+
+    {% if item.description %}
+        <div class="pdf-description">{{ item.description }}</div>
+    {% endif %}
+
+    {% if item.image %}
+        <div class="pdf-cover-image">
+            <img src="{{ item.image }}" alt="{{ item.title }}">
+        </div>
+    {% endif %}
+
+    {{ m.video(item) }}
+
+    <div class="pdf-meta">
+        {% if item.authors | length > 0 %}{{ item.authors | join(', ') }} &middot; {% endif %}
+        {{ item.date | date('d/m/Y') }}
+        {% if item.tags | length > 0 %}
+            &middot; {{ item.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+        {% endif %}
+    </div>
+
+    {% if item.deprecated %}
+        <div class="pdf-warning">
+            This content is deprecated since {{ item.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro section(item, kind, level, link_urls) %}
+    {% import _self as m %}
+    <div{% if level > 0 %} style="page-break-before: always;"{% endif %}>
+        <tocentry content="{{ item.title }}" level="{{ level }}" name="toc" />
+
+        {% if kind or item.ancestors | length > 0 %}
+            <div class="pdf-breadcrumb">
+                {% if kind %}{{ kind }}{% endif %}
+                {% for ancestor in item.ancestors %}
+                    &raquo; {{ ancestor.title }}
+                {% endfor %}
+                &raquo; {{ item.title }}
+            </div>
+        {% endif %}
+
+        <div class="{{ level > 0 ? 'pdf-subtitle' : 'pdf-title' }}">{{ item.title }}</div>
+
+        {% if item.description %}
+            <div class="pdf-description">{{ item.description }}</div>
+        {% endif %}
+
+        {% if item.image %}
+            <div class="pdf-cover-image">
+                <img src="{{ item.image }}" alt="{{ item.title }}">
+            </div>
+        {% endif %}
+
+        {{ m.video(item) }}
+
+        <div class="pdf-meta">
+            {% if item.authors | length > 0 %}{{ item.authors | join(', ') }} &middot; {% endif %}
+            {{ item.date | date('d/m/Y') }}
+            {% if item.tags | length > 0 %}
+                &middot; {{ item.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+            {% endif %}
+        </div>
+
+        {% if item.deprecated %}
+            <div class="pdf-warning">
+                This content is deprecated since {{ item.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+            </div>
+        {% endif %}
+
+        {% if item.data %}
+            {% if item.isMarkdown %}
+                {{ item.data(link_urls) | markdown(has_twig: item.has_twig) }}
+            {% else %}
+                {{ item.data(link_urls) | twig }}
+            {% endif %}
+        {% else %}
+            {{ ('# ' ~ item.title) | markdown }}
+        {% endif %}
+
+        {{ m.test(item) }}
+
+        <div class="pdf-footer-meta">
+            Last updated on {{ item.last_update | date('d/m/Y') }}
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro tree(item, kind, level, link_urls) %}
+    {% import _self as m %}
+    {{ m.section(item, kind, level, link_urls) }}
+    {% for child in item.children %}
+        {{ m.tree(child, kind, level + 1, link_urls) }}
+    {% endfor %}
+{% endmacro %}
+
+{% macro academy_module(module, kind, level, link_urls) %}
+    {% import _self as m %}
+    {{ m.section(module, kind, level, link_urls) }}
+    {% for lesson in module.lessons %}
+        {{ m.section(lesson, kind, level + 1, link_urls) }}
+    {% endfor %}
+{% endmacro %}
+
+{% macro academy_course(course, kind, link_urls) %}
+    {% import _self as m %}
+    {{ m.section(course, kind, 0, link_urls) }}
+    {% for module in course.modules %}
+        {{ m.academy_module(module, kind, 1, link_urls) }}
+    {% endfor %}
+{% endmacro %}

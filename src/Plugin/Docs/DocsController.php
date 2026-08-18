@@ -66,6 +66,7 @@ class DocsController extends AbstractContentController
                     'next' => $plugin->registry()->next($doc->uri()),
                     'docs' => $plugin->registry()->all(),
                     'tags' => $plugin->registry()->tags(),
+                    'full' => (bool) $request->query('full'),
                 ]
             );
         }

@@ -106,9 +106,21 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      *
      * This is the data of the content, without the metadata.
      *
+     * With no options, root-relative image/link references ("/img/foo.png")
+     * are returned exactly as authored — correct when rendering HTML on
+     * this same site, or resolving a PDF's images from the local
+     * filesystem. Pass 'asset_base_url' and/or 'link_base_url' to rewrite
+     * them to absolute URLs instead, needed whenever the body is consumed
+     * outside this website's own pages (a raw .md export, a JSON API
+     * response, an MCP tool result, a search index entry). The two are
+     * independent on purpose: a PDF should resolve links but leave images
+     * untouched, since those get resolved from disk instead (see
+     * HtmlPdfEngine in derafu/renderer).
+     *
+     * @param array{asset_base_url?: string|null, link_base_url?: string|null} $options
      * @return string
      */
-    public function data(): string;
+    public function data(array $options = []): string;
 
     /**
      * Check if the content data has Twig code.
@@ -176,25 +188,30 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * Get the preview of the content.
      *
      * @param int $maxLength Maximum length of the preview.
+     * @param array{asset_base_url?: string|null, link_base_url?: string|null} $options
+     * Same options as data().
      * @return string
      */
-    public function preview(int $maxLength = 300): string;
+    public function preview(int $maxLength = 300, array $options = []): string;
 
     /**
      * Cover or thumbnail image that will be used as the
      * meta property="og:image" content="..."/> in the <head>,
      * enhancing link previews on social media and messaging platforms.
      *
+     * @param array{asset_base_url?: string|null} $options Pass
+     * 'asset_base_url' to resolve a root-relative image to an absolute URL.
      * @return string|null
      */
-    public function image(): ?string;
+    public function image(array $options = []): ?string;
 
     /**
      * Get the main video of the content, if any.
      *
+     * @param array{asset_base_url?: string|null} $options Same as image().
      * @return string|null
      */
-    public function video(): ?string;
+    public function video(array $options = []): ?string;
 
     /**
      * A list of strings to tag your content.

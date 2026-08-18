@@ -1,5 +1,6 @@
 {% extends 'layouts/academy.html.twig' %}
 {% import 'academy/_nav_item.html.twig' as nav %}
+{% import '_downloads.html.twig' as downloads %}
 
 {% block title %}{{ course.title }}{% endblock %}
 
@@ -92,6 +93,13 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    {{ downloads.links(
+                        path('academy_module', {'course': course.slug, 'module': module.slug ~ '.pdf'}),
+                        path('academy_module', {'course': course.slug, 'module': module.slug ~ '.md'}),
+                        module.lessons | length > 0 ? path('academy_module', {'course': course.slug, 'module': module.slug ~ '.pdf'}) ~ '?full=1' : false,
+                        module.lessons | length > 0 ? path('academy_module', {'course': course.slug, 'module': module.slug ~ '.md'}) ~ '?full=1' : false
+                    ) }}
 
                     {% if previous or next %}
                         <div class="row my-5">

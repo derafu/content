@@ -176,7 +176,7 @@ final class AbstractContentRegistryCacheTest extends TestCase
             $this->assertSame($expectedTime, $module->time());
             $this->assertSame($expectedTime, $course->time());
 
-            $test = $lessons['leccion-uno']->test();
+            $test = $lessons['leccion-uno']->testAttachment();
             $this->assertStringContainsString('"questions"', $test->raw());
         } finally {
             ContentFixtures::removeDirectory($cacheDir);

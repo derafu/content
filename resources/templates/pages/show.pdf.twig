@@ -1,11 +1,11 @@
-<html>
-    <body>
+{% extends 'pdf/_layout.pdf.twig' %}
+{% set link_urls = {'link_base_url': plugin.context.config.url} %}
+{% set pdf_item = page %}
 
-        {% if page.isMarkdown %}
-            {{ page.data | markdown(has_twig: page.has_twig) }}
-        {% else %}
-            {{ page.data | twig }}
-        {% endif %}
-
-    </body>
-</html>
+{% block pdf_content %}
+    {% if page.isMarkdown %}
+        {{ page.data(link_urls) | markdown(has_twig: page.has_twig) }}
+    {% else %}
+        {{ page.data(link_urls) | twig }}
+    {% endif %}
+{% endblock %}

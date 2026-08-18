@@ -1,0 +1,104 @@
+{#
+    Unobtrusive "download this page" actions, meant to sit in the same
+    small/muted metadata row every *_content block already renders (next
+    to tags / last-updated) — small outline buttons, always visible,
+    nothing hidden behind a dropdown or a click-to-reveal toggle.
+
+    PDF stays a plain inline link (no "download" attribute): modern
+    browsers render PDFs in their own viewer, which already has its own
+    save/print controls — forcing a download would throw that preview
+    away. Markdown gets "download" instead: browsers have no native
+    Markdown renderer, so navigating to a .md URL just shows raw,
+    unstyled source — a bad reading experience, and the whole point of
+    the .md export is to take the content elsewhere (paste it into an
+    LLM, version it, etc.), not read it in a tab. The "Copy"/"Full Copy"
+    buttons cover that same "take it elsewhere" use case without a
+    download round trip through the filesystem.
+
+    fullPdfUrl/fullMdUrl are optional: pass false (not null — the
+    truthiness check below treats both the same, but false keeps call
+    sites consistent) for leaf content (lessons, posts, pages) that has
+    no children/modules/lessons to bundle into a "full" export.
+#}
+{% macro links(pdfUrl, mdUrl, fullPdfUrl, fullMdUrl) %}
+    {% set mdBasename = (mdUrl | split('?'))[0] | split('/') | last %}
+    {% set mdStem = mdBasename | replace({'.md': ''}) %}
+    <div class="mb-5">
+        <div class="btn-group btn-group-sm me-2" role="group">
+            <a href="{{ pdfUrl }}" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-file-pdf fa-fw"></i> PDF
+            </a>
+            {% if fullPdfUrl %}
+                <a href="{{ fullPdfUrl }}" class="btn btn-outline-secondary">Full</a>
+            {% endif %}
+        </div>
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="{{ mdUrl }}" download="{{ mdBasename }}" class="btn btn-outline-secondary">
+                <i class="fa-brands fa-markdown fa-fw"></i> Markdown
+            </a>
+            <a
+                href="{{ mdUrl }}"
+                class="btn btn-outline-secondary"
+                data-copy-md="{{ mdUrl }}"
+                title="Copy the Markdown source to your clipboard — handy for pasting into an LLM"
+            >Copy</a>
+            {% if fullMdUrl %}
+                <a href="{{ fullMdUrl }}" download="{{ mdStem }}-full.md" class="btn btn-outline-secondary">Full</a>
+                <a
+                    href="{{ fullMdUrl }}"
+                    class="btn btn-outline-secondary"
+                    data-copy-md="{{ fullMdUrl }}"
+                    title="Copy the full Markdown source to your clipboard — handy for pasting into an LLM"
+                >Full Copy</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            if (window.__derafuContentDownloadsInit) {
+                return;
+            }
+            window.__derafuContentDownloadsInit = true;
+
+            function notify(message, isError) {
+                if (typeof Notyf !== 'undefined') {
+                    var notyf = new Notyf();
+                    isError ? notyf.error(message) : notyf.success(message);
+                    return true;
+                }
+                return false;
+            }
+
+            document.addEventListener('click', function (event) {
+                var button = event.target.closest('[data-copy-md]');
+                if (!button) {
+                    return;
+                }
+                event.preventDefault();
+
+                var originalHtml = button.innerHTML;
+                var resetLabel = function (label, delay) {
+                    button.textContent = label;
+                    setTimeout(function () {
+                        button.innerHTML = originalHtml;
+                    }, delay);
+                };
+
+                fetch(button.getAttribute('data-copy-md'))
+                    .then(function (response) { return response.text(); })
+                    .then(function (text) { return navigator.clipboard.writeText(text); })
+                    .then(function () {
+                        if (!notify('Copied!', false)) {
+                            resetLabel('Copied!', 1500);
+                        }
+                    })
+                    .catch(function () {
+                        if (!notify('Could not copy', true)) {
+                            resetLabel('Error', 1500);
+                        }
+                    });
+            });
+        })();
+    </script>
+{% endmacro %}

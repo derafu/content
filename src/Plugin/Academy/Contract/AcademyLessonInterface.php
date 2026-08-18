@@ -28,11 +28,24 @@ interface AcademyLessonInterface extends ContentItemInterface
     public function module(): AcademyModuleInterface;
 
     /**
-     * Get the test of the lesson.
+     * Get the self-assessment test ("quiz") of the lesson, parsed from its
+     * JSON attachment (see testAttachment()), or null if the lesson has
+     * none, or if its "test" metadata does not point to a local
+     * attachment.
      *
-     * @return string|ContentAttachmentInterface|null
+     * @return AcademyTestInterface|null
      */
-    public function test(): string|ContentAttachmentInterface|null;
+    public function test(): ?AcademyTestInterface;
+
+    /**
+     * Get the raw attachment backing the lesson's test, if the "test"
+     * metadata points to one — either via the "?attachment=name"
+     * convention, or a literal path ending in "/_attachments/name"
+     * (both resolve to the same local attachment by its filename).
+     *
+     * @return ContentAttachmentInterface|null
+     */
+    public function testAttachment(): ?ContentAttachmentInterface;
 
     /**
      * Get the icon of the lesson.

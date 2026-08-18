@@ -1,13 +1,30 @@
+{% import 'md/_macros.md.twig' as md %}
+{% set base_url = plugin.context.config.url %}
+{% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
+{% set post_image = post.image(md_urls) %}
+{% set post_video = post.video(md_urls) %}
 ---
 title: "{{ post.title }}"
-subtitle: "{{ post.subtitle }}"
 description: "{{ post.description }}"
-authors: "{{ post.authors | join(', ') }}"
-date: "{{ post.date | date('d/m/Y') }}"
+type: "{{ post.type }}"
+category: "{{ post.category }}"
+tags: [{{ post.tags | map(t => t.slug) | join(', ') }}]
+authors: [{{ post.authors | join(', ') }}]
+date: "{{ post.date | date('Y-m-d') }}"
+last_update: "{{ post.last_update | date('Y-m-d') }}"
+time_minutes: {{ post.time }}
+draft: {{ post.draft ? 'true' : 'false' }}
+unlisted: {{ post.unlisted ? 'true' : 'false' }}
+{% if post_image %}image: "{{ post_image }}"
+{% endif %}{% if post_video %}video: "{{ post_video }}"
+{% endif %}{% if post.deprecated %}deprecated: "{{ post.deprecated | date('Y-m-d') }}"
+{% endif %}{% if post.keywords | length > 0 %}keywords: [{{ post.keywords | join(', ') }}]
+{% endif %}{% if post.attachments | length > 0 %}attachments: [{{ post.attachments | keys | join(', ') }}]
+{% endif %}url: "{{ url('blog_post', {'post': post.uri}) }}"
 ---
 
-{{ post.data | raw }}
-
+{{ post.data(md_urls) | raw }}
+{{ md.video(post) }}
 ---
 
 Last updated on {{ post.last_update | date('d/m/Y') }}

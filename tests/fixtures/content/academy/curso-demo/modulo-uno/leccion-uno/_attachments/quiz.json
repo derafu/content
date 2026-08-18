@@ -1,1 +1,25 @@
-{"questions": [{"q": "¿Esto es un fixture?", "a": true}]}
+{
+    "id": "quiz-fixture",
+    "title": "Cuestionario de prueba",
+    "description": "Usado solo por los tests automatizados de derafu/content.",
+    "questions": [
+        {
+            "id": "q1",
+            "type": "multiple_choice",
+            "text": "¿Esto es un fixture?",
+            "options": [
+                { "id": "a", "text": "Sí.", "is_correct": true },
+                { "id": "b", "text": "No.", "is_correct": false }
+            ],
+            "allow_multiple": false,
+            "explanation": "Sí, este archivo es un fixture usado por los tests."
+        },
+        {
+            "id": "q2",
+            "type": "true_false",
+            "text": "¿Este cuestionario se usa en producción?",
+            "answer": false,
+            "explanation": "No, es solo para los tests automatizados de derafu/content."
+        }
+    ]
+}

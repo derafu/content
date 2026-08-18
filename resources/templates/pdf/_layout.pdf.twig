@@ -1,0 +1,327 @@
+{#
+    Shared layout for every */*.pdf.twig template.
+
+    A child template sets these BEFORE `{% extends %}` renders the blocks
+    below (Twig evaluates top-level `{% set %}` statements in a child even
+    though its own markup is replaced by inheritance):
+
+    - pdf_item (required): the content item (doc/faq/post/course/module/
+      lesson/page) driving the cover (title, description, tags, authors,
+      dates, deprecated notice) and breadcrumb (via pdf_item.ancestors).
+    - pdf_kind (optional): root breadcrumb label ("Docs", "FAQ", "Academy",
+      "Blog"). Omitted for pages, which have no natural section root.
+    - pdf_full_html (optional): pre-rendered HTML (built via
+      pdf/_macros.pdf.twig, when ?full=1 was requested AND the item
+      actually has children/modules/lessons — a childless item ignores
+      ?full=1 entirely and falls through to the regular single-item
+      render below). When set and non-empty, a front cover
+      (pdf_item/pdf_kind, no body) followed by a real <tocpagebreak>
+      table of contents is inserted, and this replaces the single-item
+      cover/content/hierarchy below entirely.
+
+    And overrides these blocks:
+
+    - pdf_content (required): the item's own rendered body.
+    - pdf_hierarchy (optional): children/modules/lessons listing.
+#}
+{% import 'pdf/_macros.pdf.twig' as pdfmacros %}
+<html>
+<head>
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 11pt;
+            color: #212529;
+            line-height: 1.5;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #0d3b66;
+            font-weight: bold;
+            margin-top: 1.2em;
+            margin-bottom: 0.5em;
+        }
+        h1 { font-size: 20pt; }
+        h2 { font-size: 16pt; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
+        h3 { font-size: 13pt; }
+        a { color: #0d6efd; text-decoration: none; }
+        blockquote {
+            margin: 0.8em 0;
+            padding: 0.5em 1em;
+            border-left: 4px solid #0d6efd;
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f1f3f5;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 9.5pt;
+        }
+        pre {
+            font-family: monospace;
+            background-color: #f1f3f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 9pt;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+        table th, table td {
+            border: 1px solid #dee2e6;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f1f3f5;
+        }
+        img {
+            max-width: 100%;
+        }
+        .pdf-header, .pdf-footer {
+            font-size: 8pt;
+            color: #6c757d;
+        }
+        .pdf-header {
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 4px;
+        }
+        .pdf-header-site {
+            font-weight: bold;
+            color: #212529;
+        }
+        .pdf-footer {
+            border-top: 1px solid #dee2e6;
+            padding-top: 4px;
+            margin: 0;
+            width: 100%;
+        }
+        .pdf-footer td {
+            border: none;
+            padding: 0;
+        }
+        .pdf-footer-page {
+            text-align: right;
+        }
+        .pdf-breadcrumb {
+            font-size: 9pt;
+            color: #6c757d;
+            margin-bottom: 0.3em;
+        }
+        .pdf-title {
+            font-size: 22pt;
+            font-weight: bold;
+            color: #0d3b66;
+            margin: 0 0 0.2em;
+        }
+        .pdf-subtitle {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #0d3b66;
+            margin: 0 0 0.2em;
+        }
+        .pdf-description {
+            font-size: 11pt;
+            color: #495057;
+            margin-bottom: 0.6em;
+        }
+        .pdf-meta {
+            font-size: 9pt;
+            color: #6c757d;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0.8em;
+            margin-bottom: 1em;
+        }
+        .pdf-cover-image {
+            margin: 0.6em 0 1em;
+            text-align: center;
+        }
+        .pdf-video {
+            margin: 0.6em 0 1em;
+            text-align: center;
+        }
+        .pdf-video img {
+            max-width: 60%;
+            border-radius: 6px;
+        }
+        .pdf-video-caption {
+            font-size: 9pt;
+            color: #6c757d;
+            margin-top: 0.3em;
+        }
+        .pdf-test {
+            margin-top: 1.5em;
+        }
+        .pdf-test h2 {
+            margin-top: 0;
+        }
+        .pdf-test-description {
+            color: #495057;
+            margin-bottom: 1em;
+        }
+        .pdf-test-question {
+            margin-bottom: 1em;
+        }
+        .pdf-test-question-text {
+            font-weight: bold;
+            margin-bottom: 0.4em;
+        }
+        .pdf-test-option {
+            margin: 0 0 0.2em 1em;
+        }
+        .pdf-test-answers h2 {
+            margin-top: 0;
+        }
+        .pdf-test-answer {
+            margin-bottom: 1em;
+            padding-bottom: 0.8em;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .pdf-test-answer-question {
+            font-weight: bold;
+            margin-bottom: 0.3em;
+        }
+        .pdf-test-answer-correct {
+            color: #2e7d32;
+            margin-bottom: 0.3em;
+        }
+        .pdf-test-answer-explanation {
+            color: #495057;
+            font-style: italic;
+        }
+        .pdf-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffe69c;
+            color: #664d03;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 1em;
+        }
+        .pdf-hierarchy {
+            margin-top: 1.5em;
+        }
+        .pdf-hierarchy h2 {
+            margin-top: 0;
+        }
+        .pdf-hierarchy-module {
+            margin-bottom: 1em;
+        }
+        .pdf-hierarchy-module-title {
+            font-weight: bold;
+            margin-bottom: 0.3em;
+        }
+        .pdf-hierarchy ul {
+            margin: 0 0 0.6em 0;
+            padding-left: 1.2em;
+        }
+        .pdf-hierarchy li {
+            margin-bottom: 0.2em;
+        }
+        .pdf-time {
+            color: #6c757d;
+            font-size: 9pt;
+        }
+        .pdf-footer-meta {
+            margin-top: 1.5em;
+            padding-top: 0.6em;
+            border-top: 1px solid #dee2e6;
+            font-size: 9pt;
+            color: #6c757d;
+        }
+        @page {
+            margin-top: 22mm;
+            margin-bottom: 18mm;
+            margin-left: 15mm;
+            margin-right: 15mm;
+            margin-header: 8mm;
+            margin-footer: 8mm;
+            header: html_pdfheader;
+            footer: html_pdffooter;
+        }
+    </style>
+</head>
+<body>
+
+    <htmlpageheader name="pdfheader">
+        <div class="pdf-header">
+            <span class="pdf-header-site">{{ plugin.context.config.title }}</span>
+            {% if pdf_kind %}
+                &middot; {{ pdf_kind }}
+            {% endif %}
+        </div>
+    </htmlpageheader>
+
+    <htmlpagefooter name="pdffooter">
+        <table class="pdf-footer">
+            <tr>
+                <td class="pdf-footer-site">{{ plugin.context.config.title }} &middot; {{ plugin.context.config.url }}</td>
+                <td class="pdf-footer-page">Page {PAGENO} of {nb}</td>
+            </tr>
+        </table>
+    </htmlpagefooter>
+
+    {% if pdf_full_html is defined and pdf_full_html %}
+        {{ pdfmacros.cover(pdf_item, pdf_kind) }}
+        <tocpagebreak name="toc" links="on" toc-preHTML="&lt;h1&gt;Table of Contents&lt;/h1&gt;" />
+        {{ pdf_full_html }}
+    {% else %}
+        {% if pdf_item %}
+            {% if pdf_kind or pdf_item.ancestors | length > 0 %}
+                <div class="pdf-breadcrumb">
+                    {% if pdf_kind %}{{ pdf_kind }}{% endif %}
+                    {% for ancestor in pdf_item.ancestors %}
+                        &raquo; {{ ancestor.title }}
+                    {% endfor %}
+                    &raquo; {{ pdf_item.title }}
+                </div>
+            {% endif %}
+
+            <div class="pdf-title">{{ pdf_item.title }}</div>
+
+            {% if pdf_item.description %}
+                <div class="pdf-description">{{ pdf_item.description }}</div>
+            {% endif %}
+
+            {% if pdf_item.image %}
+                <div class="pdf-cover-image">
+                    <img src="{{ pdf_item.image }}" alt="{{ pdf_item.title }}">
+                </div>
+            {% endif %}
+
+            {{ pdfmacros.video(pdf_item) }}
+
+            <div class="pdf-meta">
+                {% if pdf_item.authors | length > 0 %}{{ pdf_item.authors | join(', ') }} &middot; {% endif %}
+                {{ pdf_item.date | date('d/m/Y') }}
+                {% if pdf_item.tags | length > 0 %}
+                    &middot; {{ pdf_item.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
+                {% endif %}
+            </div>
+
+            {% if pdf_item.deprecated %}
+                <div class="pdf-warning">
+                    This content is deprecated since {{ pdf_item.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% block pdf_content %}{% endblock %}
+
+        {% block pdf_hierarchy %}{% endblock %}
+
+        {% if pdf_item %}
+            <div class="pdf-footer-meta">
+                Last updated on {{ pdf_item.last_update | date('d/m/Y') }}
+            </div>
+        {% endif %}
+    {% endif %}
+
+</body>
+</html>

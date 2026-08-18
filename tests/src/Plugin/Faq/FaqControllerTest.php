@@ -88,6 +88,79 @@ final class FaqControllerTest extends TestCase
         $this->assertStringContainsString('¿Cómo se prueba este paquete?', $html);
     }
 
+    /**
+     * "pregunta-uno" has a real child, so the "completo" variants must
+     * show alongside the regular single-page download links.
+     */
+    public function testShowRendersDownloadLinksIncludingFullVariantsWhenThereAreChildren(): void
+    {
+        $request = new Request('GET', 'http://localhost/faq/pregunta-uno');
+
+        $html = $this->controller->show($request, 'pregunta-uno');
+
+        $this->assertStringContainsString('href="/faq/pregunta-uno.pdf"', $html);
+        $this->assertStringContainsString('href="/faq/pregunta-uno.md"', $html);
+        $this->assertStringContainsString('href="/faq/pregunta-uno.pdf?full=1"', $html);
+        $this->assertStringContainsString('href="/faq/pregunta-uno.md?full=1"', $html);
+    }
+
+    /**
+     * "pregunta-uno" has a real child ("pregunta-uno/sub-pregunta") in the
+     * fixture hierarchy. Unlike the HTML template (gated behind the
+     * "show_children" metadata flag), the Markdown export always lists
+     * children when present — there is no sidebar/related-questions widget
+     * to discover them otherwise when the .md body is fetched directly
+     * (e.g. by an AI agent).
+     */
+    public function testShowMarkdownFormatListsChildQuestionsWithAbsoluteUrls(): void
+    {
+        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.md');
+
+        $markdown = $this->controller->show($request, 'pregunta-uno.md');
+
+        $this->assertIsString($markdown);
+        $this->assertStringContainsString(
+            '[¿Y si el paquete falla?](http://localhost/faq/pregunta-uno/sub-pregunta)',
+            $markdown
+        );
+    }
+
+    /**
+     * "?full=1" on the .md export embeds the child question's own title
+     * and full body inline, instead of just linking to it.
+     */
+    public function testShowMarkdownFormatWithFullQueryParamEmbedsChildQuestionBodyInline(): void
+    {
+        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.md?full=1');
+
+        $markdown = $this->controller->show($request, 'pregunta-uno.md');
+
+        $this->assertIsString($markdown);
+        $this->assertStringContainsString('## ¿Y si el paquete falla?', $markdown);
+        $this->assertStringContainsString(
+            'validar el listado',
+            $markdown
+        );
+        $this->assertStringNotContainsString('Related questions', $markdown);
+    }
+
+    /**
+     * "?full=1" on a question WITHOUT children is a no-op.
+     */
+    public function testShowMarkdownFormatWithFullQueryParamOnAChildlessQuestionIgnoresTheFlag(): void
+    {
+        $withFull = $this->controller->show(
+            new Request('GET', 'http://localhost/faq/pregunta-uno/sub-pregunta.md?full=1'),
+            'pregunta-uno/sub-pregunta.md'
+        );
+        $withoutFull = $this->controller->show(
+            new Request('GET', 'http://localhost/faq/pregunta-uno/sub-pregunta.md'),
+            'pregunta-uno/sub-pregunta.md'
+        );
+
+        $this->assertSame($withoutFull, $withFull);
+    }
+
     public function testShowJsonFormatReturnsTheFullArray(): void
     {
         $request = new Request('GET', 'http://localhost/faq/pregunta-uno.json');
@@ -96,6 +169,58 @@ final class FaqControllerTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertSame('pregunta-uno', $result['data']['uri']);
+    }
+
+    /**
+     * Smoke test for the redesigned pdf/_layout (repeating header/footer,
+     * page numbering, cover, related-questions hierarchy) — never
+     * exercised by any test before.
+     */
+    public function testShowPdfFormatRendersWithoutError(): void
+    {
+        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.pdf');
+
+        $pdf = $this->controller->show($request, 'pregunta-uno.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertSame(1, $this->countPdfPages($pdf));
+    }
+
+    /**
+     * "?full=1" dumps "pregunta-uno" together with its real child
+     * ("pregunta-uno/sub-pregunta") into the SAME pdf: 1 cover page + 1
+     * TOC page + 1 page per question.
+     */
+    public function testShowPdfFormatWithFullQueryParamIncludesChildQuestionsInOnePdf(): void
+    {
+        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.pdf?full=1');
+
+        $pdf = $this->controller->show($request, 'pregunta-uno.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertSame(4, $this->countPdfPages($pdf));
+    }
+
+    /**
+     * "?full=1" on a question WITHOUT children is a no-op: it falls
+     * straight through to the regular single-item PDF.
+     */
+    public function testShowPdfFormatWithFullQueryParamOnAChildlessQuestionIgnoresTheFlag(): void
+    {
+        $request = new Request('GET', 'http://localhost/faq/pregunta-uno/sub-pregunta.pdf?full=1');
+
+        $pdf = $this->controller->show($request, 'pregunta-uno/sub-pregunta.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertSame(1, $this->countPdfPages($pdf));
+    }
+
+    private function countPdfPages(string $pdf): int
+    {
+        return preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
     }
 
     public function testUnknownQuestionBubblesAsContentNotFoundException(): void

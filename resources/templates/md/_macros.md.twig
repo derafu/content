@@ -1,0 +1,137 @@
+{#
+    Macros for the "full" Markdown export (?full=1): append every
+    descendant's own title, description and body — instead of the brief
+    bullet-list of links shown by default — right after the root item's
+    own body. Mirrors pdf/_macros.pdf.twig's recursive tree, minus
+    pagination and the table of contents (Markdown has no concept of
+    "pages").
+
+    Only used by the four templates whose content has a natural tree
+    (academy/course, academy/module, docs/show, faq/show).
+#}
+
+{#
+    Renders a frontmatter "video" (a YouTube URL, already rewritten to its
+    embed form by AbstractContentItem::video()) as a visible Markdown
+    link — the frontmatter alone buries it in YAML a reader (or an LLM)
+    has no reason to scan closely. Mirrors pdf/_macros.pdf.twig's video()
+    macro: a clickable YouTube thumbnail when the URL is recognizably
+    YouTube, a plain link otherwise.
+#}
+{% macro video(item) %}
+{%- set videoUrl = item.video -%}
+{%- if videoUrl %}
+{%- if 'youtube.com/embed/' in videoUrl -%}
+{%- set videoId = videoUrl | split('/') | last -%}
+[![Watch video](https://img.youtube.com/vi/{{ videoId }}/hqdefault.jpg)](https://www.youtube.com/watch?v={{ videoId }})
+{% else -%}
+[Watch video]({{ videoUrl }})
+{%- endif %}
+
+{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a lesson's self-assessment test ("quiz", AcademyLesson::test())
+    as plain Markdown: every question with ALL of its options as a GFM
+    task list (the correct one(s) checked), followed by the explanation.
+    Kept as a full test — not collapsed into a bare question/answer FAQ
+    — on purpose: the wrong options and the explanation are real
+    information (useful to an LLM reading this to know what NOT to
+    answer, or why an option is wrong), and the .md export's whole point
+    is to lose nothing that the site itself has.
+
+    Safe to call on ANY item, not just lessons: "item.test is defined"
+    no-ops for content types that have no test() method at all.
+#}
+{% macro test(item) %}
+{%- if item.test is defined and item.test %}
+{%- set test = item.test %}
+
+## {{ test.title }}
+
+{% if test.description -%}
+{{ test.description }}
+
+{% endif -%}
+{% for question in test.questions -%}
+### {{ loop.index }}. {{ question.text }}
+
+{% for option in question.options -%}
+- [{{ option.isCorrect ? 'x' : ' ' }}] {{ option.text }}
+{% endfor %}
+
+{% if question.explanation %}
+> {{ question.explanation }}
+
+{% endif %}
+{% endfor -%}
+{%- endif %}
+{% endmacro %}
+
+{% macro tree(items, depth, md_urls) %}
+    {%- import _self as m -%}
+    {%- set heading = '' -%}
+    {%- for i in 1..depth -%}{% set heading = heading ~ '#' %}{%- endfor -%}
+    {%- for item in items %}
+
+---
+
+{{ heading }} {{ item.title }}
+
+{% if item.description -%}
+{{ item.description }}
+
+{% endif -%}
+{{ item.data(md_urls) | trim }}
+{{ m.video(item) }}
+{{ m.test(item) }}
+{% if item.children | length > 0 %}
+{{ m.tree(item.children, depth + 1, md_urls) }}
+{%- endif -%}
+    {% endfor -%}
+{% endmacro %}
+
+{% macro academy_lessons(lessons, depth, md_urls) %}
+    {%- import _self as m -%}
+    {%- set heading = '' -%}
+    {%- for i in 1..depth -%}{% set heading = heading ~ '#' %}{%- endfor -%}
+    {%- for lesson in lessons %}
+
+---
+
+{{ heading }} {{ lesson.title }}
+
+{% if lesson.description -%}
+{{ lesson.description }}
+
+{% endif -%}
+{{ lesson.data(md_urls) | trim }}
+{{ m.video(lesson) }}
+{{ m.test(lesson) }}
+    {% endfor -%}
+{% endmacro %}
+
+{% macro academy_modules(modules, depth, md_urls) %}
+    {%- import _self as m -%}
+    {%- set heading = '' -%}
+    {%- for i in 1..depth -%}{% set heading = heading ~ '#' %}{%- endfor -%}
+    {%- for module in modules %}
+
+---
+
+{{ heading }} {{ module.title }}
+
+{% if module.description -%}
+{{ module.description }}
+
+{% endif -%}
+{% if module.data -%}
+{{ module.data(md_urls) | trim }}
+{% endif %}
+{{ m.video(module) }}
+{% if module.lessons | length > 0 %}
+{{ m.academy_lessons(module.lessons, depth + 1, md_urls) }}
+{%- endif -%}
+    {% endfor -%}
+{% endmacro %}

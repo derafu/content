@@ -42,7 +42,8 @@
         "phpunit/phpunit": "^13.2",
         "guzzlehttp/guzzle": "^7.15",
         "mcp/sdk": "^0.7",
-        "derafu/markdown": "dev-main"
+        "derafu/markdown": "dev-main",
+        "mpdf/mpdf": "^8.3"
     },
     "suggest": {
         "guzzlehttp/guzzle": "Required by the \"search\" plugin (or any psr/http-client implementation) to query the search engine and LLM backend.",

@@ -1,29 +1,28 @@
-<html>
-    <head>
-        <style>
-            footer {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                text-align: center;
-                font-weight: bold;
-                font-size: 8pt;
-                border-top: 1px solid #000;
-                padding: 5px 0;
-                margin: 0;
-                background-color: #fff;
-            }
-        </style>
-    </head>
-    <body>
+{% extends 'pdf/_layout.pdf.twig' %}
+{% import 'pdf/_macros.pdf.twig' as pdf %}
+{% set link_urls = {'link_base_url': plugin.context.config.url} %}
+{% set pdf_item = faq %}
+{% set pdf_kind = 'FAQ' %}
 
-        {{ faq.data | markdown(has_twig: faq.has_twig) }}
+{% if full and faq.children | length > 0 %}
+    {% set pdf_full_html %}
+        {{ pdf.tree(faq, pdf_kind, 0, link_urls) }}
+    {% endset %}
+{% endif %}
 
-        <footer>
-            Last updated on {{ faq.last_update | date('d/m/Y') }}
-            {{ faq.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
-        </footer>
+{% block pdf_content %}
+    {{ faq.data(link_urls) | markdown(has_twig: faq.has_twig) }}
+{% endblock %}
 
-    </body>
-</html>
+{% block pdf_hierarchy %}
+    {% if faq.children | length > 0 %}
+        <div class="pdf-hierarchy">
+            <h2>Related questions</h2>
+            <ul>
+                {% for child in faq.children %}
+                    <li>{{ child.title }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}

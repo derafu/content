@@ -1,1 +1,27 @@
-{{ page.data | raw }}
+{% import 'md/_macros.md.twig' as md %}
+{% set base_url = plugin.context.config.url %}
+{% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
+{% set page_image = page.image(md_urls) %}
+{% set page_video = page.video(md_urls) %}
+---
+title: "{{ page.title }}"
+description: "{{ page.description }}"
+type: "{{ page.type }}"
+category: "{{ page.category }}"
+tags: [{{ page.tags | map(t => t.slug) | join(', ') }}]
+authors: [{{ page.authors | join(', ') }}]
+date: "{{ page.date | date('Y-m-d') }}"
+last_update: "{{ page.last_update | date('Y-m-d') }}"
+time_minutes: {{ page.time }}
+draft: {{ page.draft ? 'true' : 'false' }}
+unlisted: {{ page.unlisted ? 'true' : 'false' }}
+{% if page_image %}image: "{{ page_image }}"
+{% endif %}{% if page_video %}video: "{{ page_video }}"
+{% endif %}{% if page.deprecated %}deprecated: "{{ page.deprecated | date('Y-m-d') }}"
+{% endif %}{% if page.keywords | length > 0 %}keywords: [{{ page.keywords | join(', ') }}]
+{% endif %}{% if page.attachments | length > 0 %}attachments: [{{ page.attachments | keys | join(', ') }}]
+{% endif %}url: "{{ url('pages_page', {'page': page.uri}) }}"
+---
+
+{{ page.data(md_urls) | raw }}
+{{ md.video(page) }}

@@ -16,12 +16,32 @@ use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\Contract\ContentAttachmentInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyLessonInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyModuleInterface;
+use Derafu\Content\Plugin\Academy\Contract\AcademyTestInterface;
 
 /**
  * Class that represents an academy lesson.
  */
 class AcademyLesson extends AbstractContentItem implements AcademyLessonInterface
 {
+    /**
+     * Self-assessment test ("quiz") of the lesson, parsed from its
+     * attachment. False is used (never null) as the "not resolved yet"
+     * memoization sentinel, since a nullable typed property set to null
+     * would make isset() (used to detect "already resolved") return
+     * false again on every call.
+     *
+     * @var AcademyTestInterface|false
+     */
+    private AcademyTestInterface|false $test;
+
+    /**
+     * Raw attachment backing the lesson's test. Same false-as-sentinel
+     * reasoning as $test above.
+     *
+     * @var ContentAttachmentInterface|false
+     */
+    private ContentAttachmentInterface|false $testAttachment;
+
     /**
      * {@inheritDoc}
      */
@@ -85,7 +105,40 @@ class AcademyLesson extends AbstractContentItem implements AcademyLessonInterfac
     /**
      * {@inheritDoc}
      */
-    public function test(): string|ContentAttachmentInterface|null
+    public function test(): ?AcademyTestInterface
+    {
+        if (!isset($this->test)) {
+            $attachment = $this->testAttachment();
+
+            $this->test = $attachment
+                ? AcademyTest::fromJson($attachment->raw())
+                : false;
+        }
+
+        return $this->test ?: null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function testAttachment(): ?ContentAttachmentInterface
+    {
+        if (!isset($this->testAttachment)) {
+            $this->testAttachment = $this->resolveTestAttachment() ?? false;
+        }
+
+        return $this->testAttachment ?: null;
+    }
+
+    /**
+     * Resolves the "test" metadata to a local attachment, supporting both
+     * the "?attachment=name" convention and a literal path ending in
+     * "/_attachments/name" (used directly in real content), since both
+     * point to the same attachment file by its basename.
+     *
+     * @return ContentAttachmentInterface|null
+     */
+    private function resolveTestAttachment(): ?ContentAttachmentInterface
     {
         $test = $this->metadata('test');
 
@@ -94,12 +147,14 @@ class AcademyLesson extends AbstractContentItem implements AcademyLessonInterfac
         }
 
         if (str_contains($test, '?attachment=')) {
-            $attachment = explode('?attachment=', $test)[1];
-
-            return $this->attachment($attachment);
+            return $this->attachment(explode('?attachment=', $test)[1]);
         }
 
-        return $test;
+        if (str_contains($test, '/_attachments/')) {
+            return $this->attachment(basename($test));
+        }
+
+        return null;
     }
 
     /**

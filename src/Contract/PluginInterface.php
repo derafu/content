@@ -20,6 +20,13 @@ use Derafu\Config\Contract\OptionsInterface;
 interface PluginInterface
 {
     /**
+     * Get the context of the content website this plugin belongs to.
+     *
+     * @return ContentContextInterface
+     */
+    public function context(): ContentContextInterface;
+
+    /**
      * Get the name of the plugin.
      *
      * @return string

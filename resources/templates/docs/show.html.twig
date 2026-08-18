@@ -1,4 +1,5 @@
 {% extends 'layouts/docs.html.twig' %}
+{% import '_downloads.html.twig' as downloads %}
 
 {% block title %}{{ doc.title }}{% endblock %}
 
@@ -149,6 +150,13 @@
             {% endif %}
         </div>
     </div>
+
+    {{ downloads.links(
+        path('docs_doc', {'doc': doc.uri ~ '.pdf'}),
+        path('docs_doc', {'doc': doc.uri ~ '.md'}),
+        doc.children | length > 0 ? path('docs_doc', {'doc': doc.uri ~ '.pdf'}) ~ '?full=1' : false,
+        doc.children | length > 0 ? path('docs_doc', {'doc': doc.uri ~ '.md'}) ~ '?full=1' : false
+    ) }}
 
     {% if previous or next %}
         <div class="row my-5">

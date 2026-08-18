@@ -64,6 +64,7 @@ class FaqController extends AbstractContentController
                     'faq' => $faq,
                     'faqs' => $plugin->registry()->all(),
                     'tags' => $plugin->registry()->tags(),
+                    'full' => (bool) $request->query('full'),
                 ]
             );
         }

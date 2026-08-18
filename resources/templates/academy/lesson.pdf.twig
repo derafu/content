@@ -1,29 +1,10 @@
-<html>
-    <head>
-        <style>
-            footer {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                text-align: center;
-                font-weight: bold;
-                font-size: 8pt;
-                border-top: 1px solid #000;
-                padding: 5px 0;
-                margin: 0;
-                background-color: #fff;
-            }
-        </style>
-    </head>
-    <body>
+{% extends 'pdf/_layout.pdf.twig' %}
+{% import 'pdf/_macros.pdf.twig' as pdf %}
+{% set link_urls = {'link_base_url': plugin.context.config.url} %}
+{% set pdf_item = lesson %}
+{% set pdf_kind = 'Academy' %}
 
-        {{ lesson.data | markdown(has_twig: lesson.has_twig) }}
-
-        <footer>
-            Last updated on {{ lesson.last_update | date('d/m/Y') }}
-            {{ lesson.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
-        </footer>
-
-    </body>
-</html>
+{% block pdf_content %}
+    {{ lesson.data(link_urls) | markdown(has_twig: lesson.has_twig) }}
+    {{ pdf.test(lesson) }}
+{% endblock %}

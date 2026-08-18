@@ -26,8 +26,10 @@ use Derafu\Content\Plugin\Pages\PagesPage;
 use Derafu\Content\Plugin\Pages\PagesPlugin;
 use Derafu\Content\Plugin\Pages\PagesRegistry;
 use Derafu\Http\Request;
+use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RendererFixture;
+use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -65,9 +67,12 @@ final class PagesControllerTest extends TestCase
 
         $contentService = ContentFixtures::contentService(['pages' => $plugin]);
 
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/pages/about'));
+
         $this->controller = new PagesController(
             $contentService,
-            RendererFixture::create()
+            RendererFixture::create($router)
         );
     }
 
@@ -98,6 +103,11 @@ final class PagesControllerTest extends TestCase
             '<p>Página de prueba usada por los tests automatizados',
             $html
         );
+        // Pages have no "completo" concept: only the two single-page
+        // download links.
+        $this->assertStringContainsString('href="/pages/about.pdf"', $html);
+        $this->assertStringContainsString('href="/pages/about.md"', $html);
+        $this->assertStringNotContainsString('full=1', $html);
     }
 
     public function testMarkdownFormatReturnsTheRawMarkdownBody(): void
@@ -129,6 +139,20 @@ final class PagesControllerTest extends TestCase
         // variable interpolated), not the Markdown filter nor raw text.
         $this->assertStringContainsString('Hola desde Twig: Página Twig', $html);
         $this->assertStringNotContainsString('{{ page.title }}', $html);
+    }
+
+    /**
+     * Smoke test for the redesigned pdf/_layout (repeating header/footer,
+     * page numbering, cover) — never exercised by any test before.
+     */
+    public function testPdfFormatRendersWithoutError(): void
+    {
+        $request = new Request('GET', 'http://localhost/pages/about.pdf');
+
+        $pdf = $this->controller->show($request, 'about.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
     }
 
     public function testUnknownPageBubblesAsContentNotFoundException(): void

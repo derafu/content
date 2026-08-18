@@ -1,4 +1,41 @@
-{{ faq.data | raw }}
+{% import 'md/_macros.md.twig' as md %}
+{% set base_url = plugin.context.config.url %}
+{% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
+{% set faq_image = faq.image(md_urls) %}
+{% set faq_video = faq.video(md_urls) %}
+---
+title: "{{ faq.title }}"
+description: "{{ faq.description }}"
+type: "{{ faq.type }}"
+category: "{{ faq.category }}"
+tags: [{{ faq.tags | map(t => t.slug) | join(', ') }}]
+authors: [{{ faq.authors | join(', ') }}]
+date: "{{ faq.date | date('Y-m-d') }}"
+last_update: "{{ faq.last_update | date('Y-m-d') }}"
+time_minutes: {{ faq.time }}
+draft: {{ faq.draft ? 'true' : 'false' }}
+unlisted: {{ faq.unlisted ? 'true' : 'false' }}
+{% if faq_image %}image: "{{ faq_image }}"
+{% endif %}{% if faq_video %}video: "{{ faq_video }}"
+{% endif %}{% if faq.deprecated %}deprecated: "{{ faq.deprecated | date('Y-m-d') }}"
+{% endif %}{% if faq.keywords | length > 0 %}keywords: [{{ faq.keywords | join(', ') }}]
+{% endif %}{% if faq.attachments | length > 0 %}attachments: [{{ faq.attachments | keys | join(', ') }}]
+{% endif %}url: "{{ url('faq_question', {'question': faq.uri}) }}"
+---
+
+{{ faq.data(md_urls) | raw }}
+{{ md.video(faq) }}
+{% if faq.children | length > 0 %}
+{% if full %}
+{{ md.tree(faq.children, 2, md_urls) }}
+{% else %}
+## Related questions
+
+{% for child in faq.children %}
+- [{{ child.title }}]({{ url('faq_question', {'question': child.uri}) }})
+{% endfor %}
+{% endif %}
+{% endif %}
 
 ---
 Last updated on {{ faq.last_update | date('d/m/Y') }}

@@ -1,31 +1,35 @@
-<html>
-    <head>
-        <style>
-            footer {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                text-align: center;
-                font-weight: bold;
-                font-size: 8pt;
-                border-top: 1px solid #000;
-                padding: 5px 0;
-                margin: 0;
-                background-color: #fff;
-            }
-        </style>
-    </head>
-    <body>
+{% extends 'pdf/_layout.pdf.twig' %}
+{% import 'pdf/_macros.pdf.twig' as pdf %}
+{% set link_urls = {'link_base_url': plugin.context.config.url} %}
+{% set pdf_item = module %}
+{% set pdf_kind = 'Academy' %}
 
-        <h1>{{ module.title }}</h1>
+{% if full and module.lessons | length > 0 %}
+    {% set pdf_full_html %}
+        {{ pdf.academy_module(module, pdf_kind, 0, link_urls) }}
+    {% endset %}
+{% endif %}
 
-        {{ module.data | markdown(has_twig: module.has_twig) }}
+{% block pdf_content %}
+    {% if not module.data %}
+        {{ ('# ' ~ module.title) | markdown }}
+    {% else %}
+        {{ module.data(link_urls) | markdown(has_twig: module.has_twig) }}
+    {% endif %}
+{% endblock %}
 
-        <footer>
-            Last updated on {{ module.last_update | date('d/m/Y') }}
-            {{ module.tags | map(tag => '#' ~ tag.slug) | join(', ') }}
-        </footer>
-
-    </body>
-</html>
+{% block pdf_hierarchy %}
+    {% if module.lessons | length > 0 %}
+        <div class="pdf-hierarchy">
+            <h2>Lessons</h2>
+            <ul>
+                {% for lesson in module.lessons %}
+                    <li>
+                        {{ lesson.title }}
+                        <span class="pdf-time">({{ lesson.time_formatted }})</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -122,6 +122,202 @@ final class DocsControllerTest extends TestCase
         );
     }
 
+    /**
+     * "guia" has real children, so the HTML page must show the "PDF
+     * completo"/"Markdown completo" links alongside the regular
+     * single-page ones — plain, always-visible links, not hidden behind
+     * a dropdown.
+     */
+    public function testHtmlRenderShowsDownloadLinksIncludingFullVariantsWhenThereAreChildren(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia'));
+
+        $request = new Request('GET', 'http://localhost/docs/guia');
+        $html = $this->controller($router)->show($request, 'guia');
+
+        $this->assertStringContainsString('href="/docs/guia.pdf"', $html);
+        $this->assertStringContainsString('href="/docs/guia.md"', $html);
+        $this->assertStringContainsString('href="/docs/guia.pdf?full=1"', $html);
+        $this->assertStringContainsString('href="/docs/guia.md?full=1"', $html);
+        // Both the single-page and the "full" Markdown get a "Copy to
+        // clipboard" action, not just a download link.
+        $this->assertStringContainsString('data-copy-md="/docs/guia.md"', $html);
+        $this->assertStringContainsString('data-copy-md="/docs/guia.md?full=1"', $html);
+    }
+
+    /**
+     * "guia/primeros-pasos" has no children: only the two single-page
+     * download links, no "completo" variants.
+     */
+    public function testHtmlRenderShowsOnlySinglePageDownloadLinksForAChildlessDoc(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos'));
+
+        $request = new Request('GET', 'http://localhost/docs/guia/primeros-pasos');
+        $html = $this->controller($router)->show($request, 'guia/primeros-pasos');
+
+        $this->assertStringContainsString('href="/docs/guia/primeros-pasos.pdf"', $html);
+        $this->assertStringContainsString('href="/docs/guia/primeros-pasos.md"', $html);
+        $this->assertStringNotContainsString('full=1', $html);
+    }
+
+    /**
+     * "guia" has a real child ("guia/primeros-pasos") in the fixture
+     * hierarchy. Unlike the HTML template (gated behind the
+     * "show_children" metadata flag), the Markdown export always lists
+     * children when present: an AI agent fetching the .md body has no
+     * sidebar to discover them otherwise.
+     */
+    public function testMarkdownFormatListsChildDocsWithAbsoluteUrls(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia.md'));
+
+        $request = new Request('GET', 'http://localhost/docs/guia.md');
+        $markdown = $this->controller($router)->show($request, 'guia.md');
+
+        $this->assertIsString($markdown);
+        $this->assertStringContainsString(
+            '[Primeros pasos](http://localhost/docs/guia/primeros-pasos)',
+            $markdown
+        );
+    }
+
+    /**
+     * "?full=1" on the .md export embeds the child's own title and full
+     * body inline (as a "## " heading), instead of just linking to it —
+     * mirrors the PDF's "full" bundling, but with no pages/TOC concept.
+     */
+    public function testMarkdownFormatWithFullQueryParamEmbedsChildDocBodyInline(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia.md'));
+
+        $request = new Request('GET', 'http://localhost/docs/guia.md?full=1');
+        $markdown = $this->controller($router)->show($request, 'guia.md');
+
+        $this->assertIsString($markdown);
+        $this->assertStringContainsString('## Primeros pasos', $markdown);
+        $this->assertStringContainsString(
+            'hijo de la sección guía, usado para validar',
+            $markdown
+        );
+        $this->assertStringNotContainsString('Pages in this section', $markdown);
+    }
+
+    /**
+     * "?full=1" on a doc WITHOUT children is a no-op: it must render
+     * byte-for-byte the same Markdown body as without the flag.
+     */
+    public function testMarkdownFormatWithFullQueryParamOnAChildlessDocIgnoresTheFlag(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos.md'));
+
+        $withFull = $this->controller($router)->show(
+            new Request('GET', 'http://localhost/docs/guia/primeros-pasos.md?full=1'),
+            'guia/primeros-pasos.md'
+        );
+        $withoutFull = $this->controller($router)->show(
+            new Request('GET', 'http://localhost/docs/guia/primeros-pasos.md'),
+            'guia/primeros-pasos.md'
+        );
+
+        $this->assertSame($withoutFull, $withFull);
+    }
+
+    /**
+     * "guia" itself has a root-relative frontmatter image and a body with
+     * a root-relative Markdown image and a root-relative Markdown link.
+     * The .md export must resolve all three to absolute URLs so the body
+     * stays self-contained outside this website (see
+     * AbstractContentItemUrlResolutionTest for the unit-level coverage of
+     * the underlying resolution logic).
+     */
+    public function testMarkdownFormatResolvesTheDocsOwnImageAndLinkUrls(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia.md'));
+
+        $request = new Request('GET', 'http://localhost/docs/guia.md');
+        $markdown = $this->controller($router)->show($request, 'guia.md');
+
+        $this->assertIsString($markdown);
+        $this->assertStringContainsString(
+            'image: "http://localhost/img/content/docs/guia/cover.png"',
+            $markdown
+        );
+        $this->assertStringContainsString(
+            '![Diagrama de la guía](http://localhost/img/content/docs/guia/diagrama.png)',
+            $markdown
+        );
+        $this->assertStringContainsString(
+            '[este artículo hijo](http://localhost/docs/guia/primeros-pasos)',
+            $markdown
+        );
+    }
+
+    /**
+     * No test exercised docs/show.pdf.twig before this one — a smoke test
+     * proving the .data(link_urls) call added to it actually renders
+     * without error and produces a real PDF.
+     */
+    public function testPdfFormatRendersWithoutError(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia.pdf'));
+
+        $request = new Request('GET', 'http://localhost/docs/guia.pdf');
+        $pdf = $this->controller($router)->show($request, 'guia.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertSame(1, $this->countPdfPages($pdf));
+    }
+
+    /**
+     * "?full=1" dumps "guia" together with its real child
+     * ("guia/primeros-pasos") into the SAME pdf: 1 cover page + 1 TOC
+     * page + 1 page for "guia" + 1 page for its child.
+     */
+    public function testPdfFormatWithFullQueryParamIncludesChildDocsInOnePdf(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia.pdf'));
+
+        $request = new Request('GET', 'http://localhost/docs/guia.pdf?full=1');
+        $pdf = $this->controller($router)->show($request, 'guia.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertSame(4, $this->countPdfPages($pdf));
+    }
+
+    /**
+     * "?full=1" on a doc WITHOUT children is a no-op: there is nothing to
+     * bundle, so it falls straight through to the regular single-item
+     * PDF — no cover, no table of contents.
+     */
+    public function testPdfFormatWithFullQueryParamOnAChildlessDocIgnoresTheFlag(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos.pdf'));
+
+        $request = new Request('GET', 'http://localhost/docs/guia/primeros-pasos.pdf?full=1');
+        $pdf = $this->controller($router)->show($request, 'guia/primeros-pasos.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertSame(1, $this->countPdfPages($pdf));
+    }
+
+    private function countPdfPages(string $pdf): int
+    {
+        return preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
+    }
+
     public function testHtmlRenderHidesTheSidebarWhenSidebarPathIsDisabled(): void
     {
         $plugin = new DocsPlugin(

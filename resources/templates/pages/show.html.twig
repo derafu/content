@@ -1,4 +1,5 @@
 {% extends 'layouts/default.html.twig' %}
+{% import '_downloads.html.twig' as downloads %}
 
 {% block title %}{{ page.title }}{% endblock %}
 
@@ -17,6 +18,14 @@
             {{ page.data | twig }}
         {% endif %}
     </div>
+
+    <hr class="mt-5 mb-1">
+    {{ downloads.links(
+        path('pages_page', {'page': page.uri ~ '.pdf'}),
+        path('pages_page', {'page': page.uri ~ '.md'}),
+        false,
+        false
+    ) }}
 
 </section>
 

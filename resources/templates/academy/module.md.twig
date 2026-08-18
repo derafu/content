@@ -1,6 +1,43 @@
+{% import 'md/_macros.md.twig' as md %}
+{% set base_url = plugin.context.config.url %}
+{% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
+{% set module_image = module.image(md_urls) %}
+{% set module_video = module.video(md_urls) %}
+---
+title: "{{ module.title }}"
+description: "{{ module.description }}"
+type: "{{ module.type }}"
+category: "{{ module.category }}"
+tags: [{{ module.tags | map(t => t.slug) | join(', ') }}]
+authors: [{{ module.authors | join(', ') }}]
+date: "{{ module.date | date('Y-m-d') }}"
+last_update: "{{ module.last_update | date('Y-m-d') }}"
+time_minutes: {{ module.time }}
+draft: {{ module.draft ? 'true' : 'false' }}
+unlisted: {{ module.unlisted ? 'true' : 'false' }}
+{% if module_image %}image: "{{ module_image }}"
+{% endif %}{% if module_video %}video: "{{ module_video }}"
+{% endif %}{% if module.deprecated %}deprecated: "{{ module.deprecated | date('Y-m-d') }}"
+{% endif %}{% if module.keywords | length > 0 %}keywords: [{{ module.keywords | join(', ') }}]
+{% endif %}{% if module.attachments | length > 0 %}attachments: [{{ module.attachments | keys | join(', ') }}]
+{% endif %}url: "{{ url('academy_module', {'course': course.slug, 'module': module.slug}) }}"
+---
+
 # {{ module.title }}
 
-{{ module.data | raw }}
+{{ module.data(md_urls) | raw }}
+{{ md.video(module) }}
+{% if module.lessons | length > 0 %}
+{% if full %}
+{{ md.academy_lessons(module.lessons, 2, md_urls) }}
+{% else %}
+## Lessons
+
+{% for lesson in module.lessons %}
+- [{{ lesson.title }}]({{ url('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug}) }})
+{% endfor %}
+{% endif %}
+{% endif %}
 
 ---
 Last updated on {{ module.last_update | date('d/m/Y') }}

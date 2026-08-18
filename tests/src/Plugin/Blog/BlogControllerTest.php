@@ -104,6 +104,35 @@ final class BlogControllerTest extends TestCase
         $this->assertStringContainsString('Primer post', $html);
     }
 
+    /**
+     * Posts have no "completo" concept (no children to bundle): only the
+     * two single-page download links.
+     */
+    public function testShowRendersOnlySinglePageDownloadLinks(): void
+    {
+        $request = new Request('GET', 'http://localhost/blog/2026-01-15-primer-post');
+
+        $html = $this->controller->show($request, '2026-01-15-primer-post');
+
+        $this->assertStringContainsString('href="/blog/2026-01-15-primer-post.pdf"', $html);
+        $this->assertStringContainsString('href="/blog/2026-01-15-primer-post.md"', $html);
+        $this->assertStringNotContainsString('full=1', $html);
+    }
+
+    /**
+     * Smoke test for the redesigned pdf/_layout (repeating header/footer,
+     * page numbering, cover) — never exercised by any test before.
+     */
+    public function testShowPdfFormatRendersWithoutError(): void
+    {
+        $request = new Request('GET', 'http://localhost/blog/2026-01-15-primer-post.pdf');
+
+        $pdf = $this->controller->show($request, '2026-01-15-primer-post.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+    }
+
     public function testUnknownPostBubblesAsContentNotFoundException(): void
     {
         $request = new Request('GET', 'http://localhost/blog/no-existe');

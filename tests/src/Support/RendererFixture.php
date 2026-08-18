@@ -49,7 +49,7 @@ final class RendererFixture
                 ContentFixtures::templatesPath(),
                 dirname(__DIR__, 3) . '/resources/templates',
             ],
-            'engines' => ['twig', 'markdown'],
+            'engines' => ['twig', 'markdown', 'pdf'],
             'extensions' => $extensions,
         ]);
     }

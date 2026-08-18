@@ -1,5 +1,6 @@
 {% extends 'layouts/academy.html.twig' %}
 {% import 'academy/_nav_item.html.twig' as nav %}
+{% import '_downloads.html.twig' as downloads %}
 
 {% block title %}{{ course.title }}{% endblock %}
 
@@ -207,6 +208,13 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    {{ downloads.links(
+                        path('academy_course', {'course': course.slug ~ '.pdf'}),
+                        path('academy_course', {'course': course.slug ~ '.md'}),
+                        course.modules | length > 0 ? path('academy_course', {'course': course.slug ~ '.pdf'}) ~ '?full=1' : false,
+                        course.modules | length > 0 ? path('academy_course', {'course': course.slug ~ '.md'}) ~ '?full=1' : false
+                    ) }}
 
                 </main>
             </div>

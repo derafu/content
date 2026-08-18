@@ -1,5 +1,6 @@
 {% extends 'layouts/academy.html.twig' %}
 {% import 'academy/_nav_item.html.twig' as nav %}
+{% import '_downloads.html.twig' as downloads %}
 
 {% block title %}{{ course.title }}{% endblock %}
 
@@ -91,7 +92,12 @@
                         </div>
                     {% endif %}
 
-                    {% if lesson.metadata.test %}
+                    {% if lesson.testAttachment %}
+                        <div class="card shadow p-4">
+                            <div id="academy-test-container" data-api="{{ path('content_storage_download', {'type': 'academy', 'uri': lesson.uri, 'attachment': lesson.testAttachment.name ~ '.' ~ lesson.testAttachment.extension}) }}"></div>
+                        </div>
+                    {% elseif lesson.metadata.test %}
+                        {# "test" metadata does not point to a local attachment (e.g. an external quiz URL) — fall back to it as-is. #}
                         <div class="card shadow p-4">
                             <div id="academy-test-container" data-api="{{ lesson.metadata.test }}"></div>
                         </div>
@@ -111,6 +117,13 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    {{ downloads.links(
+                        path('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug ~ '.pdf'}),
+                        path('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug ~ '.md'}),
+                        false,
+                        false
+                    ) }}
 
                     {% if previous or next %}
                         <div class="row my-5">

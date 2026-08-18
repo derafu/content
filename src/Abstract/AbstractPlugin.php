@@ -55,6 +55,14 @@ abstract class AbstractPlugin implements PluginInterface
     /**
      * {@inheritDoc}
      */
+    public function context(): ContentContext
+    {
+        return $this->context;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function name(): string
     {
         return $this->options->get('name');
