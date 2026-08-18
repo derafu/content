@@ -150,7 +150,7 @@ class ContentConfig implements ContentConfigInterface
     /**
      * Constructor.
      *
-     * @param array<string,array<string,mixed>> $config Configuration.
+     * @param array<string,mixed> $config Configuration.
      */
     public function __construct(array $config)
     {

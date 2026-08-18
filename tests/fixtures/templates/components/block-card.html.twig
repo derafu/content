@@ -1,0 +1,6 @@
+{% props image = null, title = null, content = null, buttonText = null, buttonUrl = null %}
+<div class="fixture-block-card">
+    <h3>{{ title }}</h3>
+    <div>{{ content|raw }}</div>
+    <a href="{{ buttonUrl }}">{{ buttonText }}</a>
+</div>

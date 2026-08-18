@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Blog;
 
 use DateTimeInterface;
+use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Blog\Contract\BlogArchiveInterface;
 use Derafu\Support\Str;
 
@@ -60,9 +61,15 @@ class BlogArchive implements BlogArchiveInterface
     /**
      * Constructor.
      *
-     * @param DateTimeInterface|string $date Date of the archive.
+     * @param DateTimeInterface|string $date Date of the archive. A string
+     * must start with a "YYYYMM" prefix (the format slug() generates and
+     * the "archive" route/controller receives); anything else, including
+     * an otherwise natural-looking "YYYY-MM", is rejected instead of
+     * silently producing an invalid month.
      * @param int $count Count of posts in the archive.
      * @param string|null $id ID of the archive.
+     * @throws ContentNotFoundException If $date is a string that does not
+     * start with a valid "YYYYMM" prefix.
      */
     public function __construct(
         DateTimeInterface|string $date,
@@ -70,9 +77,15 @@ class BlogArchive implements BlogArchiveInterface
         ?string $id = null
     ) {
         if (is_string($date)) {
-            [$date, $slug] = explode('-', $date);
-            $this->year = (int) substr($date, 0, 4);
-            $this->month = (int) substr($date, 4, 2);
+            if (!preg_match('/^(\d{4})(\d{2})/', $date, $matches) || (int) $matches[2] < 1 || (int) $matches[2] > 12) {
+                throw new ContentNotFoundException(sprintf(
+                    'Invalid archive "%s": expected it to start with a "YYYYMM" prefix.',
+                    $date
+                ));
+            }
+
+            $this->year = (int) $matches[1];
+            $this->month = (int) $matches[2];
         } else {
             $this->year = (int) $date->format('Y');
             $this->month = (int) $date->format('m');

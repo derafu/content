@@ -10,8 +10,8 @@
         {% for post in posts %}
             <item>
                 <title>{{ post.title()|e('html') }}</title>
-                <link>{{ url('blog_post', { uri: post.uri() }) }}</link>
-                <guid isPermaLink="true">{{ url('blog_post', { uri: post.uri() }) }}</guid>
+                <link>{{ url('blog_post', { post: post.uri() }) }}</link>
+                <guid isPermaLink="true">{{ url('blog_post', { post: post.uri() }) }}</guid>
                 <pubDate>{{ post.date().format('r') }}</pubDate>
                 <description><![CDATA[{{ post.data()|markdown|raw }}]]></description>
             </item>

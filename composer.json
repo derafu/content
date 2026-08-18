@@ -38,7 +38,8 @@
         "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^13.2",
         "guzzlehttp/guzzle": "^7.15",
-        "mcp/sdk": "^0.7"
+        "mcp/sdk": "^0.7",
+        "derafu/markdown": "dev-main"
     },
     "suggest": {
         "guzzlehttp/guzzle": "Required by the \"search\" plugin (or any psr/http-client implementation) to query the search engine and LLM backend.",

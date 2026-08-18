@@ -342,7 +342,7 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         if (!empty($filters['search'])) {
             $search = mb_strtolower($filters['search']);
             $text = mb_strtolower($item->title() . ' ' . $item->description() . ' ' . $item->data());
-            if (!mb_strpos($text, $search)) {
+            if (mb_strpos($text, $search) === false) {
                 return false;
             }
         }

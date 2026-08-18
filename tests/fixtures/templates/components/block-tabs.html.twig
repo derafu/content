@@ -1,0 +1,9 @@
+{% props tabs = [] %}
+<div class="fixture-block-tabs">
+    {% for tab in tabs %}
+        <div class="fixture-block-tabs__tab" id="{{ tab.id }}">
+            <h3>{{ tab.title }}</h3>
+            {{ tab.content|raw }}
+        </div>
+    {% endfor %}
+</div>
