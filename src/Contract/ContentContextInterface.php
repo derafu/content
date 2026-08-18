@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Contract;
 
+use Psr\Cache\CacheItemPoolInterface;
+
 /**
  * Interface for content context.
  */
@@ -23,4 +25,12 @@ interface ContentContextInterface
      * @return ContentConfigInterface
      */
     public function config(): ContentConfigInterface;
+
+    /**
+     * Get the cache pool used to avoid re-scanning and re-parsing the
+     * content on every request.
+     *
+     * @return CacheItemPoolInterface
+     */
+    public function cache(): CacheItemPoolInterface;
 }

@@ -427,6 +427,45 @@ abstract class AbstractContentItem implements ContentItemInterface
     }
 
     /**
+     * Export the state of the item for caching.
+     *
+     * SplFileInfo/SplFileObject (the base classes of $info/$file) cannot be
+     * serialized natively (PHP throws), so $info is exported as a plain
+     * path string instead and reconstructed in __unserialize(). $file is
+     * dropped entirely: it is only ever populated by the unused file()
+     * method, so there is never anything meaningful to preserve there.
+     *
+     * @return array<string, mixed>
+     */
+    public function __serialize(): array
+    {
+        $data = get_object_vars($this);
+
+        $data['info'] = $this->info->getPathname();
+        unset($data['file']);
+
+        return $data;
+    }
+
+    /**
+     * Restore the state of the item from a cached snapshot.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function __unserialize(array $data): void
+    {
+        $path = $data['info'];
+        unset($data['info']);
+
+        $this->info = new ContentSplFileInfo($path);
+        $this->info->setFileClass(ContentSplFileObject::class);
+
+        foreach ($data as $key => $value) {
+            $this->$key = $value;
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function name(): string

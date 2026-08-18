@@ -24,8 +24,20 @@ services:
     Derafu\Content\Contract\ContentServiceInterface:
         class: Derafu\Content\ContentService
 
+    # Content registry cache: same directory the rest of the app already
+    # uses (var/cache/<env>/), so "clear the cache" means the same thing
+    # everywhere and there is nothing extra to remember to clean up.
+    derafu_content.cache:
+        class: Symfony\Component\Cache\Adapter\FilesystemAdapter
+        arguments:
+            $namespace: 'derafu_content'
+            $defaultLifetime: 60
+            $directory: '%kernel.cache_dir%'
+
     Derafu\Content\Contract\ContentContextInterface:
         class: Derafu\Content\ContentContext
+        arguments:
+            $cache: '@derafu_content.cache'
 
     Derafu\Content\Contract\ContentConfigInterface:
         class: Derafu\Content\ContentConfig

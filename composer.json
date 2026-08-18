@@ -27,10 +27,13 @@
     "require": {
         "php": "^8.5",
         "derafu/renderer": "dev-main",
+        "derafu/routing": "dev-main",
         "derafu/support": "dev-main",
         "derafu/config": "dev-main",
         "derafu/http": "dev-main",
-        "psr/http-client": "^1.0"
+        "psr/cache": "^3.0",
+        "psr/http-client": "^1.0",
+        "symfony/cache": "^8.1"
     },
     "require-dev": {
         "ext-xdebug": "*",

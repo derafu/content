@@ -189,7 +189,8 @@ class BlogPlugin extends AbstractContentPlugin implements ContentPluginInterface
             $contentLoader,
             $this->options['path'],
             $this->options['include']->all(),
-            $this->options['exclude']->all()
+            $this->options['exclude']->all(),
+            $this->context->cache()
         );
 
         // Load the content.

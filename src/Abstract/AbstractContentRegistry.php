@@ -18,12 +18,24 @@ use Derafu\Content\Contract\ContentLoaderInterface;
 use Derafu\Content\Contract\ContentRegistryInterface;
 use Derafu\Content\Contract\ContentTagInterface;
 use Derafu\Content\Exception\ContentNotFoundException;
+use Psr\Cache\CacheItemPoolInterface;
 
 /**
  * Content registry.
  */
 abstract class AbstractContentRegistry implements ContentRegistryInterface
 {
+    /**
+     * TTL, in seconds, of the cached item tree of this registry.
+     *
+     * A short TTL is enough to remove the "rescan and reparse everything on
+     * every single request" cost while keeping content changes visible
+     * within a bounded, small delay, with no manual cache invalidation.
+     *
+     * @var int
+     */
+    private const CACHE_TTL = 60;
+
     /**
      * Content items of the registry.
      *
@@ -56,7 +68,8 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         protected ContentLoaderInterface $contentLoader,
         protected string $path,
         protected array $include,
-        protected array $exclude
+        protected array $exclude,
+        private ?CacheItemPoolInterface $cache = null
     ) {
         $this->path = rtrim($path, '/') . '/';
     }
@@ -119,10 +132,41 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
     public function all(): array
     {
         if (!isset($this->items)) {
-            $this->items = $this->load();
+            if ($this->cache === null) {
+                $this->items = $this->load();
+            } else {
+                $item = $this->cache->getItem($this->cacheKey());
+
+                if ($item->isHit()) {
+                    $this->items = $item->get();
+                } else {
+                    $this->items = $this->load();
+                    $this->cache->save(
+                        $item->set($this->items)->expiresAfter(self::CACHE_TTL)
+                    );
+                }
+            }
         }
 
         return $this->items;
+    }
+
+    /**
+     * Build the cache key that identifies this registry's item tree.
+     *
+     * Depends only on what determines which files get loaded (path,
+     * include and exclude patterns), so two registries pointed at the same
+     * content share a cache entry regardless of instantiation order.
+     *
+     * @return string
+     */
+    private function cacheKey(): string
+    {
+        return 'derafu_content_registry_' . md5(serialize([
+            $this->path,
+            $this->include,
+            $this->exclude,
+        ]));
     }
 
     /**
