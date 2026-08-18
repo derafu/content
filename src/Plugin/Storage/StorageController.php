@@ -14,9 +14,9 @@ namespace Derafu\Content\Plugin\Storage;
 
 use Derafu\Content\Contract\ContentPluginInterface;
 use Derafu\Content\Contract\ContentServiceInterface;
+use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Http\Request;
 use Derafu\Http\Response;
-use InvalidArgumentException;
 
 class StorageController
 {
@@ -57,7 +57,7 @@ class StorageController
         $knowledge = $plugin->registry()->filter($filters);
 
         if (!isset($knowledge[0])) {
-            throw new InvalidArgumentException('Content not found.');
+            throw new ContentNotFoundException('Content not found.');
         }
 
         // Filter by attachment.
@@ -65,7 +65,7 @@ class StorageController
             $content = $knowledge[0];
             $attachment = $content->attachment($filters['attachment']);
             if (!$attachment) {
-                throw new InvalidArgumentException('Attachment for the content not found.');
+                throw new ContentNotFoundException('Attachment for the content not found.');
             }
 
             $response = new Response();
@@ -74,6 +74,6 @@ class StorageController
             return $response;
         }
 
-        throw new InvalidArgumentException('Attachment not found.');
+        throw new ContentNotFoundException('Attachment not found.');
     }
 }

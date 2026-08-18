@@ -17,7 +17,7 @@ use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\Contract\ContentLoaderInterface;
 use Derafu\Content\Contract\ContentRegistryInterface;
 use Derafu\Content\Contract\ContentTagInterface;
-use InvalidArgumentException;
+use Derafu\Content\Exception\ContentNotFoundException;
 
 /**
  * Content registry.
@@ -89,7 +89,7 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             }
 
             if (!$item->allowed()) {
-                throw new InvalidArgumentException(sprintf(
+                throw new ContentNotFoundException(sprintf(
                     'Content item with URI "%s" (slug: %s) is not allowed.',
                     $uri,
                     $slug
@@ -100,13 +100,13 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         }
 
         if (empty($slug)) {
-            throw new InvalidArgumentException(sprintf(
+            throw new ContentNotFoundException(sprintf(
                 'Content item with URI "%s" not found.',
                 $uri
             ));
         }
 
-        throw new InvalidArgumentException(sprintf(
+        throw new ContentNotFoundException(sprintf(
             'Content item with URI "%s" (slug: %s) not found.',
             $uri,
             $slug

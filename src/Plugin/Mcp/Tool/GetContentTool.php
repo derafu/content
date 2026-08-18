@@ -13,9 +13,9 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Mcp\Tool;
 
 use Derafu\Content\Contract\ContentServiceInterface;
+use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Routing\Enum\UrlReferenceType;
-use InvalidArgumentException;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
 
@@ -55,7 +55,7 @@ class GetContentTool
 
         try {
             $item = $plugin->registry()->get($uri);
-        } catch (InvalidArgumentException $e) {
+        } catch (ContentNotFoundException $e) {
             throw new ToolCallException(sprintf(
                 'Content "%s" was not found in source "%s".',
                 $uri,

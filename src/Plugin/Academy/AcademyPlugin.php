@@ -84,12 +84,6 @@ class AcademyPlugin extends AbstractContentPlugin implements ContentPluginInterf
             'default' => true,
         ],
 
-        // A callback to customize the reading time number displayed.
-        'readingTime' => [
-            'types' => 'string',
-            'required' => false,
-        ],
-
         // Whether to show the last update author.
         'showLastUpdateAuthor' => [
             'types' => 'bool',

@@ -63,13 +63,14 @@ class FaqPlugin extends AbstractContentPlugin implements ContentPluginInterface
             'default' => [],
         ],
 
-        // Path to the sidebar file, relative to the path option. If true,
-        // it will be automatically generated. If false, no sidebar will be
-        // generated.
+        // Whether to show the sidebar, automatically generated from the
+        // content hierarchy (there is no support for a custom, manually
+        // curated sidebar file; sort/label questions via "sidebar_position"
+        // and "sidebar_label" in their frontmatter instead).
         'sidebarPath' => [
-            'types' => ['string', 'bool'],
+            'types' => 'bool',
             'required' => true,
-            'default' => true, // Will be automatically generated.
+            'default' => true,
         ],
 
         // Whether the sidebar should be collapsible.

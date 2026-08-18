@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Contract;
 
+use Derafu\Content\Exception\ContentNotFoundException;
+
 /**
  * Content registry interface.
  */
@@ -22,6 +24,8 @@ interface ContentRegistryInterface
      *
      * @param string $uri URI of the content.
      * @return ContentItemInterface
+     * @throws ContentNotFoundException If no content item matches the URI,
+     * or it is not allowed to be accessed.
      */
     public function get(string $uri): ContentItemInterface;
 

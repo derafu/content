@@ -15,9 +15,9 @@ namespace Derafu\Content\Plugin\Academy;
 use Derafu\Content\Abstract\AbstractContentController;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
+use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
-use InvalidArgumentException;
 
 /**
  * Academy controller.
@@ -106,7 +106,7 @@ class AcademyController extends AbstractContentController
 
         $course = $plugin->registry()->get($course);
         $module = $course->modules()[$module]
-            ?? throw new InvalidArgumentException(sprintf(
+            ?? throw new ContentNotFoundException(sprintf(
                 'Module "%s" not found.',
                 $module
             ))
@@ -159,13 +159,13 @@ class AcademyController extends AbstractContentController
 
         $course = $plugin->registry()->get($course);
         $module = $course->modules()[$module]
-            ?? throw new InvalidArgumentException(sprintf(
+            ?? throw new ContentNotFoundException(sprintf(
                 'Module "%s" not found.',
                 $module
             ))
         ;
         $lesson = $module->lessons()[$lesson]
-            ?? throw new InvalidArgumentException(sprintf(
+            ?? throw new ContentNotFoundException(sprintf(
                 'Lesson "%s" not found.',
                 $lesson
             ))

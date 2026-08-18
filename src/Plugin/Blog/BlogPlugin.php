@@ -105,18 +105,6 @@ class BlogPlugin extends AbstractContentPlugin implements ContentPluginInterface
             'default' => true,
         ],
 
-        // A callback to customize the reading time number displayed.
-        'readingTime' => [
-            'types' => 'string',
-            'required' => false,
-        ],
-
-        // Path to the authors map file, relative to the blog content directory.
-        'authorsMapPath' => [
-            'types' => 'string',
-            'required' => false,
-        ],
-
         // Options for the feed.
         'feedOptions' => [
             'types' => 'array',

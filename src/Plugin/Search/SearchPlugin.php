@@ -15,6 +15,7 @@ namespace Derafu\Content\Plugin\Search;
 use Derafu\Content\Abstract\AbstractPlugin;
 use Derafu\Content\Contract\PluginInterface;
 use Derafu\Content\Plugin\Search\Contract\LlmClientInterface;
+use InvalidArgumentException;
 
 /**
  * Plugin that provides a middleware for the search engine of the content
@@ -60,10 +61,12 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
             'required' => false,
         ],
 
+        // Model name sent to the LLM backend. Required if "llm_url" is set:
+        // there is no sensible generic default, every deployment must pick
+        // the model its own backend actually serves.
         'llm_model' => [
             'types' => 'string',
             'required' => false,
-            'default' => 'libredte',
         ],
 
         'llm_api_key' => [
@@ -119,13 +122,23 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
      * Get the LLM client for AI responses.
      *
      * @return LlmClientInterface|null
+     * @throws InvalidArgumentException If "llm_url" is set but "llm_model"
+     * is not.
      */
     public function llm(): ?LlmClientInterface
     {
         if (!isset($this->llm) && isset($this->options['llm_url'])) {
+            if (empty($this->options['llm_model'])) {
+                throw new InvalidArgumentException(
+                    'The "search" plugin has "llm_url" configured but no '
+                        . '"llm_model". Set "llm_model" to the model name '
+                        . 'your LLM backend expects.'
+                );
+            }
+
             $this->llm = new OpenAiCompatibleLlmClient(
                 $this->options['llm_url'],
-                $this->options['llm_model'] ?? 'libredte',
+                $this->options['llm_model'],
                 $this->options['llm_api_key'] ?? null,
                 $this->options['llm_completions_path'] ?? '/v1/chat/completions'
             );
