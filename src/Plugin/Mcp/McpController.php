@@ -123,43 +123,61 @@ class McpController
             ))
             ->setInstructions(
                 'Search and fetch the published content of this website '
-                . '(docs, blog, FAQ and academy). Use search_content to find '
-                . 'relevant material, get_content to fetch the full Markdown '
-                . 'body of a specific item, list_content to browse a source '
-                . 'and list_tags to discover available tags. Prefer those '
-                . 'tools over "ask" when precision matters, since "ask" only '
-                . 'reflects the underlying content as well as its LLM '
-                . 'backend allows.'
+                . '(docs, blog, FAQ and academy). Typical flow: start with '
+                . 'search_content (source: "all" unless you already know '
+                . 'which one has the answer) to find where something lives, '
+                . 'then get_content with the exact source+uri it returned to '
+                . 'read the full body. list_content/list_tags are for '
+                . 'browsing a source you have already picked, not for '
+                . 'finding where an answer is. Prefer these tools over "ask" '
+                . 'when precision matters, since "ask" only reflects the '
+                . 'underlying content as well as its LLM backend allows.'
             )
             ->addTool(
                 [new SearchContentTool($this->contentService), '__invoke'],
                 name: 'search_content',
                 description: 'Semantic search across the indexed content of '
-                    . 'the website (docs, blog, faq, academy). Returns the '
-                    . 'best matching items ranked by relevance, with a short '
-                    . 'preview of each. Use get_content to fetch the full '
-                    . 'body of a result.',
+                    . 'the website (docs, blog, faq, academy, pages). This is '
+                    . 'the tool to use when you do not already know which '
+                    . 'source has the answer — pass source: "all" (the '
+                    . 'default) to search every source at once. Only pass a '
+                    . 'specific source when you are already confident that is '
+                    . 'the right one: restricting to the wrong source does '
+                    . 'not error, it just silently misses the real answer '
+                    . 'if it lives elsewhere. Returns the best matching items '
+                    . 'ranked by relevance, with a short preview of each and '
+                    . 'the source+uri each came from. Use get_content with '
+                    . 'that source+uri to fetch the full body of a result.',
             )
             ->addTool(
                 [new GetContentTool($this->contentService, $this->router), '__invoke'],
                 name: 'get_content',
-                description: 'Fetch a single content item by source and '
-                    . 'URI, returning its full Markdown body plus metadata '
-                    . '(title, tags, dates, authors).',
+                description: 'Fetch a single content item\'s full Markdown '
+                    . 'body plus metadata (title, tags, dates, authors), '
+                    . 'given its exact source and URI. Requires already '
+                    . 'knowing both — it does not search or guess across '
+                    . 'sources. Get them from search_content or list_content '
+                    . 'first; do not call this speculatively with a guessed '
+                    . 'source.',
             )
             ->addTool(
                 [new ListContentTool($this->contentService, $this->router), '__invoke'],
                 name: 'list_content',
-                description: 'Browse/filter the items of a content source '
-                    . '(academy, blog, docs or faq), optionally by tag, '
-                    . 'category or free-text search. Does not return the '
-                    . 'full body of each item, use get_content for that.',
+                description: 'Browse/filter the items of one specific '
+                    . 'content source (academy, blog, docs or faq) you have '
+                    . 'already chosen — e.g. "every academy lesson tagged '
+                    . 'X". Not for finding which source has an answer to a '
+                    . 'question; use search_content for that instead. Does '
+                    . 'not return the full body of each item, use '
+                    . 'get_content for that.',
             )
             ->addTool(
                 [new ListTagsTool($this->contentService), '__invoke'],
                 name: 'list_tags',
-                description: 'List the tags used in a content source, with '
-                    . 'how many items use each one.',
+                description: 'List the tags used within one specific '
+                    . 'content source you have already chosen, with how '
+                    . 'many items use each one — useful to narrow a '
+                    . 'subsequent list_content call.',
             )
         ;
 
@@ -169,10 +187,10 @@ class McpController
                 name: 'ask',
                 description: 'Ask a natural-language question and get a '
                     . 'conversational answer generated by an LLM grounded '
-                    . 'on the indexed content. Less reliable than '
-                    . 'search_content/get_content because it depends on the '
-                    . 'quality of the LLM backend; prefer those tools when '
-                    . 'precision matters.',
+                    . 'on the indexed content across every source. Less '
+                    . 'reliable than search_content/get_content because it '
+                    . 'depends on the quality of the LLM backend; prefer '
+                    . 'those tools when precision matters.',
             );
         }
 

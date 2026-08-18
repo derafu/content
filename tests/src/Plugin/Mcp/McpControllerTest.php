@@ -343,6 +343,59 @@ final class McpControllerTest extends TestCase
         $this->assertSame(0.91, $results[0]['score']);
     }
 
+    /**
+     * "all" must behave exactly like omitting source entirely — it is the
+     * explicit, model-visible spelling of the same "search every source"
+     * behavior, added because a real MCP client kept passing a specific
+     * source even when it did not actually know where the answer was,
+     * silently missing it instead of finding it via the broader search.
+     */
+    public function testSearchContentToolSourceAllReturnsEveryResultJustLikeOmittingSource(): void
+    {
+        $controller = $this->buildController(askEnabled: true);
+        $sessionId = $this->initialize($controller);
+
+        [$body] = $this->callMcp([
+            'jsonrpc' => '2.0',
+            'id' => 8,
+            'method' => 'tools/call',
+            'params' => [
+                'name' => 'search_content',
+                'arguments' => ['query' => 'hola', 'source' => 'all'],
+            ],
+        ], $sessionId, $controller);
+
+        $this->assertFalse($body['result']['isError']);
+        $results = json_decode($body['result']['content'][0]['text'], true);
+        $this->assertCount(2, $results);
+    }
+
+    /**
+     * A specific source still filters, distinct from "all" — the fixture
+     * search results carry no "type" field, so filtering by any concrete
+     * source narrows the real (non-mocked) results down to none, proving
+     * the filter branch still runs when a specific source is requested.
+     */
+    public function testSearchContentToolWithASpecificSourceStillFilters(): void
+    {
+        $controller = $this->buildController(askEnabled: true);
+        $sessionId = $this->initialize($controller);
+
+        [$body] = $this->callMcp([
+            'jsonrpc' => '2.0',
+            'id' => 8,
+            'method' => 'tools/call',
+            'params' => [
+                'name' => 'search_content',
+                'arguments' => ['query' => 'hola', 'source' => 'docs'],
+            ],
+        ], $sessionId, $controller);
+
+        $this->assertFalse($body['result']['isError']);
+        $results = json_decode($body['result']['content'][0]['text'], true);
+        $this->assertCount(0, $results);
+    }
+
     public function testToolsListIncludesAskWhenEnabled(): void
     {
         $controller = $this->buildController(askEnabled: true);

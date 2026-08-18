@@ -40,13 +40,17 @@ class SearchContentTool
      * Search the indexed content of the website.
      *
      * @param string $query Natural language search query.
-     * @param string|null $source Restrict the results to a single content source.
+     * @param string|null $source Content source to restrict results to, or
+     * "all" (the default when omitted) to search across every source.
+     * Prefer "all" unless the source is already known to be correct — a
+     * query restricted to the wrong source silently returns no results
+     * from the source that actually had the answer, instead of an error.
      * @param int $limit Maximum number of results to return (1-50).
      * @return array<int, array<string, mixed>>
      */
     public function __invoke(
         string $query,
-        #[Schema(enum: ['academy', 'blog', 'docs', 'faq', 'pages'])]
+        #[Schema(enum: ['all', 'academy', 'blog', 'docs', 'faq', 'pages'])]
         ?string $source = null,
         int $limit = 10
     ): array {
@@ -61,7 +65,7 @@ class SearchContentTool
             ), previous: $e);
         }
 
-        if ($source !== null) {
+        if ($source !== null && $source !== 'all') {
             $results = array_values(array_filter(
                 $results,
                 fn (array $result) => ($result['type'] ?? null) === $source
