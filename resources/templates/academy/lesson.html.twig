@@ -118,12 +118,7 @@
                         </div>
                     </div>
 
-                    {{ downloads.links(
-                        path('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug ~ '.pdf'}),
-                        path('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug ~ '.md'}),
-                        false,
-                        false
-                    ) }}
+                    {{ downloads.links(lesson) }}
 
                     {% if previous or next %}
                         <div class="row my-5">

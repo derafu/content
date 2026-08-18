@@ -209,12 +209,7 @@
                         </div>
                     </div>
 
-                    {{ downloads.links(
-                        path('academy_course', {'course': course.slug ~ '.pdf'}),
-                        path('academy_course', {'course': course.slug ~ '.md'}),
-                        course.modules | length > 0 ? path('academy_course', {'course': course.slug ~ '.pdf'}) ~ '?full=1' : false,
-                        course.modules | length > 0 ? path('academy_course', {'course': course.slug ~ '.md'}) ~ '?full=1' : false
-                    ) }}
+                    {{ downloads.links(course) }}
 
                 </main>
             </div>

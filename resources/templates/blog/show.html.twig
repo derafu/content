@@ -85,12 +85,7 @@
         </div>
     </div>
 
-    {{ downloads.links(
-        path('blog_post', {'post': post.uri ~ '.pdf'}),
-        path('blog_post', {'post': post.uri ~ '.md'}),
-        false,
-        false
-    ) }}
+    {{ downloads.links(post) }}
 
     {% if previous or next %}
         <div class="row my-5">

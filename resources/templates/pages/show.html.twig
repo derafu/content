@@ -20,12 +20,7 @@
     </div>
 
     <hr class="mt-5 mb-1">
-    {{ downloads.links(
-        path('pages_page', {'page': page.uri ~ '.pdf'}),
-        path('pages_page', {'page': page.uri ~ '.md'}),
-        false,
-        false
-    ) }}
+    {{ downloads.links(page) }}
 
 </section>
 

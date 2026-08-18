@@ -92,12 +92,7 @@
         </div>
     </div>
 
-    {{ downloads.links(
-        path('faq_question', {'question': faq.uri ~ '.pdf'}),
-        path('faq_question', {'question': faq.uri ~ '.md'}),
-        faq.children | length > 0 ? path('faq_question', {'question': faq.uri ~ '.pdf'}) ~ '?full=1' : false,
-        faq.children | length > 0 ? path('faq_question', {'question': faq.uri ~ '.md'}) ~ '?full=1' : false
-    ) }}
+    {{ downloads.links(faq) }}
 {% endblock %}
 
 {% block custom_head %}

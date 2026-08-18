@@ -151,6 +151,14 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function slug(): string;
 
     /**
+     * Get a filesystem-safe filename base (no extension), derived from the
+     * content's URI, for uses like naming a downloaded export.
+     *
+     * @return string
+     */
+    public function downloadFilename(): string;
+
+    /**
      * Get the route of the content.
      *
      * @return object

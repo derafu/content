@@ -713,6 +713,14 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
+    public function downloadFilename(): string
+    {
+        return Str::slug($this->uri());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function route(): object
     {
         if (!isset($this->route)) {

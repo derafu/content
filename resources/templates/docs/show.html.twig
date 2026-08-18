@@ -151,12 +151,7 @@
         </div>
     </div>
 
-    {{ downloads.links(
-        path('docs_doc', {'doc': doc.uri ~ '.pdf'}),
-        path('docs_doc', {'doc': doc.uri ~ '.md'}),
-        doc.children | length > 0 ? path('docs_doc', {'doc': doc.uri ~ '.pdf'}) ~ '?full=1' : false,
-        doc.children | length > 0 ? path('docs_doc', {'doc': doc.uri ~ '.md'}) ~ '?full=1' : false
-    ) }}
+    {{ downloads.links(doc) }}
 
     {% if previous or next %}
         <div class="row my-5">

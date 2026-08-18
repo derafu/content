@@ -15,14 +15,25 @@
     buttons cover that same "take it elsewhere" use case without a
     download round trip through the filesystem.
 
-    fullPdfUrl/fullMdUrl are optional: pass false (not null — the
-    truthiness check below treats both the same, but false keeps call
-    sites consistent) for leaf content (lessons, posts, pages) that has
-    no children/modules/lessons to bundle into a "full" export.
+    Everything (URLs, whether a "full" export makes sense) is derived
+    from the content item itself: `content.route()` already carries the
+    route name and params used to build both the plain and the ".pdf"/
+    ".md" URLs, and `content.children()` is empty for leaf content
+    (lessons, posts, pages), so the "full" buttons only appear when
+    there is actually something to bundle.
 #}
-{% macro links(pdfUrl, mdUrl, fullPdfUrl, fullMdUrl) %}
-    {% set mdBasename = (mdUrl | split('?'))[0] | split('/') | last %}
-    {% set mdStem = mdBasename | replace({'.md': ''}) %}
+{% macro links(content) %}
+    {% set param = content.category %}
+    {% set baseParams = content.route.params %}
+    {% set pdfUrl = path(content.route.name, baseParams | merge({(param): baseParams[param] ~ '.pdf'})) %}
+    {% set mdUrl = path(content.route.name, baseParams | merge({(param): baseParams[param] ~ '.md'})) %}
+
+    {% set hasChildren = content.children | length > 0 %}
+    {% set fullPdfUrl = hasChildren ? pdfUrl ~ '?full=1' : false %}
+    {% set fullMdUrl = hasChildren ? mdUrl ~ '?full=1' : false %}
+
+    {% set mdStem = content.downloadFilename %}
+    {% set mdBasename = mdStem ~ '.md' %}
     <div class="mb-5">
         <div class="btn-group btn-group-sm me-2" role="group">
             <a href="{{ pdfUrl }}" class="btn btn-outline-secondary">

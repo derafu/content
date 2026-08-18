@@ -94,12 +94,7 @@
                         </div>
                     </div>
 
-                    {{ downloads.links(
-                        path('academy_module', {'course': course.slug, 'module': module.slug ~ '.pdf'}),
-                        path('academy_module', {'course': course.slug, 'module': module.slug ~ '.md'}),
-                        module.lessons | length > 0 ? path('academy_module', {'course': course.slug, 'module': module.slug ~ '.pdf'}) ~ '?full=1' : false,
-                        module.lessons | length > 0 ? path('academy_module', {'course': course.slug, 'module': module.slug ~ '.md'}) ~ '?full=1' : false
-                    ) }}
+                    {{ downloads.links(module) }}
 
                     {% if previous or next %}
                         <div class="row my-5">
