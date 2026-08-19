@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsContent\Plugin\Mcp;
 
 use Closure;
+use Derafu\Content\ContentAttachment;
 use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
@@ -23,8 +24,12 @@ use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Academy\AcademyLesson;
+use Derafu\Content\Plugin\Academy\AcademyModule;
 use Derafu\Content\Plugin\Academy\AcademyPlugin;
 use Derafu\Content\Plugin\Academy\AcademyRegistry;
+use Derafu\Content\Plugin\Academy\AcademyTest;
+use Derafu\Content\Plugin\Academy\AcademyTestOption;
+use Derafu\Content\Plugin\Academy\AcademyTestQuestion;
 use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
@@ -50,6 +55,7 @@ use Derafu\Routing\Exception\RouteNotFoundException;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\FixtureHttpServer;
 use Derafu\TestsContent\Support\FixturePluginLoader;
+use Derafu\TestsContent\Support\RendererFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -78,6 +84,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(AcademyPlugin::class)]
 #[UsesClass(AcademyRegistry::class)]
 #[UsesClass(AcademyLesson::class)]
+#[UsesClass(AcademyModule::class)]
+#[UsesClass(AcademyTest::class)]
+#[UsesClass(AcademyTestOption::class)]
+#[UsesClass(AcademyTestQuestion::class)]
+#[UsesClass(ContentAttachment::class)]
 #[UsesClass(ContentService::class)]
 #[UsesClass(ContentAuthor::class)]
 #[UsesClass(ContentBag::class)]
@@ -160,7 +171,9 @@ final class McpControllerTest extends TestCase
 
         $contentService = new ContentService($context, new FixturePluginLoader($plugins));
 
-        return new McpController($contentService, $this->fakeRouter());
+        $router = $this->fakeRouter();
+
+        return new McpController($contentService, $router, RendererFixture::create($router));
     }
 
     /**
@@ -558,7 +571,8 @@ final class McpControllerTest extends TestCase
             'search' => $searchPlugin,
         ]);
 
-        $controller = new McpController($contentService, $this->fakeRouter());
+        $router = $this->fakeRouter();
+        $controller = new McpController($contentService, $router, RendererFixture::create($router));
         $sessionId = $this->initialize($controller);
 
         [$body] = $this->callMcp([

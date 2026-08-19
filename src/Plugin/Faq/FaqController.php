@@ -53,9 +53,11 @@ class FaqController extends AbstractContentController
         $faq = $plugin->registry()->get($uri);
 
         if ($format === 'json') {
-            return [
-                'data' => $faq->toArray(),
-            ];
+            return $this->jsonResponse($faq, $this->renderer, 'faq/show.md.twig', [
+                'plugin' => $plugin,
+                'faq' => $faq,
+                'full' => false,
+            ]);
         } else {
             return $this->renderer->render(
                 'faq/show.' . $format . '.twig',

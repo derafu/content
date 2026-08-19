@@ -72,9 +72,11 @@ class AcademyController extends AbstractContentController
         $course = $plugin->registry()->get($course);
 
         if ($format === 'json') {
-            return [
-                'data' => $course->toArray(),
-            ];
+            return $this->jsonResponse($course, $this->renderer, 'academy/course.md.twig', [
+                'plugin' => $plugin,
+                'course' => $course,
+                'full' => false,
+            ]);
         } else {
             return $this->renderer->render(
                 'academy/course.' . $format . '.twig',
@@ -116,9 +118,12 @@ class AcademyController extends AbstractContentController
         ;
 
         if ($format === 'json') {
-            return [
-                'data' => $module->toArray(),
-            ];
+            return $this->jsonResponse($module, $this->renderer, 'academy/module.md.twig', [
+                'plugin' => $plugin,
+                'course' => $course,
+                'module' => $module,
+                'full' => false,
+            ]);
         } else {
             return $this->renderer->render(
                 'academy/module.' . $format . '.twig',
@@ -177,9 +182,12 @@ class AcademyController extends AbstractContentController
         ;
 
         if ($format === 'json') {
-            return [
-                'data' => $lesson->toArray(),
-            ];
+            return $this->jsonResponse($lesson, $this->renderer, 'academy/lesson.md.twig', [
+                'plugin' => $plugin,
+                'course' => $course,
+                'module' => $module,
+                'lesson' => $lesson,
+            ]);
         } else {
             return $this->renderer->render(
                 'academy/lesson.' . $format . '.twig',

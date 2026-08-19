@@ -12,12 +12,17 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Mcp\Tool;
 
+use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Exception\ContentNotFoundException;
+use Derafu\Content\Plugin\Academy\Contract\AcademyLessonInterface;
+use Derafu\Content\Plugin\Academy\Contract\AcademyModuleInterface;
+use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Routing\Enum\UrlReferenceType;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
+use RuntimeException;
 
 /**
  * MCP tool that fetches a single content item, with its full Markdown body
@@ -32,10 +37,12 @@ class GetContentTool
      *
      * @param ContentServiceInterface $contentService Content service.
      * @param RouterInterface $router Router.
+     * @param RendererInterface $renderer Renderer.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RouterInterface $router
+        private readonly RouterInterface $router,
+        private readonly RendererInterface $renderer
     ) {
     }
 
@@ -82,7 +89,88 @@ class GetContentTool
                 $route->params,
                 UrlReferenceType::ABSOLUTE_URL
             ),
-            'markdown' => $item->data(),
+            'markdown' => $this->renderMarkdown($plugin, $item),
         ];
+    }
+
+    /**
+     * Renders the exact same Markdown the ".md" format of this item
+     * would return (video/test/openapi and everything else its own
+     * "*.md.twig" template adds), instead of its raw, unprocessed body:
+     * without this, an item whose real content lives in a "special"
+     * frontmatter field (a lesson's "test", a doc's "openapi", a video)
+     * would return next to nothing here.
+     *
+     * @param object $plugin The content plugin the item came from.
+     * @param ContentItemInterface $item Content item.
+     * @return string
+     */
+    private function renderMarkdown(object $plugin, ContentItemInterface $item): string
+    {
+        return match ($item->category()) {
+            'doc' => $this->renderer->render('docs/show.md.twig', [
+                'plugin' => $plugin,
+                'doc' => $item,
+                'full' => false,
+            ]),
+            'question' => $this->renderer->render('faq/show.md.twig', [
+                'plugin' => $plugin,
+                'faq' => $item,
+                'full' => false,
+            ]),
+            'post' => $this->renderer->render('blog/show.md.twig', [
+                'plugin' => $plugin,
+                'post' => $item,
+            ]),
+            'page' => $this->renderer->render('pages/show.md.twig', [
+                'plugin' => $plugin,
+                'page' => $item,
+            ]),
+            'course' => $this->renderer->render('academy/course.md.twig', [
+                'plugin' => $plugin,
+                'course' => $item,
+                'full' => false,
+            ]),
+            'module' => $this->renderAcademyModuleMarkdown($plugin, $item),
+            'lesson' => $this->renderAcademyLessonMarkdown($plugin, $item),
+            default => throw new RuntimeException(sprintf(
+                'No Markdown template known for content category "%s".',
+                $item->category()
+            )),
+        };
+    }
+
+    /**
+     * @param object $plugin The content plugin the item came from.
+     * @param ContentItemInterface $item An academy module.
+     * @return string
+     */
+    private function renderAcademyModuleMarkdown(object $plugin, ContentItemInterface $item): string
+    {
+        assert($item instanceof AcademyModuleInterface);
+
+        return $this->renderer->render('academy/module.md.twig', [
+            'plugin' => $plugin,
+            'course' => $item->course(),
+            'module' => $item,
+            'full' => false,
+        ]);
+    }
+
+    /**
+     * @param object $plugin The content plugin the item came from.
+     * @param ContentItemInterface $item An academy lesson.
+     * @return string
+     */
+    private function renderAcademyLessonMarkdown(object $plugin, ContentItemInterface $item): string
+    {
+        assert($item instanceof AcademyLessonInterface);
+
+        return $this->renderer->render('academy/lesson.md.twig', [
+            'plugin' => $plugin,
+            'course' => $item->module()->course(),
+            'module' => $item->module(),
+            'lesson' => $item,
+        ]);
     }
 }

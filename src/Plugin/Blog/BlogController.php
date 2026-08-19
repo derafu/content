@@ -87,9 +87,10 @@ class BlogController extends AbstractContentController
         $post = $plugin->registry()->get($uri);
 
         if ($format === 'json') {
-            return [
-                'data' => $post->toArray(),
-            ];
+            return $this->jsonResponse($post, $this->renderer, 'blog/show.md.twig', [
+                'plugin' => $plugin,
+                'post' => $post,
+            ]);
         } else {
             $recentPosts = $plugin->registry()->filter([
                 'limit' => $plugin->options()->get('blogSidebarCount'),

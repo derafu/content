@@ -53,9 +53,11 @@ class DocsController extends AbstractContentController
         $doc = $plugin->registry()->get($uri);
 
         if ($format === 'json') {
-            return [
-                'data' => $doc->toArray(),
-            ];
+            return $this->jsonResponse($doc, $this->renderer, 'docs/show.md.twig', [
+                'plugin' => $plugin,
+                'doc' => $doc,
+                'full' => false,
+            ]);
         } else {
             return $this->renderer->render(
                 'docs/show.' . $format . '.twig',

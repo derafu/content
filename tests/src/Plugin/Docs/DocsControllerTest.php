@@ -94,12 +94,19 @@ final class DocsControllerTest extends TestCase
 
     public function testJsonFormatReturnsTheFullContentArray(): void
     {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos.json'));
+
         $request = new Request('GET', 'http://localhost/docs/guia/primeros-pasos.json');
 
-        $result = $this->controller()->show($request, 'guia/primeros-pasos.json');
+        $result = $this->controller($router)->show($request, 'guia/primeros-pasos.json');
 
         $this->assertIsArray($result);
         $this->assertSame('guia/primeros-pasos', $result['data']['uri']);
+        $this->assertStringContainsString(
+            'primeros pasos, hijo',
+            $result['data']['data']
+        );
     }
 
     public function testUnknownDocBubblesAsContentNotFoundException(): void

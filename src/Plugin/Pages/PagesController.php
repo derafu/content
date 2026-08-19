@@ -52,9 +52,10 @@ class PagesController extends AbstractContentController
         $item = $plugin->registry()->get($uri);
 
         if ($format === 'json') {
-            return [
-                'data' => $item->toArray(),
-            ];
+            return $this->jsonResponse($item, $this->renderer, 'pages/show.md.twig', [
+                'plugin' => $plugin,
+                'page' => $item,
+            ]);
         }
 
         return $this->renderer->render(

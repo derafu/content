@@ -19,6 +19,7 @@ use Derafu\Content\Plugin\Mcp\Tool\ListContentTool;
 use Derafu\Content\Plugin\Mcp\Tool\ListTagsTool;
 use Derafu\Content\Plugin\Mcp\Tool\SearchContentTool;
 use Derafu\Http\Request;
+use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Contract\RouterInterface;
 use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
@@ -48,10 +49,12 @@ class McpController
      *
      * @param ContentServiceInterface $contentService Content service.
      * @param RouterInterface $router Router.
+     * @param RendererInterface $renderer Renderer.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RouterInterface $router
+        private readonly RouterInterface $router,
+        private readonly RendererInterface $renderer
     ) {
     }
 
@@ -152,7 +155,7 @@ class McpController
                 annotations: $this->contentToolAnnotations(),
             )
             ->addTool(
-                [new GetContentTool($this->contentService, $this->router), '__invoke'],
+                [new GetContentTool($this->contentService, $this->router, $this->renderer), '__invoke'],
                 name: 'get_content',
                 description: 'Fetch a single content item\'s full Markdown '
                     . 'body plus metadata (title, tags, dates, authors), '
