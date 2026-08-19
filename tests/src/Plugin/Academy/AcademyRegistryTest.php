@@ -86,6 +86,29 @@ final class AcademyRegistryTest extends TestCase
         $this->assertCount(2, $module->lessons());
     }
 
+    /**
+     * AcademyRegistry::get() used to be typed to always return
+     * AcademyCourseInterface, asserting on it — so any real MCP/CLI
+     * caller passing a full module or lesson URI (not just a bare course
+     * slug) crashed with an AssertionError/TypeError instead of getting
+     * the item, since AbstractContentRegistry::get() walks the full URI
+     * and returns whatever is actually at that depth. Only the course-
+     * level lookup was ever exercised before this, since AcademyController
+     * always fetches the course first and navigates modules()/lessons()
+     * manually — this is exactly the path a generic MCP get_content(uri)
+     * call takes instead.
+     */
+    public function testGetResolvesAModuleOrLessonUriNotJustACourse(): void
+    {
+        $module = $this->plugin->registry()->get('curso-demo/modulo-uno');
+        $this->assertInstanceOf(AcademyModule::class, $module);
+        $this->assertSame('modulo-uno', $module->slug());
+
+        $lesson = $this->plugin->registry()->get('curso-demo/modulo-uno/leccion-uno');
+        $this->assertInstanceOf(AcademyLesson::class, $lesson);
+        $this->assertSame('leccion-uno', $lesson->slug());
+    }
+
     public function testLessonWithExplicitTimeIsNotEstimated(): void
     {
         $course = $this->plugin->registry()->get('curso-demo');

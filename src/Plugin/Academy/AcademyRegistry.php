@@ -26,13 +26,17 @@ class AcademyRegistry extends AbstractContentRegistry implements AcademyRegistry
     /**
      * {@inheritDoc}
      */
-    public function get(string $uri): AcademyCourseInterface
+    public function get(string $uri): AcademyCourseInterface|AcademyModuleInterface|AcademyLessonInterface
     {
-        $course = parent::get($uri);
+        $content = parent::get($uri);
 
-        assert($course instanceof AcademyCourseInterface);
+        assert(
+            $content instanceof AcademyCourseInterface
+            || $content instanceof AcademyModuleInterface
+            || $content instanceof AcademyLessonInterface
+        );
 
-        return $course;
+        return $content;
     }
 
     /**

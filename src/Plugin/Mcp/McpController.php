@@ -20,6 +20,7 @@ use Derafu\Content\Plugin\Mcp\Tool\ListTagsTool;
 use Derafu\Content\Plugin\Mcp\Tool\SearchContentTool;
 use Derafu\Http\Request;
 use Derafu\Routing\Contract\RouterInterface;
+use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\Http\Middleware\CorsMiddleware;
@@ -148,6 +149,7 @@ class McpController
                     . 'ranked by relevance, with a short preview of each and '
                     . 'the source+uri each came from. Use get_content with '
                     . 'that source+uri to fetch the full body of a result.',
+                annotations: $this->contentToolAnnotations(),
             )
             ->addTool(
                 [new GetContentTool($this->contentService, $this->router), '__invoke'],
@@ -159,6 +161,7 @@ class McpController
                     . 'sources. Get them from search_content or list_content '
                     . 'first; do not call this speculatively with a guessed '
                     . 'source.',
+                annotations: $this->contentToolAnnotations(),
             )
             ->addTool(
                 [new ListContentTool($this->contentService, $this->router), '__invoke'],
@@ -170,6 +173,7 @@ class McpController
                     . 'question; use search_content for that instead. Does '
                     . 'not return the full body of each item, use '
                     . 'get_content for that.',
+                annotations: $this->contentToolAnnotations(),
             )
             ->addTool(
                 [new ListTagsTool($this->contentService), '__invoke'],
@@ -178,6 +182,7 @@ class McpController
                     . 'content source you have already chosen, with how '
                     . 'many items use each one — useful to narrow a '
                     . 'subsequent list_content call.',
+                annotations: $this->contentToolAnnotations(),
             )
         ;
 
@@ -191,9 +196,41 @@ class McpController
                     . 'reliable than search_content/get_content because it '
                     . 'depends on the quality of the LLM backend; prefer '
                     . 'those tools when precision matters.',
+                annotations: new ToolAnnotations(
+                    readOnlyHint: true,
+                    destructiveHint: false,
+                    // Unlike the content tools, an LLM answer is not
+                    // guaranteed to be the same for the same question (model
+                    // sampling), and it cannot be given the same closed-world
+                    // guarantee a direct content query can: it may still
+                    // surface pretrained knowledge or hallucinate beyond the
+                    // retrieved context despite being grounded on it.
+                    idempotentHint: false,
+                    openWorldHint: true,
+                ),
             );
         }
 
         return $builder->build();
+    }
+
+    /**
+     * Annotations shared by every tool that queries the content index
+     * directly (search_content, get_content, list_content, list_tags):
+     * they only read, never write; repeating one with the same arguments
+     * has no additional effect beyond the first call; and their domain is
+     * closed (the site's own indexed content), unlike "ask", which goes
+     * through an LLM.
+     *
+     * @return ToolAnnotations
+     */
+    private function contentToolAnnotations(): ToolAnnotations
+    {
+        return new ToolAnnotations(
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false,
+        );
     }
 }

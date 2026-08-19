@@ -22,6 +22,9 @@ use Derafu\Content\ContentService;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
+use Derafu\Content\Plugin\Academy\AcademyLesson;
+use Derafu\Content\Plugin\Academy\AcademyPlugin;
+use Derafu\Content\Plugin\Academy\AcademyRegistry;
 use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
@@ -72,6 +75,9 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(DocsPlugin::class)]
 #[UsesClass(DocsRegistry::class)]
 #[UsesClass(DocsDoc::class)]
+#[UsesClass(AcademyPlugin::class)]
+#[UsesClass(AcademyRegistry::class)]
+#[UsesClass(AcademyLesson::class)]
 #[UsesClass(ContentService::class)]
 #[UsesClass(ContentAuthor::class)]
 #[UsesClass(ContentBag::class)]
@@ -126,6 +132,12 @@ final class McpControllerTest extends TestCase
         );
         $docsPlugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
 
+        $academyPlugin = new AcademyPlugin(
+            $context,
+            ['path' => 'academy']
+        );
+        $academyPlugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
+
         $mcpPlugin = new McpPlugin($context, [
             'session_path' => sys_get_temp_dir() . '/derafu-content-mcp-tests-' . uniqid(),
             'ask' => ['enabled' => $askEnabled],
@@ -133,6 +145,7 @@ final class McpControllerTest extends TestCase
 
         $plugins = [
             'docs' => $docsPlugin,
+            'academy' => $academyPlugin,
             'mcp' => $mcpPlugin,
         ];
 
@@ -220,6 +233,34 @@ final class McpControllerTest extends TestCase
         $this->assertNotContains('ask', $names);
     }
 
+    /**
+     * The 4 tools that query the content index directly are all
+     * read-only, non-destructive, idempotent and closed-world (they only
+     * ever see this site's own indexed content) — an MCP client should
+     * not have to fall back to its own conservative defaults for these.
+     */
+    public function testContentToolsAdvertiseReadOnlyIdempotentClosedWorldAnnotations(): void
+    {
+        $sessionId = $this->initialize();
+
+        [$body] = $this->callMcp([
+            'jsonrpc' => '2.0',
+            'id' => 2,
+            'method' => 'tools/list',
+        ], $sessionId);
+
+        $tools = array_column($body['result']['tools'], null, 'name');
+
+        foreach (['search_content', 'get_content', 'list_content', 'list_tags'] as $name) {
+            $annotations = $tools[$name]['annotations'];
+
+            $this->assertTrue($annotations['readOnlyHint'], "$name readOnlyHint");
+            $this->assertFalse($annotations['destructiveHint'], "$name destructiveHint");
+            $this->assertTrue($annotations['idempotentHint'], "$name idempotentHint");
+            $this->assertFalse($annotations['openWorldHint'], "$name openWorldHint");
+        }
+    }
+
     public function testGetContentToolReturnsTheRealMarkdownBody(): void
     {
         $sessionId = $this->initialize();
@@ -238,6 +279,34 @@ final class McpControllerTest extends TestCase
         $payload = json_decode($body['result']['content'][0]['text'], true);
         $this->assertSame('guia/primeros-pasos', $payload['uri']);
         $this->assertStringContainsString('primeros pasos, hijo', $payload['markdown']);
+    }
+
+    /**
+     * Regression test for a real production bug: AcademyRegistry::get()
+     * used to be typed/asserted to always return a course, so calling
+     * get_content with an academy lesson (or module) URI — a real
+     * request an MCP client makes routinely — crashed with an uncaught
+     * AssertionError/TypeError instead of a graceful tool error, which
+     * surfaced to the client as a raw JSON-RPC -32603 "Internal error"
+     * instead of a normal isError=true tool result.
+     */
+    public function testGetContentToolResolvesANestedAcademyLessonUri(): void
+    {
+        $sessionId = $this->initialize();
+
+        [$body] = $this->callMcp([
+            'jsonrpc' => '2.0',
+            'id' => 3,
+            'method' => 'tools/call',
+            'params' => [
+                'name' => 'get_content',
+                'arguments' => ['source' => 'academy', 'uri' => 'curso-demo/modulo-uno/leccion-uno'],
+            ],
+        ], $sessionId);
+
+        $this->assertFalse($body['result']['isError']);
+        $payload = json_decode($body['result']['content'][0]['text'], true);
+        $this->assertSame('curso-demo/modulo-uno/leccion-uno', $payload['uri']);
     }
 
     public function testGetContentToolOnUnknownUriReturnsAGracefulToolError(): void
@@ -410,6 +479,34 @@ final class McpControllerTest extends TestCase
         $names = array_column($body['result']['tools'], 'name');
 
         $this->assertContains('ask', $names);
+    }
+
+    /**
+     * "ask" is still read-only/non-destructive, but — unlike the content
+     * tools — it is not idempotent (an LLM's phrasing can vary between
+     * identical calls) and it is open-world (it cannot give the same
+     * closed-domain guarantee a direct content query can: it may still
+     * surface pretrained knowledge or hallucinate beyond the retrieved
+     * context despite being grounded on it).
+     */
+    public function testAskToolAnnotationsReflectItsLlmBackedNature(): void
+    {
+        $controller = $this->buildController(askEnabled: true);
+        $sessionId = $this->initialize($controller);
+
+        [$body] = $this->callMcp([
+            'jsonrpc' => '2.0',
+            'id' => 9,
+            'method' => 'tools/list',
+        ], $sessionId, $controller);
+
+        $tools = array_column($body['result']['tools'], null, 'name');
+        $annotations = $tools['ask']['annotations'];
+
+        $this->assertTrue($annotations['readOnlyHint']);
+        $this->assertFalse($annotations['destructiveHint']);
+        $this->assertFalse($annotations['idempotentHint']);
+        $this->assertTrue($annotations['openWorldHint']);
     }
 
     public function testAskToolReturnsTheRealLlmAnswerWhenEnabled(): void

@@ -16,6 +16,7 @@ use Derafu\Content\Abstract\AbstractContentController;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Exception\ContentNotFoundException;
+use Derafu\Content\Plugin\Academy\Contract\AcademyCourseInterface;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
 
@@ -106,6 +107,7 @@ class AcademyController extends AbstractContentController
         $module = str_replace('.' . $format, '', $module);
 
         $course = $plugin->registry()->get($course);
+        assert($course instanceof AcademyCourseInterface);
         $module = $course->modules()[$module]
             ?? throw new ContentNotFoundException(sprintf(
                 'Module "%s" not found.',
@@ -160,6 +162,7 @@ class AcademyController extends AbstractContentController
         $lesson = str_replace('.' . $format, '', $lesson);
 
         $course = $plugin->registry()->get($course);
+        assert($course instanceof AcademyCourseInterface);
         $module = $course->modules()[$module]
             ?? throw new ContentNotFoundException(sprintf(
                 'Module "%s" not found.',

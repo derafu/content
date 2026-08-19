@@ -28,12 +28,13 @@ interface AcademyRegistryInterface extends ContentRegistryInterface
     public function filter(array $filters = []): array;
 
     /**
-     * Get an academy course by URI.
+     * Get an academy course, module or lesson by URI (one, two or three
+     * URI segments, respectively).
      *
-     * @param string $uri URI of the academy course.
-     * @return AcademyCourseInterface
+     * @param string $uri URI of the academy content.
+     * @return AcademyCourseInterface|AcademyModuleInterface|AcademyLessonInterface
      */
-    public function get(string $uri): AcademyCourseInterface;
+    public function get(string $uri): AcademyCourseInterface|AcademyModuleInterface|AcademyLessonInterface;
 
     /**
      * Get the previous academy content relative to the given URI.
