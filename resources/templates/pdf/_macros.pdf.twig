@@ -95,6 +95,106 @@
     {% endif %}
 {% endmacro %}
 
+{#
+    Renders a doc's OpenAPI spec (DocsDoc::openapiSpec()) as something a
+    static PDF can show: every endpoint with its parameters, a request
+    body example and its declared responses — the same information the
+    HTML view's interactive Swagger UI widget has, minus the "try it
+    out" testing capability a static export cannot offer anyway.
+
+    Safe to call on ANY item, not just docs: "item.openapiSpec is
+    defined" no-ops for content types that have no such method at all
+    (academy, blog, faq, pages), so section() below can call this
+    unconditionally for every node of a "full" export tree.
+#}
+{% macro openapi(item) %}
+    {% if item.openapiSpec is defined and item.openapiSpec %}
+        {% set spec = item.openapiSpec %}
+        <div class="pdf-openapi">
+            <h2>{{ spec.title }}</h2>
+            {% if spec.description %}
+                <div class="pdf-openapi-description">{{ spec.description | markdown }}</div>
+            {% endif %}
+            {% if spec.servers | length > 0 %}
+                <p class="pdf-openapi-servers">Servers: {{ spec.servers | join(', ') }}</p>
+            {% endif %}
+            {% set groups = spec.endpointGroups %}
+            {% if groups | length > 0 %}
+                <tocpagebreak name="{{ item.downloadFilename }}-openapi-toc" links="on" toc-preHTML="&lt;h3&gt;Index&lt;/h3&gt;" />
+            {% endif %}
+            {% for group in groups %}
+                <div class="pdf-openapi-group">
+                    <tocentry
+                        content="{{ group.tagName ?: 'Other' }}"
+                        level="0"
+                        name="{{ item.downloadFilename }}-openapi-toc"
+                    />
+                    <h3 class="pdf-openapi-group-title">{{ group.tagName ?: 'Other' }}</h3>
+                    {% if group.tagDescription %}
+                        <div class="pdf-openapi-group-description">{{ group.tagDescription | markdown }}</div>
+                    {% endif %}
+                    {% for endpoint in group.endpoints %}
+                        <div class="pdf-openapi-endpoint">
+                            <tocentry
+                                content="{{ endpoint.summary ?: (endpoint.method ~ ' ' ~ endpoint.path) }}"
+                                level="1"
+                                name="{{ item.downloadFilename }}-openapi-toc"
+                            />
+                            <div class="pdf-openapi-endpoint-header">
+                                <span class="pdf-openapi-method">{{ endpoint.method }}</span>
+                                <span class="pdf-openapi-path">{{ endpoint.path }}</span>
+                            </div>
+                            {% if endpoint.summary %}
+                                <div class="pdf-openapi-summary">{{ endpoint.summary }}</div>
+                            {% endif %}
+                            {% if endpoint.description %}
+                                <div class="pdf-openapi-endpoint-description">{{ endpoint.description | markdown }}</div>
+                            {% endif %}
+                            {% if endpoint.parameters | length > 0 %}
+                                <div class="pdf-openapi-parameters">
+                                    <strong>Parameters</strong>
+                                    <ul>
+                                        {% for parameter in endpoint.parameters %}
+                                            <li>
+                                                <code>{{ parameter.name }}</code>
+                                                ({{ parameter.in }}{% if parameter.type %}, {{ parameter.type }}{% endif %}{% if parameter.required %}, required{% endif %})
+                                                {% if parameter.description %}
+                                                    <div class="pdf-openapi-parameter-description">{{ parameter.description | markdown }}</div>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                            {% if endpoint.requestBodyExample %}
+                                <div class="pdf-openapi-request-body">
+                                    <strong>Request body example</strong>
+                                    <pre>{{ endpoint.requestBodyExample }}</pre>
+                                </div>
+                            {% endif %}
+                            {% if endpoint.responses | length > 0 %}
+                                <div class="pdf-openapi-responses">
+                                    <strong>Responses</strong>
+                                    <ul>
+                                        {% for response in endpoint.responses %}
+                                            <li>
+                                                <code>{{ response.statusCode }}</code>
+                                                {% if response.description %}
+                                                    <div class="pdf-openapi-response-description">{{ response.description | markdown }}</div>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}
+
 {% macro cover(item, kind) %}
     {% import _self as m %}
     {% if kind %}
@@ -184,6 +284,7 @@
         {% endif %}
 
         {{ m.test(item) }}
+        {{ m.openapi(item) }}
 
         <div class="pdf-footer-meta">
             Last updated on {{ item.last_update | date('d/m/Y') }}

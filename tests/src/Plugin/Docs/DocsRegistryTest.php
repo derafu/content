@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\TestsContent\Plugin\Docs;
 
+use Derafu\Content\ContentAttachment;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
@@ -20,6 +21,11 @@ use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Docs\DocsDoc;
+use Derafu\Content\Plugin\Docs\DocsOpenApiEndpoint;
+use Derafu\Content\Plugin\Docs\DocsOpenApiParameter;
+use Derafu\Content\Plugin\Docs\DocsOpenApiResponse;
+use Derafu\Content\Plugin\Docs\DocsOpenApiSpec;
+use Derafu\Content\Plugin\Docs\DocsOpenApiTag;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
 use Derafu\TestsContent\Support\ContentFixtures;
@@ -35,6 +41,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(DocsPlugin::class)]
 #[CoversClass(DocsRegistry::class)]
 #[CoversClass(DocsDoc::class)]
+#[UsesClass(ContentAttachment::class)]
 #[UsesClass(ContentBag::class)]
 #[UsesClass(ContentConfig::class)]
 #[UsesClass(ContentContext::class)]
@@ -42,6 +49,11 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
 #[UsesClass(ContentNotFoundException::class)]
+#[UsesClass(DocsOpenApiSpec::class)]
+#[UsesClass(DocsOpenApiEndpoint::class)]
+#[UsesClass(DocsOpenApiParameter::class)]
+#[UsesClass(DocsOpenApiResponse::class)]
+#[UsesClass(DocsOpenApiTag::class)]
 final class DocsRegistryTest extends TestCase
 {
     private DocsPlugin $plugin;
@@ -109,5 +121,25 @@ final class DocsRegistryTest extends TestCase
         $this->expectException(ContentNotFoundException::class);
 
         $this->plugin->registry()->get('no-existe');
+    }
+
+    public function testOpenapiFieldResolvesAndParsesTheLocalAttachment(): void
+    {
+        $doc = $this->plugin->registry()->get('api');
+
+        $spec = $doc->openapiSpec();
+
+        $this->assertInstanceOf(DocsOpenApiSpec::class, $spec);
+        $this->assertSame('Fixture API', $spec->title());
+        $this->assertCount(3, $spec->endpoints());
+        $this->assertSame('GET', $spec->endpoints()[0]->method());
+        $this->assertSame('/widgets', $spec->endpoints()[0]->path());
+    }
+
+    public function testDocWithoutOpenapiFieldHasNoSpec(): void
+    {
+        $doc = $this->plugin->registry()->get('guia');
+
+        $this->assertNull($doc->openapiSpec());
     }
 }

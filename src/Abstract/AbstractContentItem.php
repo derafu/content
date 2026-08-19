@@ -26,6 +26,7 @@ use Derafu\Content\Contract\ContentAttachmentInterface;
 use Derafu\Content\Contract\ContentAuthorInterface;
 use Derafu\Content\Contract\ContentHtmlTagsInterface;
 use Derafu\Content\Contract\ContentItemInterface;
+use Derafu\Content\RemoteContentFetcher;
 use Derafu\Support\Str;
 use InvalidArgumentException;
 use Symfony\Component\Yaml\Yaml;
@@ -1310,6 +1311,41 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function attachment(string $filename): ?ContentAttachmentInterface
     {
         return $this->attachments()[$filename] ?? null;
+    }
+
+    /**
+     * Resolves the raw content behind a frontmatter reference: either a
+     * local attachment (the "?attachment=name" convention, or a literal
+     * path ending in "/_attachments/name") or, when it is not one of
+     * those two, an absolute URL fetched from another site (e.g. a quiz
+     * or an OpenAPI spec hosted elsewhere).
+     *
+     * @param string $metadataKey Name of the frontmatter field to resolve
+     * (e.g. "test", "openapi").
+     * @return string|null The raw content, or null if the field is not
+     * set or does not resolve to either form.
+     */
+    protected function resolveReferenceContent(string $metadataKey): ?string
+    {
+        $value = $this->metadata($metadataKey);
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (str_contains($value, '?attachment=')) {
+            return $this->attachment(explode('?attachment=', $value)[1])?->raw();
+        }
+
+        if (str_contains($value, '/_attachments/')) {
+            return $this->attachment(basename($value))?->raw();
+        }
+
+        if (preg_match('#^https?://#i', $value)) {
+            return (new RemoteContentFetcher())->fetch($value);
+        }
+
+        return null;
     }
 
     /**

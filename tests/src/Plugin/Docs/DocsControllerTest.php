@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsContent\Plugin\Docs;
 
 use Derafu\Content\Abstract\AbstractContentController;
+use Derafu\Content\ContentAttachment;
 use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
@@ -24,6 +25,12 @@ use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Docs\DocsController;
 use Derafu\Content\Plugin\Docs\DocsDoc;
+use Derafu\Content\Plugin\Docs\DocsOpenApiEndpoint;
+use Derafu\Content\Plugin\Docs\DocsOpenApiEndpointGroup;
+use Derafu\Content\Plugin\Docs\DocsOpenApiParameter;
+use Derafu\Content\Plugin\Docs\DocsOpenApiResponse;
+use Derafu\Content\Plugin\Docs\DocsOpenApiSpec;
+use Derafu\Content\Plugin\Docs\DocsOpenApiTag;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
 use Derafu\Http\Request;
@@ -48,6 +55,13 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(DocsPlugin::class)]
 #[UsesClass(DocsRegistry::class)]
 #[UsesClass(DocsDoc::class)]
+#[UsesClass(DocsOpenApiSpec::class)]
+#[UsesClass(DocsOpenApiEndpoint::class)]
+#[UsesClass(DocsOpenApiEndpointGroup::class)]
+#[UsesClass(DocsOpenApiParameter::class)]
+#[UsesClass(DocsOpenApiResponse::class)]
+#[UsesClass(DocsOpenApiTag::class)]
+#[UsesClass(ContentAttachment::class)]
 #[UsesClass(ContentService::class)]
 #[UsesClass(ContentAuthor::class)]
 #[UsesClass(ContentBag::class)]
@@ -316,6 +330,29 @@ final class DocsControllerTest extends TestCase
     private function countPdfPages(string $pdf): int
     {
         return preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
+    }
+
+    /**
+     * The "api" fixture doc's OpenAPI spec renders a real mpdf table of
+     * contents (<tocpagebreak>/<tocentry>, not a hand-rolled in-page link
+     * list) for its endpoints: mpdf must actually accept those tags and
+     * produce a real, bigger PDF, not merely pass through DocsShowOpenApi
+     * Test's intermediate-HTML assertions.
+     */
+    public function testPdfFormatRendersARealTableOfContentsForTheOpenapiSpec(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/api.pdf'));
+
+        $request = new Request('GET', 'http://localhost/docs/api.pdf');
+        $pdf = $this->controller($router)->show($request, 'api.pdf');
+
+        $this->assertIsString($pdf);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        // The doc's own content plus the OpenAPI index page it forces
+        // via <tocpagebreak>: at least 2 pages, never just the 1 a doc
+        // with no OpenAPI spec would produce.
+        $this->assertGreaterThanOrEqual(2, $this->countPdfPages($pdf));
     }
 
     public function testHtmlRenderHidesTheSidebarWhenSidebarPathIsDisabled(): void

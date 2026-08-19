@@ -25,6 +25,7 @@ unlisted: {{ doc.unlisted ? 'true' : 'false' }}
 
 {{ doc.data(md_urls) | raw }}
 {{ md.video(doc) }}
+{{ md.openapi(doc) }}
 {% if doc.children | length > 0 %}
 {% if full %}
 {{ md.tree(doc.children, 2, md_urls) }}

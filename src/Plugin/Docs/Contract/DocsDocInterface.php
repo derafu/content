@@ -32,4 +32,13 @@ interface DocsDocInterface extends ContentItemInterface
      * @return array<DocsDocInterface>
      */
     public function children(): array;
+
+    /**
+     * Get the doc's OpenAPI spec, parsed from its "openapi" frontmatter
+     * reference (a local attachment or a remote URL), or null if it has
+     * none.
+     *
+     * @return DocsOpenApiSpecInterface|null
+     */
+    public function openapiSpec(): ?DocsOpenApiSpecInterface;
 }

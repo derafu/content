@@ -69,6 +69,88 @@
 {%- endif %}
 {% endmacro %}
 
+{#
+    Renders a doc's OpenAPI spec (DocsDoc::openapiSpec()) as plain
+    Markdown: every endpoint with its parameters, a request body example
+    and its declared responses. Mirrors pdf/_macros.pdf.twig's openapi()
+    macro.
+
+    Safe to call on ANY item, not just docs: "item.openapiSpec is
+    defined" no-ops for content types that have no such method at all.
+#}
+{% macro openapi(item) %}
+{%- if item.openapiSpec is defined and item.openapiSpec %}
+{%- set spec = item.openapiSpec %}
+
+## {{ spec.title }}
+
+{% if spec.description -%}
+{{ spec.description | raw }}
+
+{% endif -%}
+{% if spec.servers | length > 0 -%}
+Servers: {{ spec.servers | join(', ') }}
+
+{% endif -%}
+{%- set groups = spec.endpointGroups %}
+{% if groups | length > 0 -%}
+Index:
+
+{% for group in groups -%}
+- {{ group.tagName ?: 'Other' }}
+{% for endpoint in group.endpoints -%}
+{{ '  - ' }}{{ endpoint.summary ?: (endpoint.method ~ ' ' ~ endpoint.path) }}
+
+{% endfor %}
+{% endfor %}
+{% endif -%}
+{% for group in groups -%}
+### {{ group.tagName ?: 'Other' }}
+
+{% if group.tagDescription -%}
+{{ group.tagDescription | raw }}
+
+{% endif -%}
+{% for endpoint in group.endpoints -%}
+#### {{ endpoint.method }} {{ endpoint.path }}
+
+{% if endpoint.summary -%}
+{{ endpoint.summary }}
+
+{% endif -%}
+{% if endpoint.description -%}
+{{ endpoint.description | raw }}
+
+{% endif -%}
+{% if endpoint.parameters | length > 0 -%}
+Parameters:
+
+{% for parameter in endpoint.parameters -%}
+- `{{ parameter.name }}` ({{ parameter.in }}{% if parameter.type %}, {{ parameter.type }}{% endif %}{% if parameter.required %}, required{% endif %}){% if parameter.description %} — {{ parameter.description | raw }}{% endif %}
+
+{% endfor %}
+{% endif -%}
+{% if endpoint.requestBodyExample -%}
+Request body example:
+
+```
+{{ endpoint.requestBodyExample | raw }}
+```
+
+{% endif -%}
+{% if endpoint.responses | length > 0 -%}
+Responses:
+
+{% for response in endpoint.responses -%}
+- `{{ response.statusCode }}`{% if response.description %} — {{ response.description | raw }}{% endif %}
+
+{% endfor %}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}
+{%- endif %}
+{% endmacro %}
+
 {% macro tree(items, depth, md_urls) %}
     {%- import _self as m -%}
     {%- set heading = '' -%}
@@ -86,6 +168,7 @@
 {{ item.data(md_urls) | trim }}
 {{ m.video(item) }}
 {{ m.test(item) }}
+{{ m.openapi(item) }}
 {% if item.children | length > 0 %}
 {{ m.tree(item.children, depth + 1, md_urls) }}
 {%- endif -%}

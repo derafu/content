@@ -108,10 +108,10 @@ class AcademyLesson extends AbstractContentItem implements AcademyLessonInterfac
     public function test(): ?AcademyTestInterface
     {
         if (!isset($this->test)) {
-            $attachment = $this->testAttachment();
+            $source = $this->resolveReferenceContent('test');
 
-            $this->test = $attachment
-                ? AcademyTest::fromJson($attachment->raw())
+            $this->test = $source !== null
+                ? AcademyTest::fromJson($source)
                 : false;
         }
 
@@ -164,7 +164,12 @@ class AcademyLesson extends AbstractContentItem implements AcademyLessonInterfac
     {
         if ($this->video()) {
             return 'fa-solid fa-play fa-fw';
-        } elseif ($this->test()) {
+        } elseif ($this->metadata('test') !== null) {
+            // Deliberately not this->test(): a remote "test" would fetch
+            // it over HTTP just to pick an icon, on every listing render
+            // (course/module pages list every lesson's icon). Whether a
+            // test is configured at all is enough for that, no need to
+            // resolve/parse it here.
             return 'fa-solid fa-question-circle fa-fw';
         } else {
             return 'fa-solid fa-file-lines fa-fw';

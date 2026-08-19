@@ -42,6 +42,17 @@ $scenario = $_GET['scenario'] ?? 'results_ok';
     'chat_error_object' => [429, ['error' => ['message' => 'Rate limited', 'type' => 'rate_limit_error']]],
     'chat_error_string' => [400, ['error' => 'Bad request']],
     'invalid_json' => [200, null],
+    'academy_test_ok' => [200, [
+        'title' => 'Cuestionario remoto',
+        'questions' => [
+            [
+                'type' => 'true_false',
+                'text' => '¿Este cuestionario vino de un servidor remoto?',
+                'answer' => true,
+                'explanation' => 'Sí, fue servido por el fixture HTTP de los tests.',
+            ],
+        ],
+    ]],
     default => [404, ['detail' => 'Unknown scenario']],
 };
 

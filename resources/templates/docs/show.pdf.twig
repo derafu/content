@@ -16,6 +16,7 @@
     {% else %}
         {{ doc.data(link_urls) | twig }}
     {% endif %}
+    {{ pdf.openapi(doc) }}
 {% endblock %}
 
 {% block pdf_hierarchy %}

@@ -46,7 +46,7 @@
         "mpdf/mpdf": "^8.3"
     },
     "suggest": {
-        "guzzlehttp/guzzle": "Required by the \"search\" plugin (or any psr/http-client implementation) to query the search engine and LLM backend.",
+        "guzzlehttp/guzzle": "Required by the \"search\" plugin (or any psr/http-client implementation) to query the search engine and LLM backend, and by the \"academy\" plugin to fetch a lesson's test when it points to a remote URL instead of a local attachment.",
         "mcp/sdk": "Required to enable the \"mcp\" plugin (Model Context Protocol server)."
     },
     "scripts": {

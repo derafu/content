@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: Fixture API
+  description: |
+    API de fixture usada por los tests de derafu/content.
+
+    **Importante**: esto es solo un fixture.
+  version: 1.0.0
+servers:
+  - url: https://fixture.example.test
+tags:
+  - name: Widgets
+    description: |
+      Recursos para gestionar widgets del fixture.
+
+      - Requiere autenticación de prueba.
+paths:
+  /widgets:
+    get:
+      summary: List widgets
+      description: |
+        Returns every widget known to the fixture API.
+
+        - Supports free-text filtering via `q`.
+      tags: [Widgets]
+      parameters:
+        - name: q
+          in: query
+          required: false
+          description: Free-text filter, e.g. `q=foo`.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of widgets.
+        '400':
+          description: Invalid query parameter.
+    post:
+      summary: Create a widget
+      tags: [Widgets]
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: "Widget de prueba"
+              quantity: 3
+      responses:
+        '201':
+          description: Widget created.
+  /gadgets:
+    get:
+      summary: List gadgets
+      responses:
+        '200':
+          description: A list of gadgets.
