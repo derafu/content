@@ -116,7 +116,7 @@
                                         {% if result.score is defined %}
                                             <small class="text-success">
                                                 <i class="fa-solid fa-bullseye me-1"></i>
-                                                {{ (result.score * 100)|round(1) }}% relevance
+                                                {{ '{percent}% relevance'|trans({'percent': (result.score * 100)|round(1)}) }}
                                             </small>
                                         {% endif %}
 
@@ -203,6 +203,13 @@
 // Configuration for LLM proxy endpoint.
 const LLM_PROXY_URL = "{{ path('search_llm_query') }}";
 
+// Translated strings for the AI Assistant widget.
+const i18nLoading = "{{ 'Loading...'|trans|e('js') }}";
+const i18nAiAssistant = "{{ 'AI Assistant'|trans|e('js') }}";
+const i18nGeneratingResponse = "{{ 'Generating response for your search...'|trans|e('js') }}";
+const i18nNoResponseGenerated = "{{ 'No response generated.'|trans|e('js') }}";
+const i18nAiResponsesInaccurate = "{{ 'AI responses can be inaccurate.'|trans|e('js') }}";
+
 // Generate LLM response for search queries.
 async function generateLLMResponse(query, targetElementId) {
     const targetElement = document.getElementById(targetElementId);
@@ -218,11 +225,11 @@ async function generateLLMResponse(query, targetElementId) {
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">${i18nLoading}</span>
                     </div>
                     <div>
-                        <h5 class="mb-1">AI Assistant</h5>
-                        <small class="text-muted">Generating response for your search...</small>
+                        <h5 class="mb-1">${i18nAiAssistant}</h5>
+                        <small class="text-muted">${i18nGeneratingResponse}</small>
                     </div>
                 </div>
             </div>
@@ -248,7 +255,7 @@ async function generateLLMResponse(query, targetElementId) {
             throw new Error(data.error);
         }
 
-        const content = data.choices?.[0]?.delta?.content || 'No response generated.';
+        const content = data.choices?.[0]?.delta?.content || i18nNoResponseGenerated;
 
         // Update the display with the response.
         targetElement.innerHTML = `
@@ -256,7 +263,7 @@ async function generateLLMResponse(query, targetElementId) {
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
                         <i class="fa-solid fa-robot text-primary me-2"></i>
-                        <h5 class="mb-0">AI Assistant</h5>
+                        <h5 class="mb-0">${i18nAiAssistant}</h5>
                     </div>
                     <div class="ai-response-content">
                         ${content.replace(/\n/g, '')}
@@ -265,7 +272,7 @@ async function generateLLMResponse(query, targetElementId) {
                 <div class="card-footer">
                     <span class="text-muted small">
                         <i class="fa-solid fa-exclamation-triangle text-warning me-1"></i>
-                        AI responses can be inaccurate.
+                        ${i18nAiResponsesInaccurate}
                     </span>
                 </div>
             </div>
@@ -273,20 +280,8 @@ async function generateLLMResponse(query, targetElementId) {
 
     } catch (error) {
         console.error('Error generating LLM response:', error);
-        targetElement.innerHTML = `
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="fa-solid fa-exclamation-triangle text-warning me-2"></i>
-                        <h5 class="mb-0">AI Assistant</h5>
-                    </div>
-                    <div class="alert alert-warning mb-0">
-                        <strong>Unable to generate AI response.</strong><br>
-                        <small class="text-muted">Error: ${error.message}</small>
-                    </div>
-                </div>
-            </div>
-        `;
+        targetElement.innerHTML = '';
+        targetElement.style.display = 'none';
     }
 }
 

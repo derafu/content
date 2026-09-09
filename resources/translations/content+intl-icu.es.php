@@ -75,6 +75,7 @@ return [
     'Real-time search' => 'Búsqueda en tiempo real',
     'Documentation' => 'Documentación',
     'View' => 'Ver',
+    '{percent}% relevance' => '{percent}% de relevancia',
     '{count, plural, one {Found <strong>#</strong> result for "<strong>{query}</strong>"} other {Found <strong>#</strong> results for "<strong>{query}</strong>"}}' =>
         '{count, plural, one {Se encontró <strong>#</strong> resultado para "<strong>{query}</strong>"} other {Se encontraron <strong>#</strong> resultados para "<strong>{query}</strong>"}}',
     'No results found' => 'No se encontraron resultados',
@@ -84,6 +85,11 @@ return [
     'Try more general terms.' => 'Prueba con términos más generales.',
     'Use different keywords.' => 'Usa palabras clave diferentes.',
     'Try synonyms.' => 'Prueba con sinónimos.',
+    'Loading...' => 'Cargando...',
+    'AI Assistant' => 'Asistente de IA',
+    'Generating response for your search...' => 'Generando respuesta para tu búsqueda...',
+    'No response generated.' => 'No se generó ninguna respuesta.',
+    'AI responses can be inaccurate.' => 'Las respuestas de la IA pueden ser inexactas.',
 
     // Academy.
     'Academy' => 'Academia',
