@@ -1,7 +1,8 @@
 {% extends 'pdf/_layout.pdf.twig' %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set link_urls = {'link_base_url': plugin.context.config.url} %}
 {% set pdf_item = post %}
-{% set pdf_kind = 'Blog' %}
+{% set pdf_kind = 'Blog'|trans %}
 
 {% block pdf_content %}
     {{ post.data(link_urls) | markdown(has_twig: post.has_twig) }}

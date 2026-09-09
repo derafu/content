@@ -19,6 +19,7 @@ use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RouterFixture;
 use Derafu\Twig\Extension\RoutingExtension;
+use Derafu\Twig\Extension\TranslationExtension;
 use Derafu\Twig\Extension\TwigExtension;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
@@ -49,7 +50,11 @@ final class DocsShowOpenApiTest extends TestCase
                 ContentFixtures::templatesPath(),
                 dirname(__DIR__, 3) . '/../resources/templates',
             ],
-            'extensions' => [new TwigExtension(), new RoutingExtension($router)],
+            'extensions' => [
+                new TwigExtension(),
+                new TranslationExtension(null, 'content+intl-icu'),
+                new RoutingExtension($router),
+            ],
         ]);
 
         $data = [

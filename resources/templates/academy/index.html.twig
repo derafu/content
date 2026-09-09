@@ -1,16 +1,16 @@
 {% extends 'layouts/academy.html.twig' %}
+{% trans_default_domain 'content+intl-icu' %}
 
-{% block title %}Academy{% endblock %}
+{% block title %}{{ 'Academy'|trans }}{% endblock %}
 
 {% block academy_header %}
+    {% set academyIntro = '<h3>Need to learn something?</h3><p>Here you will find courses, trainings and certifications associated with our products.</p><p>Do you want to learn about a topic? Start a course with us!</p>'|trans %}
     <section id="hero">
         <twig:block-hero
             size="small"
             background="/img/content/academy/academy-cover.png"
-            title="Academy"
-            subtitle="<h3>Need to learn something?</h3>
-                <p>Here you will find courses, trainings and certifications associated with our products.</p>
-                <p>Do you want to learn about a topic? Start a course with us!</p>"
+            title="{{ 'Academy'|trans }}"
+            subtitle="{{ academyIntro }}"
             align="left"
         />
     </section>
@@ -21,8 +21,8 @@
         <twig:block-title
             class="container"
             align="left"
-            title="Our courses"
-            subtitle="Explore our courses and start learning today!"
+            title="{{ 'Our courses'|trans }}"
+            subtitle="{{ 'Explore our courses and start learning today!'|trans }}"
         />
 
         <div class="container">
@@ -52,7 +52,8 @@
                                 <span>
                                     {{ course.time_formatted }}
                                 </span>
-                                <span>{{ course.lessons|length }} lessons</span>
+                                {% set lessonsCount = course.lessons|length %}
+                                <span>{{ '{count, plural, one {{n} lesson} other {{n} lessons}}'|trans({'count': lessonsCount, 'n': lessonsCount}) }}</span>
                             </div>
                         </div>
                     </div>

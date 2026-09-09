@@ -1,8 +1,9 @@
 {% extends 'pdf/_layout.pdf.twig' %}
 {% import 'pdf/_macros.pdf.twig' as pdf %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set link_urls = {'link_base_url': plugin.context.config.url} %}
 {% set pdf_item = doc %}
-{% set pdf_kind = 'Docs' %}
+{% set pdf_kind = 'Docs'|trans %}
 
 {% if full and doc.children | length > 0 %}
     {% set pdf_full_html %}
@@ -22,7 +23,7 @@
 {% block pdf_hierarchy %}
     {% if doc.children | length > 0 %}
         <div class="pdf-hierarchy">
-            <h2>Pages in this section</h2>
+            <h2>{{ 'Pages in this section'|trans }}</h2>
             <ul>
                 {% for child in doc.children %}
                     <li>

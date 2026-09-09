@@ -16,6 +16,7 @@ use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Renderer\Factory\RendererFactory;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Twig\Extension\RoutingExtension;
+use Derafu\Twig\Extension\TranslationExtension;
 use Derafu\Twig\Extension\TwigExtension;
 
 /**
@@ -38,7 +39,10 @@ final class RendererFixture
      */
     public static function create(?RouterInterface $router = null): RendererInterface
     {
-        $extensions = [new TwigExtension()];
+        $extensions = [
+            new TwigExtension(),
+            new TranslationExtension(null, 'content+intl-icu'),
+        ];
 
         if ($router !== null) {
             $extensions[] = new RoutingExtension($router);

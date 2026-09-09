@@ -1,8 +1,9 @@
 {% extends 'pdf/_layout.pdf.twig' %}
 {% import 'pdf/_macros.pdf.twig' as pdf %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set link_urls = {'link_base_url': plugin.context.config.url} %}
 {% set pdf_item = course %}
-{% set pdf_kind = 'Academy' %}
+{% set pdf_kind = 'Academy'|trans %}
 
 {% if full and course.modules | length > 0 %}
     {% set pdf_full_html %}
@@ -17,7 +18,7 @@
 {% block pdf_hierarchy %}
     {% if course.modules | length > 0 %}
         <div class="pdf-hierarchy" style="page-break-before: always;">
-            <h2>Modules</h2>
+            <h2>{{ 'Modules'|trans }}</h2>
             {% for module in course.modules %}
                 <div class="pdf-hierarchy-module">
                     <div class="pdf-hierarchy-module-title">{{ loop.index }}. {{ module.title }}</div>

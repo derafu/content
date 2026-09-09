@@ -78,10 +78,10 @@ class BlogArchive implements BlogArchiveInterface
     ) {
         if (is_string($date)) {
             if (!preg_match('/^(\d{4})(\d{2})/', $date, $matches) || (int) $matches[2] < 1 || (int) $matches[2] > 12) {
-                throw new ContentNotFoundException(sprintf(
-                    'Invalid archive "%s": expected it to start with a "YYYYMM" prefix.',
-                    $date
-                ));
+                throw new ContentNotFoundException([
+                    'Invalid archive "{date}": expected it to start with a "YYYYMM" prefix.',
+                    'date' => $date,
+                ]);
             }
 
             $this->year = (int) $matches[1];

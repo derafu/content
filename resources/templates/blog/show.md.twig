@@ -1,4 +1,5 @@
 {% import 'md/_macros.md.twig' as md %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set base_url = plugin.context.config.url %}
 {% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
 {% set post_image = post.image(md_urls) %}
@@ -27,5 +28,5 @@ unlisted: {{ post.unlisted ? 'true' : 'false' }}
 {{ md.video(post) }}
 ---
 
-Last updated on {{ post.last_update | date('d/m/Y') }}
+{{ 'Last updated on {date}'|trans({'date': post.last_update | date('d/m/Y')}) }}
 {{ post.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

@@ -1,12 +1,13 @@
 {% extends 'layouts/blog.html.twig' %}
+{% trans_default_domain 'content+intl-icu' %}
 
 {% block blog_header %}
     <section id="hero">
         <twig:block-hero
             size="small"
             background="/img/content/blog/default-cover.png"
-            title="{{ blog.title | default('Insights & Updates') }}"
-            subtitle="{{ blog.subtitle | default('Thoughts, stories, and the latest from our world.') }}"
+            title="{{ blog.title | default('Insights & Updates'|trans) }}"
+            subtitle="{{ blog.subtitle | default('Thoughts, stories, and the latest from our world.'|trans) }}"
             align="left"
         />
     </section>
@@ -21,17 +22,22 @@
                 </a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
-                Month: {{ month.name }}
+                {{ 'Month: {name}'|trans({'name': month.name}) }}
             </li>
         </ol>
     </nav>
     {% for post in posts %}
+        {% set postMeta = 'By {authors} on {date} • {time} min read.'|trans({
+            'authors': post.authors | join(', '),
+            'date': post.date | date('d/m/Y'),
+            'time': post.time,
+        }) %}
         <div class="mb-5">
             <twig:block-card
                 image="{{ post.image | default(base_path ~ '/img/content/blog/default-cover.png') }}"
                 title="{{ post.title }}"
-                content="<div class='text-muted small mb-2'>Por {{ post.authors | join(', ') }} el {{ post.date | date('d/m/Y') }} • {{ post.time }} min de lectura</div>{{ post.description | markdown }}"
-                buttonText="Leer más"
+                content="<div class='text-muted small mb-2'>{{ postMeta }}</div>{{ post.description | markdown }}"
+                buttonText="{{ 'Read more'|trans }}"
                 buttonUrl="{{ path('blog_post', {'post': post.uri}) }}"
             />
         </div>

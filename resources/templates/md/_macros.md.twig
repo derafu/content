@@ -9,6 +9,7 @@
     Only used by the four templates whose content has a natural tree
     (academy/course, academy/module, docs/show, faq/show).
 #}
+{% trans_default_domain 'content+intl-icu' %}
 
 {#
     Renders a frontmatter "video" (a YouTube URL, already rewritten to its
@@ -23,9 +24,9 @@
 {%- if videoUrl %}
 {%- if 'youtube.com/embed/' in videoUrl -%}
 {%- set videoId = videoUrl | split('/') | last -%}
-[![Watch video](https://img.youtube.com/vi/{{ videoId }}/hqdefault.jpg)](https://www.youtube.com/watch?v={{ videoId }})
+[![{{ 'Watch video'|trans }}](https://img.youtube.com/vi/{{ videoId }}/hqdefault.jpg)](https://www.youtube.com/watch?v={{ videoId }})
 {% else -%}
-[Watch video]({{ videoUrl }})
+[{{ 'Watch video'|trans }}]({{ videoUrl }})
 {%- endif %}
 
 {%- endif %}
@@ -89,15 +90,15 @@
 
 {% endif -%}
 {% if spec.servers | length > 0 -%}
-Servers: {{ spec.servers | join(', ') }}
+{{ 'Servers: {servers}'|trans({'servers': spec.servers | join(', ')}) }}
 
 {% endif -%}
 {%- set groups = spec.endpointGroups %}
 {% if groups | length > 0 -%}
-Index:
+{{ 'Index:'|trans }}
 
 {% for group in groups -%}
-- {{ group.tagName ?: 'Other' }}
+- {{ group.tagName ?: 'Other'|trans }}
 {% for endpoint in group.endpoints -%}
 {{ '  - ' }}{{ endpoint.summary ?: (endpoint.method ~ ' ' ~ endpoint.path) }}
 
@@ -105,7 +106,7 @@ Index:
 {% endfor %}
 {% endif -%}
 {% for group in groups -%}
-### {{ group.tagName ?: 'Other' }}
+### {{ group.tagName ?: 'Other'|trans }}
 
 {% if group.tagDescription -%}
 {{ group.tagDescription | raw }}
@@ -123,15 +124,15 @@ Index:
 
 {% endif -%}
 {% if endpoint.parameters | length > 0 -%}
-Parameters:
+{{ 'Parameters:'|trans }}
 
 {% for parameter in endpoint.parameters -%}
-- `{{ parameter.name }}` ({{ parameter.in }}{% if parameter.type %}, {{ parameter.type }}{% endif %}{% if parameter.required %}, required{% endif %}){% if parameter.description %} — {{ parameter.description | raw }}{% endif %}
+- `{{ parameter.name }}` ({{ parameter.in }}{% if parameter.type %}, {{ parameter.type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %}){% if parameter.description %} — {{ parameter.description | raw }}{% endif %}
 
 {% endfor %}
 {% endif -%}
 {% if endpoint.requestBodyExample -%}
-Request body example:
+{{ 'Request body example:'|trans }}
 
 ```
 {{ endpoint.requestBodyExample | raw }}
@@ -139,7 +140,7 @@ Request body example:
 
 {% endif -%}
 {% if endpoint.responses | length > 0 -%}
-Responses:
+{{ 'Responses:'|trans }}
 
 {% for response in endpoint.responses -%}
 - `{{ response.statusCode }}`{% if response.description %} — {{ response.description | raw }}{% endif %}

@@ -100,11 +100,11 @@ class OpenAiCompatibleLlmClient implements LlmClientInterface
             $request = new Request('POST', $url, $headers, json_encode($data, JSON_THROW_ON_ERROR));
             $response = $this->httpClient->sendRequest($request);
         } catch (Throwable $e) {
-            throw new SearchUpstreamException(sprintf(
-                'The LLM backend at "%s" could not be reached: %s.',
-                $url,
-                $e->getMessage()
-            ), $e);
+            throw new SearchUpstreamException([
+                'The LLM backend at "{url}" could not be reached: {reason}.',
+                'url' => $url,
+                'reason' => $e->getMessage(),
+            ], $e);
         }
 
         if ($response->getStatusCode() !== 200) {
@@ -112,12 +112,12 @@ class OpenAiCompatibleLlmClient implements LlmClientInterface
                 $response->getBody()->getContents()
             );
 
-            throw new SearchUpstreamException(sprintf(
-                'The LLM backend at "%s" returned HTTP %d%s.',
-                $url,
-                $response->getStatusCode(),
-                $detail !== null ? sprintf(': %s', $detail) : ''
-            ));
+            throw new SearchUpstreamException([
+                'The LLM backend at "{url}" returned HTTP {status}{detail}.',
+                'url' => $url,
+                'status' => $response->getStatusCode(),
+                'detail' => $detail !== null ? sprintf(': %s', $detail) : '',
+            ]);
         }
 
         $decodedResponse = json_decode(
@@ -126,11 +126,10 @@ class OpenAiCompatibleLlmClient implements LlmClientInterface
         );
 
         if (!isset($decodedResponse['choices'][0]['message']['content'])) {
-            throw new SearchUpstreamException(sprintf(
-                'The LLM backend at "%s" returned a response without a '
-                    . '"choices[0].message.content" field.',
-                $url
-            ));
+            throw new SearchUpstreamException([
+                'The LLM backend at "{url}" returned a response without a "choices[0].message.content" field.',
+                'url' => $url,
+            ]);
         }
 
         return $decodedResponse['choices'][0]['message']['content'];

@@ -1,8 +1,9 @@
 {% extends 'pdf/_layout.pdf.twig' %}
 {% import 'pdf/_macros.pdf.twig' as pdf %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set link_urls = {'link_base_url': plugin.context.config.url} %}
 {% set pdf_item = faq %}
-{% set pdf_kind = 'FAQ' %}
+{% set pdf_kind = 'FAQ'|trans %}
 
 {% if full and faq.children | length > 0 %}
     {% set pdf_full_html %}
@@ -17,7 +18,7 @@
 {% block pdf_hierarchy %}
     {% if faq.children | length > 0 %}
         <div class="pdf-hierarchy">
-            <h2>Related questions</h2>
+            <h2>{{ 'Related questions'|trans }}</h2>
             <ul>
                 {% for child in faq.children %}
                     <li>{{ child.title }}</li>

@@ -102,28 +102,28 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             }
 
             if (!$item->allowed()) {
-                throw new ContentNotFoundException(sprintf(
-                    'Content item with URI "%s" (slug: %s) is not allowed.',
-                    $uri,
-                    $slug
-                ));
+                throw new ContentNotFoundException([
+                    'Content item with URI "{uri}" (slug: {slug}) is not allowed.',
+                    'uri' => $uri,
+                    'slug' => $slug,
+                ]);
             }
 
             return $item;
         }
 
         if (empty($slug)) {
-            throw new ContentNotFoundException(sprintf(
-                'Content item with URI "%s" not found.',
-                $uri
-            ));
+            throw new ContentNotFoundException([
+                'Content item with URI "{uri}" not found.',
+                'uri' => $uri,
+            ]);
         }
 
-        throw new ContentNotFoundException(sprintf(
-            'Content item with URI "%s" (slug: %s) not found.',
-            $uri,
-            $slug
-        ));
+        throw new ContentNotFoundException([
+            'Content item with URI "{uri}" (slug: {slug}) not found.',
+            'uri' => $uri,
+            'slug' => $slug,
+        ]);
     }
 
     /**

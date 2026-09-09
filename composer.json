@@ -31,6 +31,7 @@
         "derafu/support": "dev-main",
         "derafu/config": "dev-main",
         "derafu/http": "dev-main",
+        "derafu/translation": "dev-main",
         "psr/cache": "^3.0",
         "psr/http-client": "^1.0",
         "symfony/cache": "^8.1"
@@ -39,7 +40,7 @@
         "ext-xdebug": "*",
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.2",
-        "phpunit/phpunit": "^13.2",
+        "phpunit/phpunit": "^13.3",
         "guzzlehttp/guzzle": "^7.15",
         "mcp/sdk": "^0.7",
         "derafu/markdown": "dev-main",
@@ -47,7 +48,8 @@
     },
     "suggest": {
         "guzzlehttp/guzzle": "Required by the \"search\" plugin (or any psr/http-client implementation) to query the search engine and LLM backend, and by the \"academy\" plugin to fetch a lesson's test when it points to a remote URL instead of a local attachment.",
-        "mcp/sdk": "Required to enable the \"mcp\" plugin (Model Context Protocol server)."
+        "mcp/sdk": "Required to enable the \"mcp\" plugin (Model Context Protocol server).",
+        "derafu/twig": "Required to translate this package's Twig templates: register Derafu\\Twig\\Extension\\TranslationExtension in your renderer's Twig extensions to enable the |trans filter and {% trans %} tag they use."
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",

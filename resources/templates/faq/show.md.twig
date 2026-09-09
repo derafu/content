@@ -1,4 +1,5 @@
 {% import 'md/_macros.md.twig' as md %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set base_url = plugin.context.config.url %}
 {% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
 {% set faq_image = faq.image(md_urls) %}
@@ -29,7 +30,7 @@ unlisted: {{ faq.unlisted ? 'true' : 'false' }}
 {% if full %}
 {{ md.tree(faq.children, 2, md_urls) }}
 {% else %}
-## Related questions
+## {{ 'Related questions'|trans }}
 
 {% for child in faq.children %}
 - [{{ child.title }}]({{ url('faq_question', {'question': child.uri}) }})
@@ -38,5 +39,5 @@ unlisted: {{ faq.unlisted ? 'true' : 'false' }}
 {% endif %}
 
 ---
-Last updated on {{ faq.last_update | date('d/m/Y') }}
+{{ 'Last updated on {date}'|trans({'date': faq.last_update | date('d/m/Y')}) }}
 {{ faq.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

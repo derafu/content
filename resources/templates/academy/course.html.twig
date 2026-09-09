@@ -1,6 +1,7 @@
 {% extends 'layouts/academy.html.twig' %}
 {% import 'academy/_nav_item.html.twig' as nav %}
 {% import '_downloads.html.twig' as downloads %}
+{% trans_default_domain 'content+intl-icu' %}
 
 {% block title %}{{ course.title }}{% endblock %}
 
@@ -58,7 +59,7 @@
             {% endfor %}
         </div>
     {% else %}
-        <div class="alert alert-info">No videos found for this course.</div>
+        <div class="alert alert-info">{{ 'No videos found for this course.'|trans }}</div>
     {% endif %}
 {% endset %}
 
@@ -68,11 +69,11 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th scope="col">Module</th>
-                        <th scope="col">Lesson</th>
-                        <th scope="col">File</th>
-                        <th scope="col">Size</th>
-                        <th scope="col">Download</th>
+                        <th scope="col">{{ 'Module'|trans }}</th>
+                        <th scope="col">{{ 'Lesson'|trans }}</th>
+                        <th scope="col">{{ 'File'|trans }}</th>
+                        <th scope="col">{{ 'Size'|trans }}</th>
+                        <th scope="col">{{ 'Download'|trans }}</th>
                     </tr>
                 </thead>
                 <tbody class="table-group-divider">
@@ -96,7 +97,7 @@
             </table>
         </div>
     {% else %}
-        <div class="alert alert-info">No attachments found for this course.</div>
+        <div class="alert alert-info">{{ 'No attachments found for this course.'|trans }}</div>
     {% endif %}
 {% endset %}
 
@@ -105,10 +106,10 @@
 
         <div class="container-fluid">
             <div class="row">
-                <!-- Barra lateral -->
+                <!-- Sidebar -->
                 <nav class="col-md-3 col-lg-2 d-md-block bg-light">
                     <div class="py-3">
-                        <div class="small text-muted px-3 mb-2">Modules:</div>
+                        <div class="small text-muted px-3 mb-2">{{ 'Modules:'|trans }}</div>
                         <ul class="nav flex-column">
                             {% for module in course.modules %}
                                 <li class="nav-item">
@@ -122,22 +123,22 @@
                     </div>
 
                     <div class="px-3 py-3 border-top">
-                        <div class="small text-muted mb-2"># modules:</div>
+                        <div class="small text-muted mb-2">{{ '# modules:'|trans }}</div>
                         <div class="d-flex flex-wrap gap-2 mb-3">
                             {{ course.modules | length }}
                         </div>
-                        <div class="small text-muted mb-2"># lessons:</div>
+                        <div class="small text-muted mb-2">{{ '# lessons:'|trans }}</div>
                         <div class="d-flex flex-wrap gap-2 mb-3">
                             {{ course.lessons | length }}
                         </div>
-                        <div class="small text-muted mb-2">Time to finish:</div>
+                        <div class="small text-muted mb-2">{{ 'Time to finish:'|trans }}</div>
                         <div class="d-flex flex-wrap gap-2 mb-3">
                             {{ course.time_formatted }}
                         </div>
                     </div>
                 </nav>
 
-                <!-- Contenido principal -->
+                <!-- Main content -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 
                     <nav aria-label="breadcrumb" class="mb-4">
@@ -161,7 +162,7 @@
                     {% if course.deprecated %}
                         <div class="alert alert-warning">
                             <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-                            This course is deprecated since {{ course.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+                            {{ 'This course is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': course.deprecated | date('d/m/Y')}) }}
                         </div>
                     {% endif %}
 
@@ -175,19 +176,19 @@
                         :tabs="[
                             {
                                 'id': 'modules',
-                                'title': 'Modules',
+                                'title': 'Modules'|trans,
                                 'icon': 'fa-solid fa-list',
                                 'content': tab_content_modules
                             },
                             {
                                 'id': 'videos',
-                                'title': 'Videos',
+                                'title': 'Videos'|trans,
                                 'icon': 'fa-solid fa-video',
                                 'content': tab_content_videos
                             },
                             {
                                 'id': 'attachments',
-                                'title': 'Attachments',
+                                'title': 'Attachments'|trans,
                                 'icon': 'fa-solid fa-file',
                                 'content': tab_content_attachments
                             }
@@ -201,10 +202,10 @@
                         </div>
                         <div class="col-md-6 small fst-italic text-end">
                             {% if plugin.options.showLastUpdateTime %}
-                                Last updated on {{ course.last_update | date('d/m/Y') }}
+                                {{ 'Last updated on {date}'|trans({'date': course.last_update | date('d/m/Y')}) }}
                             {% endif %}
                             {% if plugin.options.showLastUpdateAuthor %}
-                                by {{ course.authors | join(', ') }}
+                                {{ 'by {authors}'|trans({'authors': course.authors | join(', ')}) }}
                             {% endif %}
                         </div>
                     </div>

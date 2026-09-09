@@ -1,4 +1,5 @@
 {% import 'md/_macros.md.twig' as md %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set base_url = plugin.context.config.url %}
 {% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
 {% set doc_image = doc.image(md_urls) %}
@@ -30,7 +31,7 @@ unlisted: {{ doc.unlisted ? 'true' : 'false' }}
 {% if full %}
 {{ md.tree(doc.children, 2, md_urls) }}
 {% else %}
-## Pages in this section
+## {{ 'Pages in this section'|trans }}
 
 {% for child in doc.children %}
 - [{{ child.title }}]({{ url('docs_doc', {'doc': child.uri}) }})
@@ -39,5 +40,5 @@ unlisted: {{ doc.unlisted ? 'true' : 'false' }}
 {% endif %}
 
 ---
-Last updated on {{ doc.last_update | date('d/m/Y') }}
+{{ 'Last updated on {date}'|trans({'date': doc.last_update | date('d/m/Y')}) }}
 {{ doc.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

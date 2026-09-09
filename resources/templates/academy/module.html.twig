@@ -1,6 +1,7 @@
 {% extends 'layouts/academy.html.twig' %}
 {% import 'academy/_nav_item.html.twig' as nav %}
 {% import '_downloads.html.twig' as downloads %}
+{% trans_default_domain 'content+intl-icu' %}
 
 {% block title %}{{ course.title }}{% endblock %}
 
@@ -21,14 +22,14 @@
 
         <div class="container-fluid">
             <div class="row">
-                <!-- Barra lateral -->
+                <!-- Sidebar -->
                 <nav class="col-md-3 col-lg-2 d-md-block bg-light">
                     <div class="py-3">
                         {{ nav.render_items(course.modules, 0) }}
                     </div>
                 </nav>
 
-                <!-- Contenido principal -->
+                <!-- Main content -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 
                     <nav aria-label="breadcrumb" class="mb-4">
@@ -53,7 +54,7 @@
                     {% if module.deprecated %}
                         <div class="alert alert-warning">
                             <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-                            This module is deprecated since {{ module.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+                            {{ 'This module is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': module.deprecated | date('d/m/Y')}) }}
                         </div>
                     {% endif %}
 
@@ -86,10 +87,10 @@
                         </div>
                         <div class="col-md-6 small fst-italic text-end">
                             {% if plugin.options.showLastUpdateTime %}
-                                Last updated on {{ module.last_update | date('d/m/Y') }}
+                                {{ 'Last updated on {date}'|trans({'date': module.last_update | date('d/m/Y')}) }}
                             {% endif %}
                             {% if plugin.options.showLastUpdateAuthor %}
-                                by {{ module.authors | join(', ') }}
+                                {{ 'by {authors}'|trans({'authors': module.authors | join(', ')}) }}
                             {% endif %}
                         </div>
                     </div>
@@ -103,7 +104,7 @@
                                     <a href="{{ path('academy_module', {'course': previous.course.slug, 'module': previous.slug}) }}" class="btn btn-outline-secondary w-100 text-start d-flex flex-column justify-content-center p-2">
                                         <div class="small">
                                             <i class="fa-solid fa-chevron-left fa-fw"></i>
-                                            Previous
+                                            {{ 'Previous'|trans }}
                                         </div>
                                         <div class="text-truncate">{{ previous.pagination_label }}</div>
                                     </a>
@@ -113,7 +114,7 @@
                                 {% if next %}
                                     <a href="{{ path('academy_module', {'course': next.course.slug, 'module': next.slug}) }}" class="btn btn-outline-secondary w-100 text-end d-flex flex-column justify-content-center p-2">
                                         <div class="small">
-                                            Next
+                                            {{ 'Next'|trans }}
                                             <i class="fa-solid fa-chevron-right fa-fw"></i>
                                         </div>
                                         <div class="text-truncate">{{ next.pagination_label }}</div>

@@ -11,6 +11,7 @@
     (academy/lesson, blog/show, pages/show) have no children to dump, so
     they never set `full` and never import this file.
 #}
+{% trans_default_domain 'content+intl-icu' %}
 
 {#
     Front cover for the "full" export: just the root item's title,
@@ -34,14 +35,14 @@
             {% if 'youtube.com/embed/' in videoUrl %}
                 {% set videoId = videoUrl | split('/') | last %}
                 <a href="https://www.youtube.com/watch?v={{ videoId }}">
-                    <img src="https://img.youtube.com/vi/{{ videoId }}/hqdefault.jpg" alt="Video: {{ item.title }}">
+                    <img src="https://img.youtube.com/vi/{{ videoId }}/hqdefault.jpg" alt="{{ 'Video: {title}'|trans({'title': item.title}) }}">
                 </a>
                 <div class="pdf-video-caption">
-                    &#9654; <a href="https://www.youtube.com/watch?v={{ videoId }}">Watch video</a>
+                    &#9654; <a href="https://www.youtube.com/watch?v={{ videoId }}">{{ 'Watch video'|trans }}</a>
                 </div>
             {% else %}
                 <div class="pdf-video-caption">
-                    &#9654; <a href="{{ videoUrl }}">Watch video: {{ videoUrl }}</a>
+                    &#9654; <a href="{{ videoUrl }}">{{ 'Watch video: {url}'|trans({'url': videoUrl}) }}</a>
                 </div>
             {% endif %}
         </div>
@@ -79,7 +80,7 @@
         </div>
 
         <div class="pdf-test-answers" style="page-break-before: always;">
-            <h2>Answers</h2>
+            <h2>{{ 'Answers'|trans }}</h2>
             {% for question in test.questions %}
                 <div class="pdf-test-answer">
                     <div class="pdf-test-answer-question">{{ loop.index }}. {{ question.text }}</div>
@@ -116,20 +117,20 @@
                 <div class="pdf-openapi-description">{{ spec.description | markdown }}</div>
             {% endif %}
             {% if spec.servers | length > 0 %}
-                <p class="pdf-openapi-servers">Servers: {{ spec.servers | join(', ') }}</p>
+                <p class="pdf-openapi-servers">{{ 'Servers: {servers}'|trans({'servers': spec.servers | join(', ')}) }}</p>
             {% endif %}
             {% set groups = spec.endpointGroups %}
             {% if groups | length > 0 %}
-                <tocpagebreak name="{{ item.downloadFilename }}-openapi-toc" links="on" toc-preHTML="&lt;h3&gt;Index&lt;/h3&gt;" />
+                <tocpagebreak name="{{ item.downloadFilename }}-openapi-toc" links="on" toc-preHTML="&lt;h3&gt;{{ 'Index'|trans }}&lt;/h3&gt;" />
             {% endif %}
             {% for group in groups %}
                 <div class="pdf-openapi-group">
                     <tocentry
-                        content="{{ group.tagName ?: 'Other' }}"
+                        content="{{ group.tagName ?: 'Other'|trans }}"
                         level="0"
                         name="{{ item.downloadFilename }}-openapi-toc"
                     />
-                    <h3 class="pdf-openapi-group-title">{{ group.tagName ?: 'Other' }}</h3>
+                    <h3 class="pdf-openapi-group-title">{{ group.tagName ?: 'Other'|trans }}</h3>
                     {% if group.tagDescription %}
                         <div class="pdf-openapi-group-description">{{ group.tagDescription | markdown }}</div>
                     {% endif %}
@@ -152,12 +153,12 @@
                             {% endif %}
                             {% if endpoint.parameters | length > 0 %}
                                 <div class="pdf-openapi-parameters">
-                                    <strong>Parameters</strong>
+                                    <strong>{{ 'Parameters'|trans }}</strong>
                                     <ul>
                                         {% for parameter in endpoint.parameters %}
                                             <li>
                                                 <code>{{ parameter.name }}</code>
-                                                ({{ parameter.in }}{% if parameter.type %}, {{ parameter.type }}{% endif %}{% if parameter.required %}, required{% endif %})
+                                                ({{ parameter.in }}{% if parameter.type %}, {{ parameter.type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %})
                                                 {% if parameter.description %}
                                                     <div class="pdf-openapi-parameter-description">{{ parameter.description | markdown }}</div>
                                                 {% endif %}
@@ -168,13 +169,13 @@
                             {% endif %}
                             {% if endpoint.requestBodyExample %}
                                 <div class="pdf-openapi-request-body">
-                                    <strong>Request body example</strong>
+                                    <strong>{{ 'Request body example'|trans }}</strong>
                                     <pre>{{ endpoint.requestBodyExample }}</pre>
                                 </div>
                             {% endif %}
                             {% if endpoint.responses | length > 0 %}
                                 <div class="pdf-openapi-responses">
-                                    <strong>Responses</strong>
+                                    <strong>{{ 'Responses'|trans }}</strong>
                                     <ul>
                                         {% for response in endpoint.responses %}
                                             <li>
@@ -225,7 +226,7 @@
 
     {% if item.deprecated %}
         <div class="pdf-warning">
-            This content is deprecated since {{ item.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+            {{ 'This content is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': item.deprecated | date('d/m/Y')}) }}
         </div>
     {% endif %}
 {% endmacro %}
@@ -287,7 +288,7 @@
         {{ m.openapi(item) }}
 
         <div class="pdf-footer-meta">
-            Last updated on {{ item.last_update | date('d/m/Y') }}
+            {{ 'Last updated on {date}'|trans({'date': item.last_update | date('d/m/Y')}) }}
         </div>
     </div>
 {% endmacro %}

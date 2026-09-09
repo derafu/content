@@ -25,6 +25,7 @@
     - pdf_hierarchy (optional): children/modules/lessons listing.
 #}
 {% import 'pdf/_macros.pdf.twig' as pdfmacros %}
+{% trans_default_domain 'content+intl-icu' %}
 <html>
 <head>
     <style>
@@ -336,14 +337,14 @@
         <table class="pdf-footer">
             <tr>
                 <td class="pdf-footer-site">{{ plugin.context.config.title }} &middot; {{ plugin.context.config.url }}</td>
-                <td class="pdf-footer-page">Page {PAGENO} of {nb}</td>
+                <td class="pdf-footer-page">{{ 'Page {pageno} of {total}'|trans({'pageno': '{PAGENO}', 'total': '{nb}'}) }}</td>
             </tr>
         </table>
     </htmlpagefooter>
 
     {% if pdf_full_html is defined and pdf_full_html %}
         {{ pdfmacros.cover(pdf_item, pdf_kind) }}
-        <tocpagebreak name="toc" links="on" toc-preHTML="&lt;h1&gt;Table of Contents&lt;/h1&gt;" />
+        <tocpagebreak name="toc" links="on" toc-preHTML="&lt;h1&gt;{{ 'Table of Contents'|trans }}&lt;/h1&gt;" />
         {{ pdf_full_html }}
     {% else %}
         {% if pdf_item %}
@@ -381,7 +382,7 @@
 
             {% if pdf_item.deprecated %}
                 <div class="pdf-warning">
-                    This content is deprecated since {{ pdf_item.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+                    {{ 'This content is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': pdf_item.deprecated | date('d/m/Y')}) }}
                 </div>
             {% endif %}
         {% endif %}
@@ -392,7 +393,7 @@
 
         {% if pdf_item %}
             <div class="pdf-footer-meta">
-                Last updated on {{ pdf_item.last_update | date('d/m/Y') }}
+                {{ 'Last updated on {date}'|trans({'date': pdf_item.last_update | date('d/m/Y')}) }}
             </div>
         {% endif %}
     {% endif %}

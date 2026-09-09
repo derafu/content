@@ -111,10 +111,10 @@ class AcademyController extends AbstractContentController
         $course = $plugin->registry()->get($course);
         assert($course instanceof AcademyCourseInterface);
         $module = $course->modules()[$module]
-            ?? throw new ContentNotFoundException(sprintf(
-                'Module "%s" not found.',
-                $module
-            ))
+            ?? throw new ContentNotFoundException([
+                'Module "{module}" not found.',
+                'module' => $module,
+            ])
         ;
 
         if ($format === 'json') {
@@ -169,16 +169,16 @@ class AcademyController extends AbstractContentController
         $course = $plugin->registry()->get($course);
         assert($course instanceof AcademyCourseInterface);
         $module = $course->modules()[$module]
-            ?? throw new ContentNotFoundException(sprintf(
-                'Module "%s" not found.',
-                $module
-            ))
+            ?? throw new ContentNotFoundException([
+                'Module "{module}" not found.',
+                'module' => $module,
+            ])
         ;
         $lesson = $module->lessons()[$lesson]
-            ?? throw new ContentNotFoundException(sprintf(
-                'Lesson "%s" not found.',
-                $lesson
-            ))
+            ?? throw new ContentNotFoundException([
+                'Lesson "{lesson}" not found.',
+                'lesson' => $lesson,
+            ])
         ;
 
         if ($format === 'json') {

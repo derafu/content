@@ -1,16 +1,16 @@
 {% extends 'layouts/academy.html.twig' %}
+{% trans_default_domain 'content+intl-icu' %}
 
 {% block title %}{{ tag.name }}{% endblock %}
 
 {% block academy_header %}
+    {% set academyIntro = '<h3>Need to learn something?</h3><p>Here you will find courses, trainings and certifications associated with our products.</p><p>Do you want to learn about a topic? Start a course with us!</p>'|trans %}
     <section id="hero">
         <twig:block-hero
             size="small"
             background="/img/content/academy/academy-cover.png"
-            title="Academy"
-            subtitle="<h3>Need to learn something?</h3>
-                <p>Here you will find courses, trainings and certifications associated with our products.</p>
-                <p>Do you want to learn about a topic? Start a course with us!</p>"
+            title="{{ 'Academy'|trans }}"
+            subtitle="{{ academyIntro }}"
             align="left"
         />
     </section>
@@ -21,10 +21,10 @@
 
         <div class="container-fluid">
             <div class="row">
-                <!-- Barra lateral -->
+                <!-- Sidebar -->
                 <nav class="col-md-3 col-lg-2 d-md-block bg-light">
                     <div class="py-3">
-                        <div class="small text-muted px-3 mb-2">Our courses:</div>
+                        <div class="small text-muted px-3 mb-2">{{ 'Our courses:'|trans }}</div>
                         <ul class="nav flex-column">
                             {% for course in courses %}
                                 <li class="nav-item">
@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="px-3 py-3 border-top">
-                        <div class="small text-muted mb-2">Tags:</div>
+                        <div class="small text-muted mb-2">{{ 'Tags:'|trans }}</div>
                         <div class="d-flex flex-wrap gap-2">
                             {% for tag in tags %}
                                 <a href="{{ path('academy_tag', {'tag': tag.slug}) }}"
@@ -51,7 +51,7 @@
                     </div>
                 </nav>
 
-                <!-- Contenido principal -->
+                <!-- Main content -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                     <nav aria-label="breadcrumb" class="mb-4">
                         <ol class="breadcrumb">
@@ -61,7 +61,7 @@
                                 </a>
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">
-                                Tag: {{ tag.name }}
+                                {{ 'Tag: {name}'|trans({'name': tag.name}) }}
                             </li>
                         </ol>
                     </nav>
@@ -74,12 +74,12 @@
                                     {{ course.description | markdown }}
                                     {% if course.ancestors | length > 0 %}
                                         <div class="text-muted small">
-                                            academy &raquo; {{ course.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}
+                                            {{ 'Academy'|trans }} &raquo; {{ course.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}
                                         </div>
                                     {% endif %}
                                 </div>
                                 <span class="badge text-bg-primary rounded-pill">
-                                    {{ course.time }} min de lectura
+                                    {{ '{time} min read'|trans({'time': course.time}) }}
                                 </span>
                             </a>
                         {% endfor %}

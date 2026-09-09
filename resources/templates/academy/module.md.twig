@@ -1,4 +1,5 @@
 {% import 'md/_macros.md.twig' as md %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set base_url = plugin.context.config.url %}
 {% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
 {% set module_image = module.image(md_urls) %}
@@ -31,7 +32,7 @@ unlisted: {{ module.unlisted ? 'true' : 'false' }}
 {% if full %}
 {{ md.academy_lessons(module.lessons, 2, md_urls) }}
 {% else %}
-## Lessons
+## {{ 'Lessons'|trans }}
 
 {% for lesson in module.lessons %}
 - [{{ lesson.title }}]({{ url('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug}) }})
@@ -40,5 +41,5 @@ unlisted: {{ module.unlisted ? 'true' : 'false' }}
 {% endif %}
 
 ---
-Last updated on {{ module.last_update | date('d/m/Y') }}
+{{ 'Last updated on {date}'|trans({'date': module.last_update | date('d/m/Y')}) }}
 {{ module.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

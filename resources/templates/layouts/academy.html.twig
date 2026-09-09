@@ -1,6 +1,7 @@
 {% extends 'layouts/default.html.twig' %}
+{% trans_default_domain 'content+intl-icu' %}
 
-{% block title %}{{ course.title | default('Academy') }}{% endblock %}
+{% block title %}{{ course.title | default('Academy'|trans) }}{% endblock %}
 
 {% block content %}
     {% block academy_header %}{% endblock %}

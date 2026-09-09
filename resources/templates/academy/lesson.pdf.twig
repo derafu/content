@@ -1,8 +1,9 @@
 {% extends 'pdf/_layout.pdf.twig' %}
 {% import 'pdf/_macros.pdf.twig' as pdf %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set link_urls = {'link_base_url': plugin.context.config.url} %}
 {% set pdf_item = lesson %}
-{% set pdf_kind = 'Academy' %}
+{% set pdf_kind = 'Academy'|trans %}
 
 {% block pdf_content %}
     {{ lesson.data(link_urls) | markdown(has_twig: lesson.has_twig) }}

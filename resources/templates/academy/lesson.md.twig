@@ -1,4 +1,5 @@
 {% import 'md/_macros.md.twig' as md %}
+{% trans_default_domain 'content+intl-icu' %}
 {% set base_url = plugin.context.config.url %}
 {% set md_urls = {'asset_base_url': base_url, 'link_base_url': base_url} %}
 {% set lesson_image = lesson.image(md_urls) %}
@@ -27,5 +28,5 @@ unlisted: {{ lesson.unlisted ? 'true' : 'false' }}
 {{ md.video(lesson) }}
 {{ md.test(lesson) }}
 ---
-Last updated on {{ lesson.last_update | date('d/m/Y') }}
+{{ 'Last updated on {date}'|trans({'date': lesson.last_update | date('d/m/Y')}) }}
 {{ lesson.tags | map(tag => '#' ~ tag.slug) | join(', ') }}

@@ -1,6 +1,7 @@
 {% extends 'layouts/default.html.twig' %}
+{% trans_default_domain 'content+intl-icu' %}
 
-{% block title %}{{ blog.title | default('Blog') }}{% endblock %}
+{% block title %}{{ blog.title | default('Blog'|trans) }}{% endblock %}
 
 {% block content %}
 
@@ -16,7 +17,7 @@
 
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Latest Posts</h5>
+                    <h5 class="card-title mb-0">{{ 'Latest Posts'|trans }}</h5>
                 </div>
                 <div class="list-group list-group-flush">
                     {% for post in recentPosts %}
@@ -25,7 +26,11 @@
                                 <h6 class="mb-1">{{ post.title }}</h6>
                             </div>
                             <small class="text-muted">
-                                Por {{ post.authors | join(', ') }} el {{ post.date | date('d/m/Y') }} • {{ post.time }} min de lectura
+                                {{ 'By {authors} on {date} • {time} min read.'|trans({
+                                    'authors': post.authors | join(', '),
+                                    'date': post.date | date('d/m/Y'),
+                                    'time': post.time,
+                                }) }}
                             </small>
                         </a>
                     {% endfor %}
@@ -34,7 +39,7 @@
 
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Tags</h5>
+                    <h5 class="card-title mb-0">{{ 'Tags'|trans }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2">
@@ -50,7 +55,7 @@
 
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Archives</h5>
+                    <h5 class="card-title mb-0">{{ 'Archives'|trans }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2">

@@ -1,4 +1,5 @@
 {% extends 'layouts/docs.html.twig' %}
+{% trans_default_domain 'content+intl-icu' %}
 
 {% block title %}{{ tag.name }}{% endblock %}
 
@@ -11,7 +12,7 @@
                 </a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
-                Tag: {{ tag.name }}
+                {{ 'Tag: {name}'|trans({'name': tag.name}) }}
             </li>
         </ol>
     </nav>
@@ -24,12 +25,12 @@
                     {{ doc.description | markdown }}
                     {% if doc.ancestors | length > 0 %}
                         <div class="text-muted small">
-                            Docs &raquo; {{ doc.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}
+                            {{ 'Docs'|trans }} &raquo; {{ doc.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}
                         </div>
                     {% endif %}
                 </div>
                 <span class="badge text-bg-primary rounded-pill">
-                    {{ doc.time }} min de lectura
+                    {{ '{time} min read'|trans({'time': doc.time}) }}
                 </span>
             </a>
         {% endfor %}

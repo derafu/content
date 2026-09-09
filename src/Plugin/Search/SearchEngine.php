@@ -88,11 +88,11 @@ class SearchEngine
 
             $response = $this->httpClient->sendRequest($request);
         } catch (Throwable $e) {
-            throw new SearchUpstreamException(sprintf(
-                'The search engine at "%s" could not be reached: %s.',
-                $url,
-                $e->getMessage()
-            ), $e);
+            throw new SearchUpstreamException([
+                'The search engine at "{url}" could not be reached: {reason}.',
+                'url' => $url,
+                'reason' => $e->getMessage(),
+            ], $e);
         }
 
         $responseBody = $response->getBody()->getContents();
@@ -100,22 +100,21 @@ class SearchEngine
         if ($response->getStatusCode() !== 200) {
             $detail = $this->extractErrorDetail($responseBody);
 
-            throw new SearchUpstreamException(sprintf(
-                'The search engine at "%s" returned HTTP %d%s.',
-                $url,
-                $response->getStatusCode(),
-                $detail !== null ? sprintf(': %s', $detail) : ''
-            ));
+            throw new SearchUpstreamException([
+                'The search engine at "{url}" returned HTTP {status}{detail}.',
+                'url' => $url,
+                'status' => $response->getStatusCode(),
+                'detail' => $detail !== null ? sprintf(': %s', $detail) : '',
+            ]);
         }
 
         $decodedResponse = json_decode($responseBody, true);
 
         if (!is_array($decodedResponse) || !isset($decodedResponse['results'])) {
-            throw new SearchUpstreamException(sprintf(
-                'The search engine at "%s" returned a response without a '
-                    . '"results" field.',
-                $url
-            ));
+            throw new SearchUpstreamException([
+                'The search engine at "{url}" returned a response without a "results" field.',
+                'url' => $url,
+            ]);
         }
 
         return $decodedResponse['results'];

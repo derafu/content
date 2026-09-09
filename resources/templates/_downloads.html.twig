@@ -22,6 +22,7 @@
     (lessons, posts, pages), so the "full" buttons only appear when
     there is actually something to bundle.
 #}
+{% trans_default_domain 'content+intl-icu' %}
 {% macro links(content) %}
     {% set param = content.category %}
     {% set baseParams = content.route.params %}
@@ -37,30 +38,30 @@
     <div class="mb-5">
         <div class="btn-group btn-group-sm me-2" role="group">
             <a href="{{ pdfUrl }}" class="btn btn-outline-secondary">
-                <i class="fa-solid fa-file-pdf fa-fw"></i> PDF
+                <i class="fa-solid fa-file-pdf fa-fw"></i> {{ 'PDF'|trans }}
             </a>
             {% if fullPdfUrl %}
-                <a href="{{ fullPdfUrl }}" class="btn btn-outline-secondary">Full</a>
+                <a href="{{ fullPdfUrl }}" class="btn btn-outline-secondary">{{ 'Full'|trans }}</a>
             {% endif %}
         </div>
         <div class="btn-group btn-group-sm" role="group">
             <a href="{{ mdUrl }}" download="{{ mdBasename }}" class="btn btn-outline-secondary">
-                <i class="fa-brands fa-markdown fa-fw"></i> Markdown
+                <i class="fa-brands fa-markdown fa-fw"></i> {{ 'Markdown'|trans }}
             </a>
             <a
                 href="{{ mdUrl }}"
                 class="btn btn-outline-secondary"
                 data-copy-md="{{ mdUrl }}"
-                title="Copy the Markdown source to your clipboard — handy for pasting into an LLM"
-            >Copy</a>
+                title="{{ 'Copy the Markdown source to your clipboard — handy for pasting into an LLM'|trans }}"
+            >{{ 'Copy'|trans }}</a>
             {% if fullMdUrl %}
-                <a href="{{ fullMdUrl }}" download="{{ mdStem }}-full.md" class="btn btn-outline-secondary">Full</a>
+                <a href="{{ fullMdUrl }}" download="{{ mdStem }}-full.md" class="btn btn-outline-secondary">{{ 'Full'|trans }}</a>
                 <a
                     href="{{ fullMdUrl }}"
                     class="btn btn-outline-secondary"
                     data-copy-md="{{ fullMdUrl }}"
-                    title="Copy the full Markdown source to your clipboard — handy for pasting into an LLM"
-                >Full Copy</a>
+                    title="{{ 'Copy the full Markdown source to your clipboard — handy for pasting into an LLM'|trans }}"
+                >{{ 'Full Copy'|trans }}</a>
             {% endif %}
         </div>
     </div>
@@ -100,13 +101,13 @@
                     .then(function (response) { return response.text(); })
                     .then(function (text) { return navigator.clipboard.writeText(text); })
                     .then(function () {
-                        if (!notify('Copied!', false)) {
-                            resetLabel('Copied!', 1500);
+                        if (!notify('{{ 'Copied!'|trans|e('js') }}', false)) {
+                            resetLabel('{{ 'Copied!'|trans|e('js') }}', 1500);
                         }
                     })
                     .catch(function () {
-                        if (!notify('Could not copy', true)) {
-                            resetLabel('Error', 1500);
+                        if (!notify('{{ 'Could not copy'|trans|e('js') }}', true)) {
+                            resetLabel('{{ 'Error'|trans|e('js') }}', 1500);
                         }
                     });
             });

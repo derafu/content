@@ -52,6 +52,14 @@ services:
         arguments:
             $basePath: '%kernel.project_dir%'
 
+    # Feeds resources/translations into the consuming app's Translator (the
+    # app must pass $resourceProviders: !tagged_iterator
+    # derafu_translation.resource_provider to TranslatorFactory::create(),
+    # see derafu/translation's translation-services.yaml). The tag is
+    # explicit because _instanceof does not propagate across imported files.
+    Derafu\Content\Translation\ContentTranslationResourceProvider:
+        tags: ['derafu_translation.resource_provider']
+
     Derafu\Content\Plugin\Academy\AcademyController:
         public: true
 

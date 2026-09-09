@@ -1,5 +1,6 @@
 {% extends 'layouts/blog.html.twig' %}
 {% import '_downloads.html.twig' as downloads %}
+{% trans_default_domain 'content+intl-icu' %}
 
 {% block title %}{{ post.title }}{% endblock %}
 
@@ -16,7 +17,7 @@
 {% block blog_sidebar %}
     {% if not post.hide_table_of_contents %}
         <div class="ps-3 py-4 border-start small mb-4">
-            <div class="fw-bold mb-3">On this page</div>
+            <div class="fw-bold mb-3">{{ 'On this page'|trans }}</div>
             <div id="toc-navbar" class="d-flex flex-column gap-2" data-toc-min-heading-level="{{ post.toc_min_heading_level }}" data-toc-max-heading-level="{{ post.toc_max_heading_level }}"></div>
         </div>
     {% endif %}
@@ -47,7 +48,7 @@
         {% if post.deprecated %}
             <div class="alert alert-warning">
                 <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-                This post is deprecated since {{ post.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+                {{ 'This post is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': post.deprecated | date('d/m/Y')}) }}
             </div>
         {% endif %}
 
@@ -77,10 +78,10 @@
         </div>
         <div class="col-md-6 small fst-italic text-end">
             {% if plugin.options.showLastUpdateTime %}
-                Last updated on {{ post.last_update | date('d/m/Y') }}
+                {{ 'Last updated on {date}'|trans({'date': post.last_update | date('d/m/Y')}) }}
             {% endif %}
             {% if plugin.options.showLastUpdateAuthor %}
-                by {{ post.authors | join(', ') }}
+                {{ 'by {authors}'|trans({'authors': post.authors | join(', ')}) }}
             {% endif %}
         </div>
     </div>
@@ -94,7 +95,7 @@
                     <a href="{{ path('blog_post', {'post': previous.uri}) }}" class="btn btn-outline-secondary w-100 text-start d-flex flex-column justify-content-center p-2">
                         <div class="small">
                             <i class="fa-solid fa-chevron-left fa-fw"></i>
-                            Previous
+                            {{ 'Previous'|trans }}
                         </div>
                         <div class="text-truncate">{{ previous.pagination_label }}</div>
                     </a>
@@ -104,7 +105,7 @@
                 {% if next %}
                     <a href="{{ path('blog_post', {'post': next.uri}) }}" class="btn btn-outline-secondary w-100 text-end d-flex flex-column justify-content-center p-2">
                         <div class="small">
-                            Next
+                            {{ 'Next'|trans }}
                             <i class="fa-solid fa-chevron-right fa-fw"></i>
                         </div>
                         <div class="text-truncate">{{ next.pagination_label }}</div>

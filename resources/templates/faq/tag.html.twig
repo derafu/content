@@ -1,4 +1,5 @@
 {% extends 'layouts/faq.html.twig' %}
+{% trans_default_domain 'content+intl-icu' %}
 
 {% block title %}{{ tag.name }}{% endblock %}
 
@@ -11,7 +12,7 @@
                 </a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
-                Tag: {{ tag.name }}
+                {{ 'Tag: {name}'|trans({'name': tag.name}) }}
             </li>
         </ol>
     </nav>
@@ -24,12 +25,12 @@
                     {{ faq.description | markdown }}
                     {% if faq.ancestors | length > 0 %}
                         <div class="text-muted small">
-                            FAQ &raquo; {{ faq.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}
+                            {{ 'FAQ'|trans }} &raquo; {{ faq.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}
                         </div>
                     {% endif %}
                 </div>
                 <span class="badge text-bg-primary rounded-pill">
-                    {{ faq.time }} min de lectura
+                    {{ '{time} min read'|trans({'time': faq.time}) }}
                 </span>
             </a>
         {% endfor %}
