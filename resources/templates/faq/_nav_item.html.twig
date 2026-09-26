@@ -2,7 +2,7 @@
     <ul class="nav flex-column {% if level > 0 %}ms-{{ level }}{% endif %}">
         {% for item in items %}
             <li class="nav-item">
-                {% set hasChildren = item.children is defined and item.children|length > 0 and (maxDepth is null or level < maxDepth) %}
+                {% set hasChildren = item.visibleChildren is defined and item.visibleChildren|length > 0 and (maxDepth is null or level < maxDepth) %}
                 {% set collapseId = 'collapse' ~ loop.index0 ~ '_' ~ level %}
                 {% set isActive = is_active_path('faq_question', {'question': item.uri}) %}
                 {% set expanded = isActive or not collapsed %}
@@ -23,7 +23,7 @@
                     </a>
 
                     <div class="collapse {% if expanded %}show{% endif %}" id="{{ collapseId }}">
-                        {{ _self.render_items(item.children, level + 1, collapsible, collapsed, maxDepth) }}
+                        {{ _self.render_items(item.visibleChildren, level + 1, collapsible, collapsed, maxDepth) }}
                     </div>
                 {% elseif hasChildren %}
                     <span class="nav-link d-flex justify-content-between align-items-center {% if isActive %}text-primary fw-bold{% endif %} {{ item.sidebar_class_name }}"
@@ -34,7 +34,7 @@
                         {{ item.sidebar_label }}
                     </span>
 
-                    {{ _self.render_items(item.children, level + 1, collapsible, collapsed, maxDepth) }}
+                    {{ _self.render_items(item.visibleChildren, level + 1, collapsible, collapsed, maxDepth) }}
                 {% else %}
                     <a class="nav-link {% if isActive %}text-primary fw-bold{% endif %} {{ item.sidebar_class_name }}"
                         href="{{ path('faq_question', {'question': item.uri}) }}"

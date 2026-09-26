@@ -17,7 +17,7 @@ draft: {{ page.draft ? 'true' : 'false' }}
 unlisted: {{ page.unlisted ? 'true' : 'false' }}
 {% if page_image %}image: "{{ page_image }}"
 {% endif %}{% if page_video %}video: "{{ page_video }}"
-{% endif %}{% if page.deprecated %}deprecated: "{{ page.deprecated | date('Y-m-d') }}"
+{% endif %}{% if page.deprecated %}deprecated: "{{ page.deprecatedAt | date('Y-m-d') }}"
 {% endif %}{% if page.keywords | length > 0 %}keywords: [{{ page.keywords | join(', ') }}]
 {% endif %}{% if page.attachments | length > 0 %}attachments: [{{ page.attachments | keys | join(', ') }}]
 {% endif %}url: "{{ url('pages_page', {'page': page.uri}) }}"

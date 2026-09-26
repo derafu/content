@@ -45,6 +45,7 @@ use Derafu\Content\Plugin\Search\Exception\SearchUpstreamException;
 use Derafu\Content\Plugin\Search\OpenAiCompatibleLlmClient;
 use Derafu\Content\Plugin\Search\SearchEngine;
 use Derafu\Content\Plugin\Search\SearchPlugin;
+use Derafu\Content\Plugin\Search\SearchResultsFilter;
 use Derafu\Http\Request;
 use Derafu\Routing\Contract\ParserInterface;
 use Derafu\Routing\Contract\RequestContextInterface;
@@ -102,6 +103,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(SearchUpstreamException::class)]
 #[UsesClass(OpenAiCompatibleLlmClient::class)]
 #[UsesClass(SearchEngine::class)]
+#[UsesClass(SearchResultsFilter::class)]
 final class McpControllerTest extends TestCase
 {
     private static FixtureHttpServer $searchServer;
@@ -453,10 +455,11 @@ final class McpControllerTest extends TestCase
     }
 
     /**
-     * A specific source still filters, distinct from "all" — the fixture
-     * search results carry no "type" field, so filtering by any concrete
-     * source narrows the real (non-mocked) results down to none, proving
-     * the filter branch still runs when a specific source is requested.
+     * A specific, non-matching source narrows the results to none — the
+     * fixture search results carry a real "type" ("docs") for both
+     * entries, so filtering by "academy" (a real source none of them
+     * has) proves the filter branch actually excludes non-matching
+     * results, not just that it happens to leave everything in.
      */
     public function testSearchContentToolWithASpecificSourceStillFilters(): void
     {
@@ -469,7 +472,7 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/call',
             'params' => [
                 'name' => 'search_content',
-                'arguments' => ['query' => 'hola', 'source' => 'docs'],
+                'arguments' => ['query' => 'hola', 'source' => 'academy'],
             ],
         ], $sessionId, $controller);
 

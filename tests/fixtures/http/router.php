@@ -28,9 +28,24 @@ if (isset($_GET['log_to'])) {
 $scenario = $_GET['scenario'] ?? 'results_ok';
 
 [$status, $body] = match ($scenario) {
+    // "type"/"uri" point at real docs fixtures (both fully visible: not
+    // draft, not unlisted, searchable) so SearchResultsFilter lets both
+    // through unchanged — this scenario is about the raw engine response
+    // shape, not about the post-filter, which has its own scenario below.
     'results_ok' => [200, ['results' => [
-        ['id' => 'doc-1', 'title' => 'Fixture result one', 'score' => 0.91],
-        ['id' => 'doc-2', 'title' => 'Fixture result two', 'score' => 0.77],
+        ['id' => 'doc-1', 'type' => 'docs', 'uri' => 'guia', 'title' => 'Fixture result one', 'score' => 0.91],
+        ['id' => 'doc-2', 'type' => 'docs', 'uri' => 'index', 'title' => 'Fixture result two', 'score' => 0.77],
+    ]]],
+    // Mixed results for SearchController's post-filter: one real,
+    // fully-visible doc ("guia"), one searchable:false, one draft (stale
+    // index entry that later became draft), one unlisted, and one whose
+    // uri no longer exists in the registry at all (another stale entry).
+    'results_mixed_searchability' => [200, ['results' => [
+        ['type' => 'docs', 'uri' => 'guia', 'title' => 'Guía', 'score' => 0.95],
+        ['type' => 'docs', 'uri' => 'no-buscable', 'title' => 'No Buscable', 'score' => 0.9],
+        ['type' => 'docs', 'uri' => 'borrador-padre', 'title' => 'Sección borrador', 'score' => 0.85],
+        ['type' => 'docs', 'uri' => 'no-listado', 'title' => 'No Listado', 'score' => 0.8],
+        ['type' => 'docs', 'uri' => 'fantasma-inexistente', 'title' => 'Fantasma', 'score' => 0.75],
     ]]],
     'results_missing_field' => [200, ['unexpected' => true]],
     'results_bad_status' => [503, ['detail' => 'Search backend unavailable']],

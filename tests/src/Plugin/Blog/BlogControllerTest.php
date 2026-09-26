@@ -94,6 +94,20 @@ final class BlogControllerTest extends TestCase
         $this->assertStringContainsString('Segundo post', $html);
     }
 
+    /**
+     * "2099-01-01-post-futuro" has a publish date far in the future — it
+     * must not appear in the blog index (or its "recent posts" sidebar)
+     * before that date arrives, the same way a draft post must not.
+     */
+    public function testIndexDoesNotListAFutureDatedPost(): void
+    {
+        $request = new Request('GET', 'http://localhost/blog');
+
+        $html = $this->controller->index($request);
+
+        $this->assertStringNotContainsString('Post futuro', $html);
+    }
+
     public function testShowRendersASinglePost(): void
     {
         $request = new Request('GET', 'http://localhost/blog/2026-01-15-primer-post');

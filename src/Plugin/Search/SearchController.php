@@ -120,6 +120,6 @@ class SearchController
 
         $results = $plugin->engine()->query($query);
 
-        return $results;
+        return SearchResultsFilter::filter($this->contentService, $results);
     }
 }

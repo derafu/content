@@ -243,7 +243,7 @@ abstract class AbstractContentItem implements ContentItemInterface
      *
      * @var DateTimeInterface|bool
      */
-    private DateTimeInterface|bool $deprecated;
+    private DateTimeInterface|bool $deprecatedAt;
 
     /**
      * Is the content indexable?
@@ -1033,9 +1033,9 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
-    public function deprecated(): ?DateTimeInterface
+    public function deprecatedAt(): ?DateTimeInterface
     {
-        if (!isset($this->deprecated)) {
+        if (!isset($this->deprecatedAt)) {
             $deprecated = $this->metadata('deprecated', false);
 
             if ($deprecated) {
@@ -1048,10 +1048,20 @@ abstract class AbstractContentItem implements ContentItemInterface
                 }
             }
 
-            $this->deprecated = $deprecated;
+            $this->deprecatedAt = $deprecated;
         }
 
-        return $this->deprecated ?: null;
+        return $this->deprecatedAt ?: null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function deprecated(): bool
+    {
+        $deprecatedAt = $this->deprecatedAt();
+
+        return $deprecatedAt !== null && $deprecatedAt <= new DateTime();
     }
 
     /**
@@ -1292,6 +1302,18 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
+    public function visibleChildren(): array
+    {
+        return array_filter(
+            $this->children(),
+            fn (ContentItemInterface $child): bool => $child->allowed()
+                && !$child->unlisted()
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function attachments(): array
     {
         if (!isset($this->attachments)) {
@@ -1430,10 +1452,6 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     public function allowed(): bool
     {
-        if (!$this->draft()) {
-            return true;
-        }
-
         if (isset($_SERVER['APP_ENV']) && $_SERVER['APP_ENV'] === 'local') {
             return true;
         }
@@ -1442,7 +1460,24 @@ abstract class AbstractContentItem implements ContentItemInterface
             return true;
         }
 
-        return false;
+        if ($this->draft() || $this->date() > new DateTime()) {
+            return false;
+        }
+
+        // A draft (or not-yet-published) ancestor must hide its whole
+        // branch, not just itself: otherwise a non-draft/already-past-
+        // dated item nested under one stays reachable by URI even though
+        // the section that contains it is supposed to be hidden. Each
+        // item still resolves its own date() independently — this only
+        // borrows the ancestor's own date to gate the whole branch, it
+        // never overrides the descendant's own date.
+        foreach ($this->ancestors() as $ancestor) {
+            if ($ancestor->draft() || $ancestor->date() > new DateTime()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -1470,7 +1505,7 @@ abstract class AbstractContentItem implements ContentItemInterface
             'unlisted' => $this->unlisted(),
             'date' => $this->date()->format('Y-m-d'),
             'last_update' => $this->last_update()->format('Y-m-d'),
-            'deprecated' => $this->deprecated()?->format('Y-m-d'),
+            'deprecated' => $this->deprecatedAt()?->format('Y-m-d'),
             'indexable' => $this->indexable(),
             'searchable' => $this->searchable(),
             'metadata' => $this->metadata(),

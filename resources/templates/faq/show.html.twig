@@ -26,7 +26,7 @@
     {% if faq.deprecated %}
         <div class="alert alert-warning mb-4">
             <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-            {{ 'This FAQ is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': faq.deprecated | date('d/m/Y')}) }}
+            {{ 'This FAQ is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': faq.deprecatedAt | date('d/m/Y')}) }}
         </div>
     {% endif %}
 

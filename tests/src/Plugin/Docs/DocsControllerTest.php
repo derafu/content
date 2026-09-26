@@ -362,6 +362,115 @@ final class DocsControllerTest extends TestCase
         $this->assertGreaterThanOrEqual(2, $this->countPdfPages($pdf));
     }
 
+    /**
+     * "borrador-padre" is a draft top-level section, with a non-draft
+     * child ("hijo-visible"). Neither must appear in the sidebar: today
+     * DocsController feeds it plugin->registry()->all(), which returns
+     * every loaded doc regardless of allowed() — this is the real bug
+     * reported for this package (a draft leaks into the nav in
+     * production even though direct access to it is already blocked).
+     */
+    public function testHtmlRenderSidebarDoesNotListADraftTopLevelSection(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/index'));
+
+        $request = new Request('GET', 'http://localhost/docs/index');
+        $html = $this->controller($router)->show($request, 'index');
+
+        $this->assertStringNotContainsString('Sección borrador', $html);
+        $this->assertStringNotContainsString('Hijo visible', $html);
+    }
+
+    /**
+     * "seccion-visible" is NOT draft, but its only child ("nota-borrador")
+     * is. The parent must still show in the sidebar, but the draft child
+     * must not leak through the nested recursion of the nav macro, which
+     * calls item.children directly (bypassing whatever the controller
+     * filtered at the top level).
+     */
+    public function testHtmlRenderSidebarDoesNotListADraftChildNestedUnderAnAllowedSection(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/index'));
+
+        $request = new Request('GET', 'http://localhost/docs/index');
+        $html = $this->controller($router)->show($request, 'index');
+
+        $this->assertStringContainsString('Sección visible', $html);
+        $this->assertStringNotContainsString('Nota borrador', $html);
+    }
+
+    /**
+     * "pasado-deprecado" has an already-past deprecated() date: the real
+     * Twig render must show the warning banner, using deprecatedAt() for
+     * the actual date (not deprecated(), which is a bool since this
+     * session's fix) — a real end-to-end check that the template rename
+     * across every plugin's show template didn't break the Twig syntax.
+     */
+    public function testHtmlRenderShowsTheDeprecatedBannerWithItsRealDate(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/pasado-deprecado'));
+
+        $request = new Request('GET', 'http://localhost/docs/pasado-deprecado');
+        $html = $this->controller($router)->show($request, 'pasado-deprecado');
+
+        $this->assertStringContainsString('is deprecated since 01/01/2020', $html);
+    }
+
+    /**
+     * "futuro-deprecado" has a deprecated() date far in the future:
+     * deprecated() must be false today, so the banner must not render at
+     * all yet — the real Twig counterpart of
+     * testFutureDeprecationDateDoesNotDisableIndexableOrSearchableYet.
+     */
+    public function testHtmlRenderDoesNotShowTheDeprecatedBannerBeforeItsDateArrives(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/futuro-deprecado'));
+
+        $request = new Request('GET', 'http://localhost/docs/futuro-deprecado');
+        $html = $this->controller($router)->show($request, 'futuro-deprecado');
+
+        $this->assertStringNotContainsString('is deprecated since', $html);
+    }
+
+    /**
+     * "no-listado" is a top-level doc marked unlisted (not draft). Same
+     * bug class as the draft one: DocsController feeds the sidebar
+     * plugin->registry()->all(), unfiltered.
+     */
+    public function testHtmlRenderSidebarDoesNotListAnUnlistedTopLevelDoc(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/index'));
+
+        $request = new Request('GET', 'http://localhost/docs/index');
+        $html = $this->controller($router)->show($request, 'index');
+
+        $this->assertStringNotContainsString('No Listado', $html);
+    }
+
+    /**
+     * "seccion-visible" is not draft, and one of its children
+     * ("nota-no-listada") is not draft either — only unlisted. The
+     * parent must still show, but this child must not leak through the
+     * nested recursion of the nav macro: visibleChildren() must exclude
+     * it just like it excludes a draft child.
+     */
+    public function testHtmlRenderSidebarDoesNotListAnUnlistedChildNestedUnderAnAllowedSection(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/index'));
+
+        $request = new Request('GET', 'http://localhost/docs/index');
+        $html = $this->controller($router)->show($request, 'index');
+
+        $this->assertStringContainsString('Sección visible', $html);
+        $this->assertStringNotContainsString('Nota no listada', $html);
+    }
+
     public function testHtmlRenderHidesTheSidebarWhenSidebarPathIsDisabled(): void
     {
         $plugin = new DocsPlugin(

@@ -54,7 +54,7 @@
                     {% if lesson.deprecated %}
                         <div class="alert alert-warning">
                             <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-                            {{ 'This lesson is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': lesson.deprecated | date('d/m/Y')}) }}
+                            {{ 'This lesson is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': lesson.deprecatedAt | date('d/m/Y')}) }}
                         </div>
                     {% endif %}
 

@@ -223,6 +223,17 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
     /**
      * {@inheritDoc}
      */
+    public function filterTree(array $filters = []): array
+    {
+        return array_filter(
+            $this->all(),
+            fn (ContentItemInterface $item): bool => $this->matches($item, $filters)
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function previous(string $uri, array $filters = []): ?ContentItemInterface
     {
         $items = $this->flatten($filters);

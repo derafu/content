@@ -18,7 +18,7 @@ draft: {{ module.draft ? 'true' : 'false' }}
 unlisted: {{ module.unlisted ? 'true' : 'false' }}
 {% if module_image %}image: "{{ module_image }}"
 {% endif %}{% if module_video %}video: "{{ module_video }}"
-{% endif %}{% if module.deprecated %}deprecated: "{{ module.deprecated | date('Y-m-d') }}"
+{% endif %}{% if module.deprecated %}deprecated: "{{ module.deprecatedAt | date('Y-m-d') }}"
 {% endif %}{% if module.keywords | length > 0 %}keywords: [{{ module.keywords | join(', ') }}]
 {% endif %}{% if module.attachments | length > 0 %}attachments: [{{ module.attachments | keys | join(', ') }}]
 {% endif %}url: "{{ url('academy_module', {'course': course.slug, 'module': module.slug}) }}"

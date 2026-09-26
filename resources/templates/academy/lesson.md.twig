@@ -18,7 +18,7 @@ draft: {{ lesson.draft ? 'true' : 'false' }}
 unlisted: {{ lesson.unlisted ? 'true' : 'false' }}
 {% if lesson_image %}image: "{{ lesson_image }}"
 {% endif %}{% if lesson_video %}video: "{{ lesson_video }}"
-{% endif %}{% if lesson.deprecated %}deprecated: "{{ lesson.deprecated | date('Y-m-d') }}"
+{% endif %}{% if lesson.deprecated %}deprecated: "{{ lesson.deprecatedAt | date('Y-m-d') }}"
 {% endif %}{% if lesson.keywords | length > 0 %}keywords: [{{ lesson.keywords | join(', ') }}]
 {% endif %}{% if lesson.attachments | length > 0 %}attachments: [{{ lesson.attachments | keys | join(', ') }}]
 {% endif %}url: "{{ url('academy_lesson', {'course': course.slug, 'module': module.slug, 'lesson': lesson.slug}) }}"

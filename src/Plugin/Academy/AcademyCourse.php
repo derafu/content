@@ -87,7 +87,7 @@ class AcademyCourse extends AbstractContentItem implements AcademyCourseInterfac
     {
         $modules = [];
 
-        foreach ($this->children() as $child) {
+        foreach ($this->visibleChildren() as $child) {
             assert($child instanceof AcademyModuleInterface);
             $modules[$child->slug()] = $child;
         }

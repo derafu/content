@@ -66,7 +66,7 @@ class DocsController extends AbstractContentController
                     'doc' => $doc,
                     'previous' => $plugin->registry()->previous($doc->uri()),
                     'next' => $plugin->registry()->next($doc->uri()),
-                    'docs' => $plugin->registry()->all(),
+                    'docs' => $plugin->registry()->filterTree(),
                     'tags' => $plugin->registry()->tags(),
                     'full' => (bool) $request->query('full'),
                 ]
@@ -91,7 +91,7 @@ class DocsController extends AbstractContentController
         $contentTag = $tags[$tag] ?? new ContentTag($tag);
         $filters['tag'] = $contentTag->slug();
         $docsFiltered = $plugin->registry()->filter($filters);
-        $docs = $plugin->registry()->all();
+        $docs = $plugin->registry()->filterTree();
 
         return $this->renderer->render('docs/tag.html.twig', [
             'plugin' => $plugin,

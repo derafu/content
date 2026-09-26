@@ -53,9 +53,15 @@ final class FaqRegistryTest extends TestCase
         $this->plugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
     }
 
-    public function testBothFixtureQuestionsAreLoaded(): void
+    public function testAllFixtureQuestionsAreLoaded(): void
     {
-        $this->assertCount(2, $this->plugin->registry()->all());
+        $slugs = array_keys($this->plugin->registry()->all());
+
+        sort($slugs);
+        $this->assertSame(
+            ['index', 'pregunta-borrador', 'pregunta-uno', 'pregunta-visible'],
+            $slugs
+        );
     }
 
     public function testHideTableOfContentsDefaultsToTrueForFaq(): void

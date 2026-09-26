@@ -220,4 +220,56 @@ final class AcademyRegistryTest extends TestCase
 
         $this->plugin->registry()->get('no-existe');
     }
+
+    /**
+     * "curso-con-modulo-borrador" is not draft, but its "modulo-borrador"
+     * module is, and that module's "leccion-visible" lesson is not.
+     * allowed() must cascade: the lesson is not allowed either, and
+     * modules()/lessons() (the methods every template and aggregate
+     * relies on) must exclude the draft module, while keeping its
+     * non-draft sibling "modulo-visible".
+     */
+    public function testModulesExcludesADraftModuleButKeepsItsVisibleSibling(): void
+    {
+        $course = $this->plugin->registry()->get('curso-con-modulo-borrador');
+
+        $modules = $course->modules();
+
+        $this->assertArrayHasKey('modulo-visible', $modules);
+        $this->assertArrayNotHasKey('modulo-borrador', $modules);
+    }
+
+    public function testDraftModuleMakesItsNonDraftLessonNotAllowedToo(): void
+    {
+        $course = $this->plugin->registry()->get('curso-con-modulo-borrador');
+        $draftModule = $course->children()['modulo-borrador'];
+        $lesson = $draftModule->children()['leccion-visible'];
+
+        $this->assertTrue($draftModule->draft());
+        $this->assertFalse($lesson->draft());
+        $this->assertFalse($lesson->allowed());
+
+        $this->expectException(ContentNotFoundException::class);
+        $this->plugin->registry()->get(
+            'curso-con-modulo-borrador/modulo-borrador/leccion-visible'
+        );
+    }
+
+    /**
+     * The lesson under the draft module declares a video and an explicit
+     * time, precisely so this test can prove they stop being counted in
+     * the course's aggregates once the module is excluded — not just that
+     * modules()/lessons() drop the key.
+     */
+    public function testCourseAggregatesExcludeEverythingUnderADraftModule(): void
+    {
+        $course = $this->plugin->registry()->get('curso-con-modulo-borrador');
+
+        $this->assertArrayNotHasKey(
+            'curso-con-modulo-borrador/modulo-borrador/leccion-visible',
+            $course->lessons()
+        );
+        $this->assertSame(3, $course->time());
+        $this->assertCount(0, $course->videos());
+    }
 }

@@ -18,7 +18,7 @@ draft: {{ post.draft ? 'true' : 'false' }}
 unlisted: {{ post.unlisted ? 'true' : 'false' }}
 {% if post_image %}image: "{{ post_image }}"
 {% endif %}{% if post_video %}video: "{{ post_video }}"
-{% endif %}{% if post.deprecated %}deprecated: "{{ post.deprecated | date('Y-m-d') }}"
+{% endif %}{% if post.deprecated %}deprecated: "{{ post.deprecatedAt | date('Y-m-d') }}"
 {% endif %}{% if post.keywords | length > 0 %}keywords: [{{ post.keywords | join(', ') }}]
 {% endif %}{% if post.attachments | length > 0 %}attachments: [{{ post.attachments | keys | join(', ') }}]
 {% endif %}url: "{{ url('blog_post', {'post': post.uri}) }}"

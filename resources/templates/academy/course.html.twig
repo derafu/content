@@ -162,7 +162,7 @@
                     {% if course.deprecated %}
                         <div class="alert alert-warning">
                             <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-                            {{ 'This course is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': course.deprecated | date('d/m/Y')}) }}
+                            {{ 'This course is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': course.deprecatedAt | date('d/m/Y')}) }}
                         </div>
                     {% endif %}
 

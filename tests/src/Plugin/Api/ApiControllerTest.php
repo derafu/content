@@ -138,4 +138,24 @@ final class ApiControllerTest extends TestCase
 
         $this->assertSame(['pages'], $types);
     }
+
+    /**
+     * "no-indexable" is a docs fixture with `indexable: false` explicit
+     * in its frontmatter, NOT draft, NOT unlisted. Per its documented
+     * purpose ("Whether the item should be considered for the
+     * /api/content.json export and, from there, external indexing"),
+     * this export must exclude it by default — the same way
+     * testDraftPagesAreExcludedFromTheExport above expects a draft to be
+     * excluded without the caller having to ask for it via query string.
+     */
+    public function testIndexExcludesAnExplicitlyNonIndexableDocByDefault(): void
+    {
+        $request = new Request('GET', 'http://localhost/api/content.json');
+
+        $result = $this->controller->index($request);
+
+        $uris = array_column($result['data'], 'uri');
+
+        $this->assertNotContains('no-indexable', $uris);
+    }
 }

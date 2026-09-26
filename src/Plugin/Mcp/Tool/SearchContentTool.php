@@ -14,6 +14,7 @@ namespace Derafu\Content\Plugin\Mcp\Tool;
 
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Plugin\Search\SearchPlugin;
+use Derafu\Content\Plugin\Search\SearchResultsFilter;
 use InvalidArgumentException;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
@@ -64,6 +65,8 @@ class SearchContentTool
                 $e->getMessage()
             ), previous: $e);
         }
+
+        $results = SearchResultsFilter::filter($this->contentService, $results);
 
         if ($source !== null && $source !== 'all') {
             $results = array_values(array_filter(

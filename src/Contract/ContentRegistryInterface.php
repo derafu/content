@@ -32,6 +32,10 @@ interface ContentRegistryInterface
     /**
      * Get all content items.
      *
+     * Returns every loaded item regardless of allowed() (drafts included):
+     * consumers that build a listing or navigation for display must use
+     * filterTree() (or filter()/flatten()) instead.
+     *
      * @return array<ContentItemInterface>
      */
     public function all(): array;
@@ -62,6 +66,21 @@ interface ContentRegistryInterface
      * @return array<ContentItemInterface>
      */
     public function flatten(array $filters = []): array;
+
+    /**
+     * Get the top-level content items matching the given criteria,
+     * preserving their hierarchy (children() of the returned items).
+     *
+     * Unlike filter()/flatten(), which return a flat array of every
+     * matching item at any depth, this keeps the tree shape a sidebar or
+     * nested menu needs. It only filters the top level; each returned
+     * item's own visibleChildren() is what keeps a disallowed descendant
+     * out of a nested level.
+     *
+     * @param array<string, mixed> $filters Filter criteria.
+     * @return array<ContentItemInterface>
+     */
+    public function filterTree(array $filters = []): array;
 
     /**
      * Get the previous content item relative to the given ID.

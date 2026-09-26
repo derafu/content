@@ -98,5 +98,13 @@ final class SitemapControllerTest extends TestCase
         // matching "docs/huerfano.md", so it is never loaded at all (see
         // the content hierarchy test) — it must not leak into the sitemap.
         $this->assertNotContains('http://localhost/docs/huerfano/hijo-perdido', $locations);
+
+        // Unlike ApiController (which does not hardcode the "indexable"
+        // filter), SitemapController hardcodes ['indexable' => true], so
+        // both an explicitly non-indexable doc and an unlisted one
+        // (unlisted defaults indexable to false too) must be excluded
+        // here regardless of any query string.
+        $this->assertNotContains('http://localhost/docs/no-indexable', $locations);
+        $this->assertNotContains('http://localhost/docs/no-listado', $locations);
     }
 }

@@ -42,7 +42,9 @@ class ApiController
         // Ensure the plugin is enabled.
         $this->contentService->plugin('api');
 
-        $knowledge = $this->contentService->allContent($request->all());
+        $knowledge = $this->contentService->allContent(
+            array_merge($request->all(), ['indexable' => true])
+        );
 
         $data = [];
 

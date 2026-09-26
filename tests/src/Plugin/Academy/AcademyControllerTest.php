@@ -416,6 +416,77 @@ final class AcademyControllerTest extends TestCase
         $this->assertStringContainsString('Curso Demo', $html);
     }
 
+    /**
+     * "curso-borrador" is a draft top-level course. The index page feeds
+     * its own template plugin->registry()->all(), which returns every
+     * loaded course regardless of allowed() — the same real bug reported
+     * for this package, applied to Academy's course grid.
+     */
+    public function testIndexDoesNotListADraftCourse(): void
+    {
+        $html = $this->controller->index();
+
+        $this->assertStringNotContainsString('Curso Borrador', $html);
+    }
+
+    /**
+     * "curso-con-modulo-borrador" has a draft module ("modulo-borrador")
+     * alongside a non-draft one ("modulo-visible"). The course page's own
+     * sidebar/tabs list modules via course.modules directly (not through
+     * the registry), so this exercises AcademyCourse::modules() itself,
+     * not the controller.
+     */
+    public function testCourseActionDoesNotListADraftModule(): void
+    {
+        $request = new Request('GET', 'http://localhost/academy/curso-con-modulo-borrador');
+
+        $html = $this->controller->course($request, 'curso-con-modulo-borrador');
+
+        $this->assertStringContainsString('Módulo Visible', $html);
+        $this->assertStringNotContainsString('Módulo Borrador', $html);
+    }
+
+    /**
+     * Direct access to a draft module's own page must be refused, exactly
+     * like a draft course or doc is refused — today it is not: `course->
+     * modules()[$module]` is a plain array lookup that never checks
+     * allowed(), so a draft module is fully reachable by URL regardless
+     * of environment.
+     */
+    public function testModuleActionRejectsADraftModuleOutsideALocalEnvironment(): void
+    {
+        $request = new Request(
+            'GET',
+            'http://localhost/academy/curso-con-modulo-borrador/modulo-borrador'
+        );
+
+        $this->expectException(ContentNotFoundException::class);
+
+        $this->controller->module($request, 'curso-con-modulo-borrador', 'modulo-borrador');
+    }
+
+    /**
+     * Same bug, one level deeper: a lesson whose own draft flag is false
+     * but whose module is draft must still be refused, via the same
+     * allowed() cascade already covered at the registry level.
+     */
+    public function testLessonActionRejectsALessonNestedUnderADraftModule(): void
+    {
+        $request = new Request(
+            'GET',
+            'http://localhost/academy/curso-con-modulo-borrador/modulo-borrador/leccion-visible'
+        );
+
+        $this->expectException(ContentNotFoundException::class);
+
+        $this->controller->lesson(
+            $request,
+            'curso-con-modulo-borrador',
+            'modulo-borrador',
+            'leccion-visible'
+        );
+    }
+
     private function countPdfPages(string $pdf): int
     {
         return preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);

@@ -48,7 +48,7 @@
         {% if post.deprecated %}
             <div class="alert alert-warning">
                 <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-                {{ 'This post is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': post.deprecated | date('d/m/Y')}) }}
+                {{ 'This post is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': post.deprecatedAt | date('d/m/Y')}) }}
             </div>
         {% endif %}
 

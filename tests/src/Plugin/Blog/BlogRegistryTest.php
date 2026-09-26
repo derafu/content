@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\TestsContent\Plugin\Blog;
 
+use DateTime;
 use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
@@ -55,9 +56,46 @@ final class BlogRegistryTest extends TestCase
         $this->plugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
     }
 
-    public function testBothFixturePostsAreLoaded(): void
+    public function testAllFixturePostsAreLoaded(): void
     {
-        $this->assertCount(2, $this->plugin->registry()->all());
+        $slugs = array_keys($this->plugin->registry()->all());
+
+        sort($slugs);
+        $this->assertSame(
+            ['2026-01-15-primer-post', '2026-02-20-segundo-post', '2099-01-01-post-futuro'],
+            $slugs
+        );
+    }
+
+    /**
+     * "2099-01-01-post-futuro" has a publish date far in the future
+     * (resolved from its filename prefix, same mechanism covered by
+     * testDateFallsBackToTheFileNamePrefixWhenNotInFrontmatter below). A
+     * future publish date must mean "not published yet": allowed() must
+     * be false outside a local environment, the same way a draft is.
+     */
+    public function testFutureDatedPostIsNotAllowedOutsideALocalEnvironment(): void
+    {
+        $post = $this->plugin->registry()->all()['2099-01-01-post-futuro'];
+
+        $this->assertGreaterThan(new DateTime(), $post->date());
+        $this->assertFalse($post->draft());
+        $this->assertFalse($post->allowed());
+
+        $this->expectException(ContentNotFoundException::class);
+        $this->plugin->registry()->get('2099-01-01-post-futuro');
+    }
+
+    /**
+     * A future-dated post must not leak into filter()/filterTree() (the
+     * blog index, tags, sidebar "recent posts") — the same exclusion
+     * already applied to draft/unlisted items.
+     */
+    public function testFilterExcludesAFutureDatedPost(): void
+    {
+        $uris = array_map(fn ($post) => $post->uri(), $this->plugin->registry()->filter());
+
+        $this->assertNotContains('2099-01-01-post-futuro', $uris);
     }
 
     public function testDateFallsBackToTheFileNamePrefixWhenNotInFrontmatter(): void

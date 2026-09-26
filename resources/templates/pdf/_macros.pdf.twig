@@ -226,7 +226,7 @@
 
     {% if item.deprecated %}
         <div class="pdf-warning">
-            {{ 'This content is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': item.deprecated | date('d/m/Y')}) }}
+            {{ 'This content is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': item.deprecatedAt | date('d/m/Y')}) }}
         </div>
     {% endif %}
 {% endmacro %}
@@ -270,7 +270,7 @@
 
         {% if item.deprecated %}
             <div class="pdf-warning">
-                This content is deprecated since {{ item.deprecated | date('d/m/Y') }}. It's not recommended to use this content anymore.
+                This content is deprecated since {{ item.deprecatedAt | date('d/m/Y') }}. It's not recommended to use this content anymore.
             </div>
         {% endif %}
 

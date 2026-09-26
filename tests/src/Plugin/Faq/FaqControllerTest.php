@@ -232,6 +232,38 @@ final class FaqControllerTest extends TestCase
         $this->controller->show($request, 'no-existe');
     }
 
+    /**
+     * "pregunta-borrador" is a draft top-level question, with a non-draft
+     * child ("sub-respuesta-visible"). Neither must appear in the
+     * sidebar: FaqController feeds it plugin->registry()->all(), which
+     * returns every loaded question regardless of allowed().
+     */
+    public function testShowRendersSidebarWithoutADraftTopLevelQuestion(): void
+    {
+        $request = new Request('GET', 'http://localhost/faq/pregunta-uno');
+
+        $html = $this->controller->show($request, 'pregunta-uno');
+
+        $this->assertStringNotContainsString('¿Pregunta en borrador?', $html);
+        $this->assertStringNotContainsString('Sub respuesta visible', $html);
+    }
+
+    /**
+     * "pregunta-visible" is NOT draft, but its only child
+     * ("sub-borrador") is. The parent must still show in the sidebar, but
+     * the draft child must not leak through the nested recursion of the
+     * nav macro.
+     */
+    public function testShowRendersSidebarWithoutADraftChildNestedUnderAnAllowedQuestion(): void
+    {
+        $request = new Request('GET', 'http://localhost/faq/pregunta-uno');
+
+        $html = $this->controller->show($request, 'pregunta-uno');
+
+        $this->assertStringContainsString('¿Pregunta visible?', $html);
+        $this->assertStringNotContainsString('Sub pregunta borrador', $html);
+    }
+
     public function testTagActionFiltersQuestions(): void
     {
         $request = new Request('GET', 'http://localhost/faq/tags/tests');

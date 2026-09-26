@@ -49,7 +49,7 @@ class AcademyController extends AbstractContentController
 
         return $this->renderer->render('academy/index.html.twig', [
             'plugin' => $plugin,
-            'courses' => $plugin->registry()->all(),
+            'courses' => $plugin->registry()->filterTree(),
             'tags' => $plugin->registry()->tags(),
         ]);
     }
@@ -226,7 +226,7 @@ class AcademyController extends AbstractContentController
         $contentTag = $tags[$tag] ?? new ContentTag($tag);
         $filters['tag'] = $contentTag->slug();
         $coursesFiltered = $plugin->registry()->filter($filters);
-        $courses = $plugin->registry()->all();
+        $courses = $plugin->registry()->filterTree();
 
         return $this->renderer->render('academy/tag.html.twig', [
             'plugin' => $plugin,

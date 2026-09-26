@@ -2,7 +2,7 @@
     <ul class="nav flex-column {% if level > 0 %}ms-{{ level }}{% endif %}">
         {% for item in items %}
             <li class="nav-item">
-                {% set hasChildren = item.children is defined and item.children|length > 0 %}
+                {% set hasChildren = item.visibleChildren is defined and item.visibleChildren|length > 0 %}
                 {% set collapseId = 'collapse' ~ loop.index0 ~ '_' ~ level %}
 
                 {% if item.module is defined %}
@@ -27,7 +27,7 @@
                     </a>
 
                     <div class="collapse {% if isActive %}show{% endif %}" id="{{ collapseId }}">
-                        {{ _self.render_items(item.children, level + 1) }}
+                        {{ _self.render_items(item.visibleChildren, level + 1) }}
                     </div>
                 {% else %}
                     {% if item.module is defined %}

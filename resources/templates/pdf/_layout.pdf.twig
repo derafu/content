@@ -382,7 +382,7 @@
 
             {% if pdf_item.deprecated %}
                 <div class="pdf-warning">
-                    {{ 'This content is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': pdf_item.deprecated | date('d/m/Y')}) }}
+                    {{ 'This content is deprecated since {date}. It\'s not recommended to use this content anymore.'|trans({'date': pdf_item.deprecatedAt | date('d/m/Y')}) }}
                 </div>
             {% endif %}
         {% endif %}

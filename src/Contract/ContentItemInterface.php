@@ -267,7 +267,9 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function unlisted(): bool;
 
     /**
-     * Get the created date of the content.
+     * Get the publish date of the content. A future date means "not
+     * published yet": allowed() is false until that date arrives, the
+     * same way it is false for a draft.
      *
      * @return DateTimeInterface
      */
@@ -281,11 +283,23 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     public function last_update(): DateTimeInterface;
 
     /**
-     * Get the deprecated date of the content.
+     * Get the configured deprecation date of the content, regardless of
+     * whether it has arrived yet — true resolves to the file's
+     * modification time, a string/timestamp to that specific date.
      *
      * @return DateTimeInterface|null
      */
-    public function deprecated(): ?DateTimeInterface;
+    public function deprecatedAt(): ?DateTimeInterface;
+
+    /**
+     * Check if the content is deprecated, i.e. deprecatedAt() is set and
+     * has already arrived. A future deprecation date means "not
+     * deprecated yet", the same way a future date() means "not published
+     * yet" for allowed().
+     *
+     * @return bool
+     */
+    public function deprecated(): bool;
 
     /**
      * Check if the content is indexable.
@@ -421,6 +435,20 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * @return array<ContentItemInterface>
      */
     public function children(): array;
+
+    /**
+     * Get the children of the content that are allowed() and not
+     * unlisted().
+     *
+     * Unlike children(), which always returns every child regardless of
+     * draft/unlisted status, this is what navigation (sidebars, nested
+     * menus) must use so neither a draft nor an unlisted item leaks
+     * through a parent that is itself visible — the same exclusion
+     * matches() already applies at the registry's top level.
+     *
+     * @return array<ContentItemInterface>
+     */
+    public function visibleChildren(): array;
 
     /**
      * Get the attachments related to the content.

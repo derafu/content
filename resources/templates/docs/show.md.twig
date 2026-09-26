@@ -18,7 +18,7 @@ draft: {{ doc.draft ? 'true' : 'false' }}
 unlisted: {{ doc.unlisted ? 'true' : 'false' }}
 {% if doc_image %}image: "{{ doc_image }}"
 {% endif %}{% if doc_video %}video: "{{ doc_video }}"
-{% endif %}{% if doc.deprecated %}deprecated: "{{ doc.deprecated | date('Y-m-d') }}"
+{% endif %}{% if doc.deprecated %}deprecated: "{{ doc.deprecatedAt | date('Y-m-d') }}"
 {% endif %}{% if doc.keywords | length > 0 %}keywords: [{{ doc.keywords | join(', ') }}]
 {% endif %}{% if doc.attachments | length > 0 %}attachments: [{{ doc.attachments | keys | join(', ') }}]
 {% endif %}url: "{{ url('docs_doc', {'doc': doc.uri}) }}"

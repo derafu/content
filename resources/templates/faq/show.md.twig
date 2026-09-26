@@ -18,7 +18,7 @@ draft: {{ faq.draft ? 'true' : 'false' }}
 unlisted: {{ faq.unlisted ? 'true' : 'false' }}
 {% if faq_image %}image: "{{ faq_image }}"
 {% endif %}{% if faq_video %}video: "{{ faq_video }}"
-{% endif %}{% if faq.deprecated %}deprecated: "{{ faq.deprecated | date('Y-m-d') }}"
+{% endif %}{% if faq.deprecated %}deprecated: "{{ faq.deprecatedAt | date('Y-m-d') }}"
 {% endif %}{% if faq.keywords | length > 0 %}keywords: [{{ faq.keywords | join(', ') }}]
 {% endif %}{% if faq.attachments | length > 0 %}attachments: [{{ faq.attachments | keys | join(', ') }}]
 {% endif %}url: "{{ url('faq_question', {'question': faq.uri}) }}"

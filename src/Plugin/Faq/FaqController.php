@@ -64,7 +64,7 @@ class FaqController extends AbstractContentController
                 [
                     'plugin' => $plugin,
                     'faq' => $faq,
-                    'faqs' => $plugin->registry()->all(),
+                    'faqs' => $plugin->registry()->filterTree(),
                     'tags' => $plugin->registry()->tags(),
                     'full' => (bool) $request->query('full'),
                 ]
@@ -89,7 +89,7 @@ class FaqController extends AbstractContentController
         $contentTag = $tags[$tag] ?? new ContentTag($tag);
         $filters['tag'] = $contentTag->slug();
         $faqsFiltered = $plugin->registry()->filter($filters);
-        $faqs = $plugin->registry()->all();
+        $faqs = $plugin->registry()->filterTree();
 
         return $this->renderer->render('faq/tag.html.twig', [
             'plugin' => $plugin,

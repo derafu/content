@@ -18,7 +18,7 @@ draft: {{ course.draft ? 'true' : 'false' }}
 unlisted: {{ course.unlisted ? 'true' : 'false' }}
 {% if course_image %}image: "{{ course_image }}"
 {% endif %}{% if course_video %}video: "{{ course_video }}"
-{% endif %}{% if course.deprecated %}deprecated: "{{ course.deprecated | date('Y-m-d') }}"
+{% endif %}{% if course.deprecated %}deprecated: "{{ course.deprecatedAt | date('Y-m-d') }}"
 {% endif %}{% if course.keywords | length > 0 %}keywords: [{{ course.keywords | join(', ') }}]
 {% endif %}url: "{{ url('academy_course', {'course': course.slug}) }}"
 ---
