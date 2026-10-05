@@ -18,6 +18,8 @@ use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
+use Derafu\Content\ContentHtmlTag;
+use Derafu\Content\ContentHtmlTags;
 use Derafu\Content\ContentLoader;
 use Derafu\Content\ContentService;
 use Derafu\Content\ContentSplFileInfo;
@@ -67,6 +69,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentBag::class)]
 #[UsesClass(ContentConfig::class)]
 #[UsesClass(ContentContext::class)]
+#[UsesClass(ContentHtmlTag::class)]
+#[UsesClass(ContentHtmlTags::class)]
 #[UsesClass(ContentLoader::class)]
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
@@ -88,7 +92,8 @@ final class DocsControllerTest extends TestCase
     {
         return new DocsController(
             ContentFixtures::contentService(['docs' => $this->plugin]),
-            RendererFixture::create($router)
+            RendererFixture::create($router),
+            $router ?? RouterFixture::create()
         );
     }
 
@@ -484,7 +489,8 @@ final class DocsControllerTest extends TestCase
 
         $controller = new DocsController(
             ContentFixtures::contentService(['docs' => $plugin]),
-            RendererFixture::create($router)
+            RendererFixture::create($router),
+            $router
         );
 
         $request = new Request('GET', 'http://localhost/docs/index');

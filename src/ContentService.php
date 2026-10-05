@@ -17,7 +17,7 @@ use Derafu\Content\Contract\ContentPluginInterface;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Contract\PluginInterface;
 use Derafu\Content\Contract\PluginLoaderInterface;
-use InvalidArgumentException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 
 /**
  * Main service to manage the content.
@@ -70,11 +70,11 @@ class ContentService implements ContentServiceInterface
         $plugins = array_keys($this->plugins());
 
         if (!in_array($name, $plugins)) {
-            throw new InvalidArgumentException(sprintf(
-                'Plugin "%s" not found. Available plugins: %s.',
-                $name,
-                implode(', ', $plugins)
-            ));
+            throw new InvalidArgumentException([
+                'Plugin "{plugin}" not found. Available plugins: {plugins}.',
+                'plugin' => $name,
+                'plugins' => implode(', ', $plugins),
+            ]);
         }
 
         return $this->plugins[$name];

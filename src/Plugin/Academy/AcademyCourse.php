@@ -66,23 +66,6 @@ class AcademyCourse extends AbstractContentItem implements AcademyCourseInterfac
     /**
      * {@inheritDoc}
      */
-    public function links(): array
-    {
-        if (!isset($this->links)) {
-            $urlBasePath = '/academy';
-
-            $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
-                'collection' => ['href' => $urlBasePath],
-            ];
-        }
-
-        return $this->links;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function modules(): array
     {
         $modules = [];

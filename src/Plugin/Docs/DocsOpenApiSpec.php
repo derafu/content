@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Docs;
 
 use Derafu\Content\Plugin\Docs\Contract\DocsOpenApiSpecInterface;
-use RuntimeException;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
@@ -181,10 +181,10 @@ class DocsOpenApiSpec implements DocsOpenApiSpecInterface
 
             return Yaml::parse($raw) ?? [];
         } catch (Throwable $e) {
-            throw new RuntimeException(sprintf(
-                'Invalid OpenAPI document: %s',
-                $e->getMessage()
-            ), previous: $e);
+            throw new RuntimeException([
+                'Invalid OpenAPI document: {error}',
+                'error' => $e->getMessage(),
+            ], previous: $e);
         }
     }
 

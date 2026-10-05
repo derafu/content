@@ -17,6 +17,7 @@ use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
+use Derafu\Routing\Contract\RouterInterface;
 
 /**
  * FAQ controller.
@@ -28,10 +29,12 @@ class FaqController extends AbstractContentController
      *
      * @param ContentServiceInterface $contentService Content service.
      * @param RendererInterface $renderer Renderer.
+     * @param RouterInterface $router Router.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RendererInterface $renderer
+        private readonly RendererInterface $renderer,
+        private readonly RouterInterface $router
     ) {
     }
 
@@ -53,7 +56,7 @@ class FaqController extends AbstractContentController
         $faq = $plugin->registry()->get($uri);
 
         if ($format === 'json') {
-            return $this->jsonResponse($faq, $this->renderer, 'faq/show.md.twig', [
+            return $this->jsonResponse($faq, $this->renderer, $this->router, 'faq/show.md.twig', [
                 'plugin' => $plugin,
                 'faq' => $faq,
                 'full' => false,

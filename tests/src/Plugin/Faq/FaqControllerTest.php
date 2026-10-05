@@ -74,7 +74,8 @@ final class FaqControllerTest extends TestCase
 
         $this->controller = new FaqController(
             ContentFixtures::contentService(['faq' => $plugin]),
-            RendererFixture::create($router)
+            RendererFixture::create($router),
+            $router
         );
     }
 

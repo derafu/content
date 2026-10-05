@@ -5,7 +5,7 @@
 {% block title %}{{ doc.title }}{% endblock %}
 
 {% block docs_content %}
-    <nav aria-label="breadcrumb" class="mb-4">
+    <nav aria-label="{{ 'breadcrumb'|trans }}" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
                 <a href="{{ path('docs') }}">

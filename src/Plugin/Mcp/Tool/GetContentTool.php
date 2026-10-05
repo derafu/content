@@ -20,15 +20,19 @@ use Derafu\Content\Plugin\Academy\Contract\AcademyModuleInterface;
 use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Routing\Enum\UrlReferenceType;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Exception\ToolCallException;
-use RuntimeException;
 
 /**
  * MCP tool that fetches a single content item, with its full Markdown body
  * and metadata. This is the canonical way for an agent to read a specific
  * doc/post/question/lesson, and it returns the exact same Markdown body the
  * website serves for the ".md" format of the item.
+ *
+ * Its errors are `ToolCallException` of the MCP SDK (a `final` class, so they
+ * can not be translatable): the message goes to the MCP client, an agent, and it
+ * is always in English.
  */
 class GetContentTool
 {
@@ -133,10 +137,10 @@ class GetContentTool
             ]),
             'module' => $this->renderAcademyModuleMarkdown($plugin, $item),
             'lesson' => $this->renderAcademyLessonMarkdown($plugin, $item),
-            default => throw new RuntimeException(sprintf(
-                'No Markdown template known for content category "%s".',
-                $item->category()
-            )),
+            default => throw new RuntimeException([
+                'No Markdown template known for content category "{category}".',
+                'category' => $item->category(),
+            ]),
         };
     }
 

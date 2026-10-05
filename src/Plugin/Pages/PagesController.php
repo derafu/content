@@ -16,6 +16,7 @@ use Derafu\Content\Abstract\AbstractContentController;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
+use Derafu\Routing\Contract\RouterInterface;
 
 /**
  * Controller for the pages plugin.
@@ -27,10 +28,12 @@ class PagesController extends AbstractContentController
      *
      * @param ContentServiceInterface $contentService Content service.
      * @param RendererInterface $renderer Renderer.
+     * @param RouterInterface $router Router.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RendererInterface $renderer
+        private readonly RendererInterface $renderer,
+        private readonly RouterInterface $router
     ) {
     }
 
@@ -52,7 +55,7 @@ class PagesController extends AbstractContentController
         $item = $plugin->registry()->get($uri);
 
         if ($format === 'json') {
-            return $this->jsonResponse($item, $this->renderer, 'pages/show.md.twig', [
+            return $this->jsonResponse($item, $this->renderer, $this->router, 'pages/show.md.twig', [
                 'plugin' => $plugin,
                 'page' => $item,
             ]);

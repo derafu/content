@@ -19,6 +19,7 @@ use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Academy\Contract\AcademyCourseInterface;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
+use Derafu\Routing\Contract\RouterInterface;
 
 /**
  * Academy controller.
@@ -30,10 +31,12 @@ class AcademyController extends AbstractContentController
      *
      * @param ContentServiceInterface $contentService Content service.
      * @param RendererInterface $renderer Renderer.
+     * @param RouterInterface $router Router.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RendererInterface $renderer
+        private readonly RendererInterface $renderer,
+        private readonly RouterInterface $router
     ) {
     }
 
@@ -72,7 +75,7 @@ class AcademyController extends AbstractContentController
         $course = $plugin->registry()->get($course);
 
         if ($format === 'json') {
-            return $this->jsonResponse($course, $this->renderer, 'academy/course.md.twig', [
+            return $this->jsonResponse($course, $this->renderer, $this->router, 'academy/course.md.twig', [
                 'plugin' => $plugin,
                 'course' => $course,
                 'full' => false,
@@ -118,7 +121,7 @@ class AcademyController extends AbstractContentController
         ;
 
         if ($format === 'json') {
-            return $this->jsonResponse($module, $this->renderer, 'academy/module.md.twig', [
+            return $this->jsonResponse($module, $this->renderer, $this->router, 'academy/module.md.twig', [
                 'plugin' => $plugin,
                 'course' => $course,
                 'module' => $module,
@@ -182,7 +185,7 @@ class AcademyController extends AbstractContentController
         ;
 
         if ($format === 'json') {
-            return $this->jsonResponse($lesson, $this->renderer, 'academy/lesson.md.twig', [
+            return $this->jsonResponse($lesson, $this->renderer, $this->router, 'academy/lesson.md.twig', [
                 'plugin' => $plugin,
                 'course' => $course,
                 'module' => $module,

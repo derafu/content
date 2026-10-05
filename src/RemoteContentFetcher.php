@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace Derafu\Content;
 
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Client\ClientInterface as HttpClientInterface;
-use RuntimeException;
 use Throwable;
 
 /**
@@ -59,19 +59,19 @@ class RemoteContentFetcher
         try {
             $response = $this->httpClient->sendRequest(new Request('GET', $url));
         } catch (Throwable $e) {
-            throw new RuntimeException(sprintf(
-                'Remote content at %s could not be fetched: %s',
-                $url,
-                $e->getMessage()
-            ), previous: $e);
+            throw new RuntimeException([
+                'Remote content at {url} could not be fetched: {error}',
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ], previous: $e);
         }
 
         if ($response->getStatusCode() >= 400) {
-            throw new RuntimeException(sprintf(
-                'Remote content at %s responded with status %d.',
-                $url,
-                $response->getStatusCode()
-            ));
+            throw new RuntimeException([
+                'Remote content at {url} responded with status {status}.',
+                'url' => $url,
+                'status' => $response->getStatusCode(),
+            ]);
         }
 
         return (string) $response->getBody();

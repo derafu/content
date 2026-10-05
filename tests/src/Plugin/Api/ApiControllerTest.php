@@ -78,12 +78,24 @@ final class ApiControllerTest extends TestCase
             'pages' => $pagesPlugin,
         ]);
 
-        $router = RouterFixture::create([
-            'homepage' => ['path' => '/', 'handler' => 'App\\Controller\\HomeController::index'],
-        ]);
+        $router = RouterFixture::create();
         $router->setContext(new RequestContext(pathInfo: '/api/content.json'));
 
         $this->controller = new ApiController($contentService, $router);
+    }
+
+    /**
+     * The URL of the website comes from the configuration of the content,
+     * not from a route that the website using the package would have to
+     * define.
+     */
+    public function testMetaUrlIsTheConfiguredUrlOfTheWebsite(): void
+    {
+        $request = new Request('GET', 'http://localhost/api/content.json');
+
+        $result = $this->controller->index($request);
+
+        $this->assertSame('http://localhost/', $result['meta']['url']);
     }
 
     public function testIndexAggregatesContentFromEveryContentPlugin(): void

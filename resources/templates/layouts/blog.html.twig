@@ -3,6 +3,11 @@
 
 {% block title %}{{ blog.title | default('Blog'|trans) }}{% endblock %}
 
+{% block custom_head %}
+    {{ parent() }}
+    <link rel="alternate" type="application/rss+xml" title="{{ 'RSS feed'|trans }}" href="{{ url('blog_rss') }}">
+{% endblock %}
+
 {% block content %}
 
 {% block blog_header %}{% endblock %}
@@ -16,8 +21,12 @@
             {% block blog_sidebar %}{% endblock %}
 
             <div class="card mb-4">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">{{ 'Latest Posts'|trans }}</h5>
+                    <a href="{{ path('blog_rss') }}" class="btn btn-outline-secondary btn-sm" title="{{ 'RSS feed'|trans }}" aria-label="{{ 'RSS feed'|trans }}">
+                        <i class="fa-solid fa-rss fa-fw"></i>
+                        {{ 'RSS'|trans }}
+                    </a>
                 </div>
                 <div class="list-group list-group-flush">
                     {% for post in recentPosts %}

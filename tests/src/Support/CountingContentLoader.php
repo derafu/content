@@ -23,10 +23,28 @@ use Derafu\Content\Contract\ContentLoaderInterface;
  */
 final class CountingContentLoader implements ContentLoaderInterface
 {
-    public int $scans = 0;
+    private int $scans = 0;
 
     public function __construct(private readonly ContentLoaderInterface $loader)
     {
+    }
+
+    /**
+     * Number of times scan() was called since the last call to this method,
+     * and starts counting again from zero.
+     *
+     * A test reads it after each step: "1" after the first registry loaded the
+     * content, and "0" after a second one that must have used the cache. It
+     * resets on purpose: reading a plain counter twice in a row looks, to
+     * static analysis, like reading the same value twice, and it reports the
+     * second comparison as always true.
+     */
+    public function scansSinceLastCheck(): int
+    {
+        $scans = $this->scans;
+        $this->scans = 0;
+
+        return $scans;
     }
 
     public function scan(string $path, array $include, array $exclude): array

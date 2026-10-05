@@ -72,7 +72,8 @@ final class PagesControllerTest extends TestCase
 
         $this->controller = new PagesController(
             $contentService,
-            RendererFixture::create($router)
+            RendererFixture::create($router),
+            $router
         );
     }
 

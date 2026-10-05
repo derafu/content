@@ -31,6 +31,7 @@ use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
 use Derafu\Content\Plugin\Faq\FaqQuestion;
 use Derafu\Content\Plugin\Faq\FaqRegistry;
+use Derafu\Support\File;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\CountingContentLoader;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -84,7 +85,7 @@ final class AbstractContentRegistryCacheTest extends TestCase
         );
         $first->all();
 
-        $this->assertSame(1, $loader->scans);
+        $this->assertSame(1, $loader->scansSinceLastCheck());
 
         $second = new DocsRegistry(
             $loader,
@@ -95,9 +96,9 @@ final class AbstractContentRegistryCacheTest extends TestCase
         );
         $items = $second->all();
 
-        // Still 1: the second registry's all() was served from the cache,
-        // it never touched the filesystem loader's scan() again.
-        $this->assertSame(1, $loader->scans);
+        // No new scan: the second registry's all() was served from the
+        // cache, it never touched the filesystem loader's scan() again.
+        $this->assertSame(0, $loader->scansSinceLastCheck());
         $this->assertSame('Guía', $items['guia']->title());
     }
 
@@ -140,7 +141,7 @@ final class AbstractContentRegistryCacheTest extends TestCase
                 $cache
             );
             $first->all();
-            $this->assertSame(1, $loader->scans);
+            $this->assertSame(1, $loader->scansSinceLastCheck());
 
             // A second, independent registry, sharing only the real
             // filesystem cache: this forces an actual disk read plus
@@ -154,7 +155,7 @@ final class AbstractContentRegistryCacheTest extends TestCase
             );
             $course = $second->all()['curso-demo'];
 
-            $this->assertSame(1, $loader->scans);
+            $this->assertSame(0, $loader->scansSinceLastCheck());
             $this->assertInstanceOf(AcademyCourse::class, $course);
             $this->assertSame('Curso Demo', $course->title());
 
@@ -179,7 +180,7 @@ final class AbstractContentRegistryCacheTest extends TestCase
             $test = $lessons['leccion-uno']->testAttachment();
             $this->assertStringContainsString('"questions"', $test->raw());
         } finally {
-            ContentFixtures::removeDirectory($cacheDir);
+            File::rmdir($cacheDir);
         }
     }
 }

@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Academy;
 
 use Derafu\Content\Plugin\Academy\Contract\AcademyTestInterface;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use JsonException;
-use RuntimeException;
 
 /**
  * Class that represents an academy lesson's self-assessment test ("quiz"),
@@ -78,10 +78,10 @@ class AcademyTest implements AcademyTestInterface
         try {
             $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
-            throw new RuntimeException(sprintf(
-                'Invalid academy test JSON: %s',
-                $e->getMessage()
-            ), previous: $e);
+            throw new RuntimeException([
+                'Invalid academy test JSON: {error}',
+                'error' => $e->getMessage(),
+            ], previous: $e);
         }
 
         $questions = array_map(

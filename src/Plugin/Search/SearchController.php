@@ -15,7 +15,7 @@ namespace Derafu\Content\Plugin\Search;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
-use InvalidArgumentException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 
 /**
  * Controller for the search plugin.

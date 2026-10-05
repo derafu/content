@@ -85,7 +85,7 @@
                                 <i class="{{ attachment.icon }}"></i>
                                 {{ attachment.name }}.{{ attachment.extension }}
                             </td>
-                            <td>{{ attachment.size / 1000 }} KB</td>
+                            <td>{{ '{size} KB'|trans({'size': (attachment.size / 1000) ~ ''}) }}</td>
                             <td>
                                 <a href="{{ path('content_storage_download', {'type': 'academy', 'uri': attachment.parent.uri, 'attachment': attachment.name ~ '.' ~ attachment.extension}) }}" class="btn btn-primary" download="{{ attachment.parent.id }}--{{ attachment.name }}.{{ attachment.extension }}" target="_blank">
                                     <i class="fa-solid fa-download fa-fw"></i>
@@ -141,18 +141,13 @@
                 <!-- Main content -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 
-                    <nav aria-label="breadcrumb" class="mb-4">
+                    <nav aria-label="{{ 'breadcrumb'|trans }}" class="mb-4">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
                                 <a href="{{ path('academy') }}">
                                     <i class="fa-solid fa-graduation-cap fa-fw"></i>
                                 </a>
                             </li>
-                            {% for ancestor in course.ancestors %}
-                                <li class="breadcrumb-item">
-                                    <a href="{{ path('academy_show', {'uri': ancestor.uri}) }}">{{ ancestor.title }}</a>
-                                </li>
-                            {% endfor %}
                             <li class="breadcrumb-item active" aria-current="page">
                                 {{ course.title }}
                             </li>

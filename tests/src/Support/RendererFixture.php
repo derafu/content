@@ -13,11 +13,14 @@ declare(strict_types=1);
 namespace Derafu\TestsContent\Support;
 
 use Derafu\Renderer\Contract\RendererInterface;
+use Derafu\Renderer\Engine\Html\TwigHtmlEngine;
 use Derafu\Renderer\Factory\RendererFactory;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Twig\Extension\RoutingExtension;
 use Derafu\Twig\Extension\TranslationExtension;
 use Derafu\Twig\Extension\TwigExtension;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Environment;
 
 /**
  * Builds a real Renderer (real Twig environment, real Markdown engine),
@@ -28,6 +31,24 @@ use Derafu\Twig\Extension\TwigExtension;
 final class RendererFixture
 {
     /**
+     * The Twig environment of the real renderer that {@see self::create()}
+     * builds: the one that renders the templates of this package, with its
+     * functions, tags and components. For tests that read the templates
+     * instead of rendering them.
+     *
+     * @param RouterInterface $router Real router, for the "path"/"url"/
+     * "is_active_path" Twig functions.
+     * @return Environment
+     */
+    public static function twig(RouterInterface $router): Environment
+    {
+        $engine = self::create($router)->getEngine('twig');
+        assert($engine instanceof TwigHtmlEngine);
+
+        return $engine->getTwig();
+    }
+
+    /**
      * Build a real renderer able to render this package's own templates
      * (docs/, faq/, pages/, etc.) on top of the fixture "layouts/default"
      * used to stand in for a website's own base layout.
@@ -35,13 +56,18 @@ final class RendererFixture
      * @param RouterInterface|null $router Real router to back the
      * "path"/"url"/"is_active_path" Twig functions used by the sidebar
      * templates (docs/faq). Only needed to render templates that call them.
+     * @param TranslatorInterface|null $translator Translator of the
+     * translation extension, in Spanish. Without it, the texts are in English,
+     * as they are written in the templates.
      * @return RendererInterface
      */
-    public static function create(?RouterInterface $router = null): RendererInterface
-    {
+    public static function create(
+        ?RouterInterface $router = null,
+        ?TranslatorInterface $translator = null
+    ): RendererInterface {
         $extensions = [
             new TwigExtension(),
-            new TranslationExtension(null, 'content+intl-icu'),
+            new TranslationExtension($translator, 'content+intl-icu', $translator !== null ? 'es' : null),
         ];
 
         if ($router !== null) {

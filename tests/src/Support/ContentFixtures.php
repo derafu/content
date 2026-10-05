@@ -17,10 +17,7 @@ use Derafu\Content\ContentContext;
 use Derafu\Content\ContentLoader;
 use Derafu\Content\ContentService;
 use Derafu\Content\Contract\PluginInterface;
-use FilesystemIterator;
 use Psr\Cache\CacheItemPoolInterface;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 /**
@@ -105,29 +102,5 @@ final class ContentFixtures
             self::contentContext(),
             new FixturePluginLoader($plugins)
         );
-    }
-
-    /**
-     * Recursively remove a real directory tree, used to clean up
-     * FilesystemAdapter cache directories created by tests.
-     *
-     * @param string $dir Absolute path of the directory to remove.
-     */
-    public static function removeDirectory(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $items = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($items as $item) {
-            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
-        }
-
-        rmdir($dir);
     }
 }

@@ -21,6 +21,10 @@ use Mcp\Exception\ToolCallException;
  * Resolves a content source name (academy, blog, docs, faq) to its plugin,
  * turning invalid input into a clean MCP tool error instead of an unhandled
  * exception.
+ *
+ * Its errors are `ToolCallException` of the MCP SDK (a `final` class, so they
+ * can not be translatable): the message goes to the MCP client, an agent, and it
+ * is always in English.
  */
 final class ContentSourceResolver
 {

@@ -19,7 +19,7 @@ use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Contract\PluginInterface;
 use Derafu\Content\Contract\PluginLoaderInterface;
 use Derafu\Routing\Contract\RouterInterface;
-use InvalidArgumentException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 
 /**
  * Plugin loader.

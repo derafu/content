@@ -15,7 +15,7 @@ namespace Derafu\Content\Plugin\Search;
 use Derafu\Content\Abstract\AbstractPlugin;
 use Derafu\Content\Contract\PluginInterface;
 use Derafu\Content\Plugin\Search\Contract\LlmClientInterface;
-use InvalidArgumentException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 
 /**
  * Plugin that provides a middleware for the search engine of the content
@@ -130,9 +130,7 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
         if (!isset($this->llm) && isset($this->options['llm_url'])) {
             if (empty($this->options['llm_model'])) {
                 throw new InvalidArgumentException(
-                    'The "search" plugin has "llm_url" configured but no '
-                        . '"llm_model". Set "llm_model" to the model name '
-                        . 'your LLM backend expects.'
+                    'The "search" plugin has "llm_url" configured but no "llm_model". Set "llm_model" to the model name your LLM backend expects.'
                 );
             }
 

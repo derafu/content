@@ -14,6 +14,7 @@ namespace Derafu\Content\Plugin\Pages;
 
 use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\Plugin\Pages\Contract\PagesPageInterface;
+use Derafu\Routing\Contract\RouterInterface;
 
 /**
  * Pages page.
@@ -46,18 +47,18 @@ class PagesPage extends AbstractContentItem implements PagesPageInterface
 
     /**
      * {@inheritDoc}
+     *
+     * The router is not used on purpose. The pages of a website are served
+     * from the root by the file system parser, which gives them no name, so
+     * the router has no route that builds `/{uri}`: the route named
+     * `pages_page` is another path (`/pages/{uri}`) and using it would change
+     * the links that are delivered.
      */
-    public function links(): array
+    public function links(RouterInterface $router): array
     {
-        if (!isset($this->links)) {
-            $urlBasePath = '';
-
-            $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
-                'collection' => ['href' => $urlBasePath],
-            ];
-        }
-
-        return $this->links;
+        return [
+            'self' => ['href' => '/' . $this->uri()],
+            'collection' => ['href' => ''],
+        ];
     }
 }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Contract;
 
 use DateTimeInterface;
+use Derafu\Routing\Contract\RouterInterface;
 use JsonSerializable;
 use Stringable;
 
@@ -409,8 +410,15 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     /**
      * Set the parent of the content.
      *
+     * The parent must be set before reading the URI, level, route or ancestors
+     * of the content, or of any of its children: those values depend
+     * on the chain of parents and, once read, they are not recalculated.
+     * Setting a different parent afterwards fails, instead of leaving them
+     * stale. Setting the parent the content already has is allowed.
+     *
      * @param ContentItemInterface $parent Parent.
      * @return static
+     * @throws \LogicException If any of those values was already read.
      */
     public function setParent(ContentItemInterface $parent): static;
 
@@ -468,9 +476,14 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     /**
      * Get the links of the content.
      *
+     * The URLs are the ones the router builds for the route of the content
+     * and for its collection, so they follow the paths of the routes instead of
+     * repeating them.
+     *
+     * @param RouterInterface $router Router.
      * @return array
      */
-    public function links(): array;
+    public function links(RouterInterface $router): array;
 
     /**
      * Get the HTML tags of the content.
@@ -489,9 +502,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     /**
      * Get the content as an array.
      *
+     * The links of the content (`_links`) are part of it only when a router is
+     * given, because building them needs it.
+     *
+     * @param RouterInterface|null $router Router.
      * @return array
      */
-    public function toArray(): array;
+    public function toArray(?RouterInterface $router = null): array;
 
     /**
      * Get the content as a JSON string.

@@ -15,7 +15,7 @@ namespace Derafu\Content;
 use Derafu\Content\Contract\ContentAttachmentInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Http\Enum\ContentType;
-use InvalidArgumentException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 
 class ContentAttachment implements ContentAttachmentInterface
 {
@@ -65,10 +65,10 @@ class ContentAttachment implements ContentAttachmentInterface
         if (is_string($info)) {
             $this->info = new ContentSplFileInfo($info);
             if (!$this->info->isFile() || !$this->info->isReadable()) {
-                throw new InvalidArgumentException(sprintf(
-                    'Path %s must be a readable attachment.',
-                    $this->info->getRealPath()
-                ));
+                throw new InvalidArgumentException([
+                    'Path {path} must be a readable attachment.',
+                    'path' => $this->info->getRealPath(),
+                ]);
             }
             $this->info->setFileClass(ContentSplFileObject::class);
         } else {

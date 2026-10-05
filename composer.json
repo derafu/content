@@ -40,16 +40,18 @@
         "ext-xdebug": "*",
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.2",
-        "phpunit/phpunit": "^13.3",
+        "phpunit/phpunit": "^13.4",
         "guzzlehttp/guzzle": "^7.15",
         "mcp/sdk": "^0.7",
         "derafu/markdown": "dev-main",
-        "mpdf/mpdf": "^8.3"
+        "mpdf/mpdf": "^8.3",
+        "nikic/php-parser": "^5.9"
     },
     "suggest": {
         "guzzlehttp/guzzle": "Required by the \"search\" plugin (or any psr/http-client implementation) to query the search engine and LLM backend, and by the \"academy\" plugin to fetch a lesson's test when it points to a remote URL instead of a local attachment.",
         "mcp/sdk": "Required to enable the \"mcp\" plugin (Model Context Protocol server).",
-        "derafu/twig": "Required to translate this package's Twig templates: register Derafu\\Twig\\Extension\\TranslationExtension in your renderer's Twig extensions to enable the |trans filter and {% trans %} tag they use."
+        "derafu/twig": "Required to translate this package's Twig templates: register Derafu\\Twig\\Extension\\TranslationExtension in your renderer's Twig extensions to enable the |trans filter and {% trans %} tag they use.",
+        "nikic/php-parser": "Required by the tests of the messages of the package (Derafu\\Translation\\Lint reads the code)."
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",

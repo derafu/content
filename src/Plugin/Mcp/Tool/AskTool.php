@@ -28,6 +28,10 @@ use Throwable;
  * it. That is why it is opt-in (see McpPlugin::askEnabled()): a bad or failed
  * answer here makes the whole MCP server look unreliable, even though the
  * rest of the tools never touch an LLM at all.
+ *
+ * Its errors are `ToolCallException` of the MCP SDK (a `final` class, so they
+ * can not be translatable): the message goes to the MCP client, an agent, and it
+ * is always in English.
  */
 class AskTool
 {

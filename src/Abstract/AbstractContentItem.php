@@ -27,8 +27,10 @@ use Derafu\Content\Contract\ContentAuthorInterface;
 use Derafu\Content\Contract\ContentHtmlTagsInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\RemoteContentFetcher;
+use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Support\Str;
-use InvalidArgumentException;
+use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -358,13 +360,6 @@ abstract class AbstractContentItem implements ContentItemInterface
     private array $attachments;
 
     /**
-     * Links of the content.
-     *
-     * @var array
-     */
-    protected array $links;
-
-    /**
      * Constructor.
      *
      * @param ContentSplFileInfo|string $info Info of the content file.
@@ -374,10 +369,10 @@ abstract class AbstractContentItem implements ContentItemInterface
         if (is_string($info)) {
             $this->info = new ContentSplFileInfo($info);
             if (!$this->info->isFile() || !$this->info->isReadable()) {
-                throw new InvalidArgumentException(sprintf(
-                    'Path %s must be a readable file content.',
-                    $this->info->getRealPath()
-                ));
+                throw new InvalidArgumentException([
+                    'Path {path} must be a readable file content.',
+                    'path' => $this->info->getRealPath(),
+                ]);
             }
             $this->info->setFileClass(ContentSplFileObject::class);
         } else {
@@ -1259,12 +1254,56 @@ abstract class AbstractContentItem implements ContentItemInterface
 
     /**
      * {@inheritDoc}
+     *
+     * The URI, level, route and ancestors are memoized the first time
+     * they are read and all of them depend on the chain of parents. Since the
+     * tree is built bottom up (the children are complete before they are
+     * attached), a parent set after one of them was read, in this item or in
+     * any item below it, would leave that value stale. So the parent must be
+     * set before reading them, and doing it afterwards fails instead of
+     * leaving a wrong value that is also kept in the registry cache.
+     *
+     * Setting the parent it already has is allowed.
+     *
+     * @throws LogicException If any of those values was already read in this
+     * item or in any of its descendants.
      */
     public function setParent(ContentItemInterface $parent): static
     {
+        if ($this->parent !== $parent && $this->hasParentDerivedState()) {
+            throw new LogicException([
+                'The parent of the content "{content}" can not be set after its URI, level, route or ancestors (or those of its children) were read. Set the parent before reading them.',
+                'content' => $this->name(),
+            ]);
+        }
+
         $this->parent = $parent;
 
         return $this;
+    }
+
+    /**
+     * Checks whether a value that depends on the chain of parents was already
+     * memoized in this item or in any of its descendants.
+     */
+    private function hasParentDerivedState(): bool
+    {
+        if (
+            isset($this->uri)
+            || isset($this->route)
+            || isset($this->level)
+            || isset($this->ancestors)
+        ) {
+            return true;
+        }
+
+        foreach ($this->children() as $child) {
+            if ($child instanceof self && $child->hasParentDerivedState()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1373,18 +1412,31 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
-    public function links(): array
+    public function links(RouterInterface $router): array
     {
-        if (!isset($this->links)) {
-            $urlBasePath = $this->urlBasePath ?? '/' . $this->type();
+        $route = $this->route();
 
-            $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
-                'collection' => ['href' => $urlBasePath],
-            ];
+        $links = [
+            'self' => ['href' => $router->generate($route->name, $route->params)],
+        ];
+
+        $collection = $this->collectionRoute();
+        if ($collection !== null) {
+            $links['collection'] = ['href' => $router->generate($collection)];
         }
 
-        return $this->links;
+        return $links;
+    }
+
+    /**
+     * Name of the route of the list this content is part of.
+     *
+     * By default it is the one named as the type of the content (`docs`,
+     * `blog`, ...). A content that has no list returns `null`.
+     */
+    protected function collectionRoute(): ?string
+    {
+        return $this->type();
     }
 
     /**
@@ -1483,9 +1535,9 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * {@inheritDoc}
      */
-    public function toArray(): array
+    public function toArray(?RouterInterface $router = null): array
     {
-        return [
+        $data = [
             'id' => $this->id(),
             'checksum' => $this->checksum(),
             'type' => $this->type(),
@@ -1511,8 +1563,13 @@ abstract class AbstractContentItem implements ContentItemInterface
             'metadata' => $this->metadata(),
             'data' => $this->data(),
             'has_twig' => $this->has_twig(),
-            '_links' => $this->links(),
         ];
+
+        if ($router !== null) {
+            $data['_links'] = $this->links($router);
+        }
+
+        return $data;
     }
 
     /**

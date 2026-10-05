@@ -17,6 +17,7 @@ use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
+use Derafu\Routing\Contract\RouterInterface;
 
 /**
  * Docs controller.
@@ -28,10 +29,12 @@ class DocsController extends AbstractContentController
      *
      * @param ContentServiceInterface $contentService Content service.
      * @param RendererInterface $renderer Renderer.
+     * @param RouterInterface $router Router.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RendererInterface $renderer
+        private readonly RendererInterface $renderer,
+        private readonly RouterInterface $router
     ) {
     }
 
@@ -53,7 +56,7 @@ class DocsController extends AbstractContentController
         $doc = $plugin->registry()->get($uri);
 
         if ($format === 'json') {
-            return $this->jsonResponse($doc, $this->renderer, 'docs/show.md.twig', [
+            return $this->jsonResponse($doc, $this->renderer, $this->router, 'docs/show.md.twig', [
                 'plugin' => $plugin,
                 'doc' => $doc,
                 'full' => false,

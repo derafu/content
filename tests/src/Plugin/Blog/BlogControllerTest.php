@@ -72,9 +72,7 @@ final class BlogControllerTest extends TestCase
         );
         $plugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
 
-        $router = RouterFixture::create([
-            'homepage' => ['path' => '/', 'handler' => 'App\\Controller\\HomeController::index'],
-        ]);
+        $router = RouterFixture::create();
         $router->setContext(new RequestContext(pathInfo: '/blog'));
 
         $this->controller = new BlogController(
@@ -106,6 +104,44 @@ final class BlogControllerTest extends TestCase
         $html = $this->controller->index($request);
 
         $this->assertStringNotContainsString('Post futuro', $html);
+    }
+
+    public function testTheSidebarLinksToTheRssFeed(): void
+    {
+        $request = new Request('GET', 'http://localhost/blog');
+
+        $html = $this->controller->index($request);
+
+        $this->assertMatchesRegularExpression(
+            '#<a href="[^"]*/blog/rss\.xml"[^>]*>\s*<i class="fa-solid fa-rss[^"]*"></i>\s*RSS\s*</a>#',
+            $html
+        );
+    }
+
+    /**
+     * The feed is advertised in the `<head>` so feed readers and browsers
+     * find it without the visitor looking for the link. Every page of the
+     * blog must do it, including a post, whose own `custom_head` block would
+     * replace the one of the layout unless it calls `parent()`.
+     */
+    public function testEveryBlogPageAdvertisesTheRssFeedForAutodiscovery(): void
+    {
+        $pages = [
+            'index' => $this->controller->index(new Request('GET', 'http://localhost/blog')),
+            'show' => $this->controller->show(
+                new Request('GET', 'http://localhost/blog/2026-01-15-primer-post'),
+                '2026-01-15-primer-post'
+            ),
+            'tag' => $this->controller->tag(new Request('GET', 'http://localhost/blog/tags/demo'), 'demo'),
+        ];
+
+        foreach ($pages as $page => $html) {
+            $this->assertMatchesRegularExpression(
+                '#<link rel="alternate" type="application/rss\+xml" title="[^"]+" href="[^"]*/blog/rss\.xml">#',
+                $html,
+                sprintf('The "%s" page does not advertise the RSS feed.', $page)
+            );
+        }
     }
 
     public function testShowRendersASinglePost(): void

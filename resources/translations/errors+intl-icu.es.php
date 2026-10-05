@@ -41,4 +41,32 @@ return [
         'El backend de LLM en "{url}" respondió HTTP {status}{detail}.',
     'The LLM backend at "{url}" returned a response without a "choices[0].message.content" field.' =>
         'El backend de LLM en "{url}" respondió sin un campo "choices[0].message.content".',
+    'Path {path} must be a readable file content.' =>
+        'La ruta {path} debe ser un archivo de contenido legible.',
+    'The parent of the content "{content}" can not be set after its URI, level, route or ancestors (or those of its children) were read. Set the parent before reading them.' =>
+        'El padre del contenido "{content}" no se puede definir después de leer su URI, nivel, ruta o ancestros (o los de sus hijos). Define el padre antes de leerlos.',
+    'Path {path} must be a readable attachment.' =>
+        'La ruta {path} debe ser un adjunto legible.',
+    'Plugin "{plugin}" not found. Available plugins: {plugins}.' =>
+        'No se encontró el plugin "{plugin}". Plugins disponibles: {plugins}.',
+    'Invalid academy test JSON: {error}' =>
+        'JSON de prueba de academia inválido: {error}',
+    'Invalid OpenAPI document: {error}' =>
+        'Documento OpenAPI inválido: {error}',
+    'No Markdown template known for content category "{category}".' =>
+        'No se conoce una plantilla Markdown para la categoría de contenido "{category}".',
+    'Query is required.' =>
+        'La consulta es obligatoria.',
+    'The "search" plugin has "llm_url" configured but no "llm_model". Set "llm_model" to the model name your LLM backend expects.' =>
+        'El plugin "search" tiene "llm_url" configurado pero no "llm_model". Define "llm_model" con el nombre del modelo que espera tu backend de LLM.',
+    'Key "name" is required for addRoute().' =>
+        'La clave "name" es obligatoria para addRoute().',
+    'Key "path" is required for addRoute().' =>
+        'La clave "path" es obligatoria para addRoute().',
+    'Key "handler" is required for addRoute().' =>
+        'La clave "handler" es obligatoria para addRoute().',
+    'Remote content at {url} could not be fetched: {error}' =>
+        'No se pudo obtener el contenido remoto en {url}: {error}',
+    'Remote content at {url} responded with status {status}.' =>
+        'El contenido remoto en {url} respondió con el estado {status}.',
 ];

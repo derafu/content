@@ -24,6 +24,10 @@ use Throwable;
  * MCP tool that searches the content indexed in the semantic search engine
  * (Qdrant, through the "search" plugin), the same engine used by the
  * `/api/search.json` endpoint and the website's search page.
+ *
+ * Its errors are `ToolCallException` of the MCP SDK (a `final` class, so they
+ * can not be translatable): the message goes to the MCP client, an agent, and it
+ * is always in English.
  */
 class SearchContentTool
 {

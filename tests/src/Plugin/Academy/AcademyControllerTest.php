@@ -88,7 +88,8 @@ final class AcademyControllerTest extends TestCase
 
         $this->controller = new AcademyController(
             ContentFixtures::contentService(['academy' => $plugin]),
-            RendererFixture::create($router)
+            RendererFixture::create($router),
+            $router
         );
     }
 

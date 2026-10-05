@@ -670,6 +670,11 @@ final class McpControllerTest extends TestCase
                 throw new RouteNotFoundException($uri ?? '');
             }
 
+            public function has(string $name): bool
+            {
+                return false;
+            }
+
             public function generate(string $name, array $parameters = [], UrlReferenceType $referenceType = UrlReferenceType::ABSOLUTE_PATH): string
             {
                 return 'http://localhost/' . ($parameters['doc'] ?? '');

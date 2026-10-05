@@ -110,27 +110,38 @@ class BlogPlugin extends AbstractContentPlugin implements ContentPluginInterface
             'types' => 'array',
             'required' => false,
             'schema' => [
+                // Number of posts in the feed: always the latest ones.
                 'limit' => [
                     'types' => 'int',
                     'required' => true,
-                    'default' => 20,
+                    'default' => 10,
+                ],
+                // Most posts a reader can ask for with "?limit=" in the URL
+                // of the feed. A bigger number is reduced to this one.
+                'maxLimit' => [
+                    'types' => 'int',
+                    'required' => true,
+                    'default' => 50,
                 ],
                 'title' => [
                     'types' => 'string',
-                    'required' => false, // By default, the blog title is used.
+                    'required' => false, // By default "Blog of {site}", with the title of the website.
                 ],
                 'description' => [
                     'types' => 'string',
-                    'required' => false, // By default, the blog description is used.
+                    'required' => false, // By default a generic description of the blog.
                 ],
                 'copyright' => [
                     'types' => 'string',
-                    'required' => false,
+                    'required' => false, // It is not written in the feed unless it is set.
                 ],
                 'language' => [
                     'types' => 'string',
-                    'required' => false,
+                    'required' => false, // For example "es-CL". It is not written in the feed unless it is set.
                 ],
+                // Order of the posts in the feed. The posts that are part of
+                // it are always the latest ones, this only sets the order in
+                // which they are listed.
                 'sortPosts' => [
                     'types' => 'string',
                     'required' => true,

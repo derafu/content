@@ -18,6 +18,9 @@ return [
     'by {authors}' => 'por {authors}',
     'On this page' => 'En esta página',
     'Tags:' => 'Etiquetas:',
+    'breadcrumb' => 'migas de pan',
+    'RSS' => 'RSS',
+    '{size} KB' => '{size} KB',
     'Tags' => 'Etiquetas',
     'Tag: {name}' => 'Etiqueta: {name}',
     'Month: {name}' => 'Mes: {name}',
@@ -62,6 +65,7 @@ return [
     'Read more' => 'Leer más',
     '{time} min read' => '{time} min de lectura',
     'Latest Posts' => 'Últimas publicaciones',
+    'RSS feed' => 'Feed RSS',
     'Archives' => 'Archivos',
 
     // Search.

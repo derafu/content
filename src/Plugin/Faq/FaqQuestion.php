@@ -63,21 +63,4 @@ class FaqQuestion extends AbstractContentItem implements FaqQuestionInterface
 
         return $parent;
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function links(): array
-    {
-        if (!isset($this->links)) {
-            $urlBasePath = '/faq';
-
-            $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
-                'collection' => ['href' => $urlBasePath],
-            ];
-        }
-
-        return $this->links;
-    }
 }

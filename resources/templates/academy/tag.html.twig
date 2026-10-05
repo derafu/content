@@ -53,7 +53,7 @@
 
                 <!-- Main content -->
                 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                    <nav aria-label="breadcrumb" class="mb-4">
+                    <nav aria-label="{{ 'breadcrumb'|trans }}" class="mb-4">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item">
                                 <a href="{{ path('academy') }}">
@@ -72,11 +72,6 @@
                                 <div class="ms-2 me-auto">
                                     <div class="fw-bold">{{ course.title }}</div>
                                     {{ course.description | markdown }}
-                                    {% if course.ancestors | length > 0 %}
-                                        <div class="text-muted small">
-                                            {{ 'Academy'|trans }} &raquo; {{ course.ancestors | map(ancestor => ancestor.title) | join(' &raquo; ') | raw }}
-                                        </div>
-                                    {% endif %}
                                 </div>
                                 <span class="badge text-bg-primary rounded-pill">
                                     {{ '{time} min read'|trans({'time': course.time}) }}

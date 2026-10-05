@@ -80,11 +80,7 @@ class ApiController
         return [
             'meta' => [
                 'count' => count($data),
-                'url' => $this->router->generate(
-                    'homepage',
-                    [],
-                    UrlReferenceType::ABSOLUTE_URL
-                ),
+                'url' => rtrim($this->contentService->context()->config()->url(), '/') . '/',
                 'generated' => date('Y-m-d H:i:s'),
             ],
             'data' => $data,

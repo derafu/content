@@ -65,23 +65,6 @@ class DocsDoc extends AbstractContentItem implements DocsDocInterface
     /**
      * {@inheritDoc}
      */
-    public function links(): array
-    {
-        if (!isset($this->links)) {
-            $urlBasePath = '/docs';
-
-            $this->links = [
-                'self' => ['href' => $urlBasePath . '/' . $this->uri()],
-                'collection' => ['href' => $urlBasePath],
-            ];
-        }
-
-        return $this->links;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function openapiSpec(): ?DocsOpenApiSpecInterface
     {
         if (!isset($this->openapiSpec)) {
