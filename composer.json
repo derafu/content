@@ -43,7 +43,7 @@
         "phpunit/phpunit": "^13.4",
         "guzzlehttp/guzzle": "^7.15",
         "mcp/sdk": "^0.7",
-        "derafu/markdown": "dev-main",
+        "derafu/markdown": "^2.0",
         "mpdf/mpdf": "^8.3",
         "nikic/php-parser": "^5.9"
     },
