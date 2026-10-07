@@ -186,7 +186,7 @@ final class McpControllerTest extends TestCase
         array $payload,
         ?string $sessionId = null,
         ?McpController $controller = null,
-        string $requestUrl = 'http://localhost/api/mcp'
+        string $requestUrl = 'http://localhost/api/content/mcp'
     ): array {
         $headers = [
             'Content-Type' => 'application/json',
@@ -211,7 +211,7 @@ final class McpControllerTest extends TestCase
         ];
     }
 
-    private function initialize(?McpController $controller = null, string $requestUrl = 'http://localhost/api/mcp'): string
+    private function initialize(?McpController $controller = null, string $requestUrl = 'http://localhost/api/content/mcp'): string
     {
         [, $sessionId] = $this->callMcp([
             'jsonrpc' => '2.0',
@@ -606,13 +606,13 @@ final class McpControllerTest extends TestCase
     {
         $controller = $this->buildController(askEnabled: false, url: 'https://www.libredte.cl');
 
-        $sessionId = $this->initialize($controller, 'https://www.libredte.cl/api/mcp');
+        $sessionId = $this->initialize($controller, 'https://www.libredte.cl/api/content/mcp');
 
         [$body] = $this->callMcp([
             'jsonrpc' => '2.0',
             'id' => 12,
             'method' => 'tools/list',
-        ], $sessionId, $controller, 'https://www.libredte.cl/api/mcp');
+        ], $sessionId, $controller, 'https://www.libredte.cl/api/content/mcp');
 
         $this->assertArrayHasKey('result', $body);
         $this->assertArrayNotHasKey('error', $body);
@@ -629,7 +629,7 @@ final class McpControllerTest extends TestCase
 
         $request = new Request(
             'POST',
-            'http://evil.example.com/api/mcp',
+            'http://evil.example.com/api/content/mcp',
             [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json, text/event-stream',

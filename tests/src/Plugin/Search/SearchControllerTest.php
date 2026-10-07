@@ -98,7 +98,7 @@ final class SearchControllerTest extends TestCase
      */
     public function testApiIndexFiltersOutNonSearchableAndNoLongerAllowedResults(): void
     {
-        $request = new Request('GET', 'http://localhost/api/search.json?q=hola');
+        $request = new Request('GET', 'http://localhost/api/content/search.json?q=hola');
 
         $results = $this->controller()->api_index($request);
 

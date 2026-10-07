@@ -201,7 +201,7 @@
 {% block javascripts %}
 <script>
 // Configuration for LLM proxy endpoint.
-const LLM_PROXY_URL = "{{ path('search_llm_query') }}";
+const LLM_PROXY_URL = "{{ path('content_search_llm_query') }}";
 
 // Translated strings for the AI Assistant widget.
 const i18nLoading = "{{ 'Loading...'|trans|e('js') }}";

@@ -82,7 +82,7 @@ final class ContentExceptionsTest extends TestCase
             ],
             'search without a query' => [
                 fn () => (new SearchController(ContentFixtures::contentService([]), RendererFixture::create()))
-                    ->api_index(new Request('GET', 'http://localhost/api/search.json')),
+                    ->api_index(new Request('GET', 'http://localhost/api/content/search.json')),
                 \InvalidArgumentException::class,
                 'Query is required.',
             ],
