@@ -16,6 +16,7 @@ use Derafu\Http\Contract\HttpExceptionInterface;
 use Derafu\Http\Enum\HttpStatus;
 use Derafu\Translation\Contract\TranslatableInterface;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException;
+use Derafu\Translation\Trait\HeadersAwareTrait;
 use Throwable;
 
 /**
@@ -30,6 +31,8 @@ use Throwable;
  */
 class ContentNotFoundException extends TranslatableRuntimeException implements HttpExceptionInterface
 {
+    use HeadersAwareTrait;
+
     /**
      * Constructor.
      *
@@ -72,14 +75,6 @@ class ContentNotFoundException extends TranslatableRuntimeException implements H
      * {@inheritDoc}
      */
     public function getContext(): array
-    {
-        return [];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getHeaders(): array
     {
         return [];
     }

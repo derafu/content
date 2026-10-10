@@ -15,6 +15,7 @@ namespace Derafu\Content\Exception;
 use Derafu\Http\Contract\HttpExceptionInterface;
 use Derafu\Http\Enum\HttpStatus;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
+use Derafu\Translation\Trait\HeadersAwareTrait;
 
 /**
  * Exception for when a plugin is requested but the website did not enable it.
@@ -29,6 +30,8 @@ use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
  */
 class PluginNotFoundException extends TranslatableInvalidArgumentException implements HttpExceptionInterface
 {
+    use HeadersAwareTrait;
+
     /**
      * {@inheritDoc}
      */
@@ -57,14 +60,6 @@ class PluginNotFoundException extends TranslatableInvalidArgumentException imple
      * {@inheritDoc}
      */
     public function getContext(): array
-    {
-        return [];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getHeaders(): array
     {
         return [];
     }
