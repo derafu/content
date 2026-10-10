@@ -18,6 +18,7 @@ use Derafu\Content\Lint\ContentLinkAuditReport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,7 +28,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(ContentLinkAudit::class)]
 #[CoversClass(ContentLinkAuditReport::class)]
-#[CoversClass(ContentLink::class)]
+#[UsesClass(ContentLink::class)]
 final class ContentLinkAuditTest extends TestCase
 {
     /**
@@ -67,6 +68,24 @@ final class ContentLinkAuditTest extends TestCase
     {
         $report = $this->audit(['/docs/a' => self::page('<a href="/docs/gone">gone</a>')])->audit(['/docs/a']);
 
+        $this->assertSame(['/docs/a => /docs/gone (text: "gone")'], $report->describe($report->missingPages));
+    }
+
+    #[Test]
+    public function theTextOfTheLinkIsTrimmedAsTheRenderedPageHasIt(): void
+    {
+        $report = $this->audit(['/docs/a' => self::page("<a href=\"/docs/gone\">\n  gone  \n</a>")])->audit(['/docs/a']);
+
+        $this->assertSame('gone', $report->missingPages[0]->text);
+    }
+
+    #[Test]
+    public function aLinkWithNoTextOfItsOwnHasAnEmptyOne(): void
+    {
+        // An image inside the `<a>`, for one.
+        $report = $this->audit(['/docs/a' => self::page('<a href="/docs/gone"><img src="x.png"></a>')])->audit(['/docs/a']);
+
+        $this->assertSame('', $report->missingPages[0]->text);
         $this->assertSame(['/docs/a => /docs/gone'], $report->describe($report->missingPages));
     }
 
@@ -81,7 +100,7 @@ final class ContentLinkAuditTest extends TestCase
         $report = $audit->audit(['/docs/a']);
 
         $this->assertSame(
-            ['/docs/a => /docs/b#not-there', '/docs/a => #nowhere [/docs/a#nowhere]'],
+            ['/docs/a => /docs/b#not-there (text: "bad")', '/docs/a => #nowhere [/docs/a#nowhere] (text: "bad")'],
             $report->describe($report->missingAnchors)
         );
         $this->assertSame([], $report->missingPages);
@@ -99,7 +118,7 @@ final class ContentLinkAuditTest extends TestCase
 
         $report = $audit->audit(['/docs/a']);
 
-        $this->assertSame(['/docs/a => /docs/b#llm'], $report->describe($report->missingAnchors));
+        $this->assertSame(['/docs/a => /docs/b#llm (text: "plain")'], $report->describe($report->missingAnchors));
     }
 
     /**
@@ -179,7 +198,11 @@ final class ContentLinkAuditTest extends TestCase
         $report = $audit->audit(['/docs/a']);
 
         $this->assertSame(
-            ['/docs/a => b.md#part [/docs/b.md#part]', '/docs/a => /docs/b.pdf', '/docs/a => /docs/b.JSON'],
+            [
+                '/docs/a => b.md#part [/docs/b.md#part] (text: "md")',
+                '/docs/a => /docs/b.pdf (text: "pdf")',
+                '/docs/a => /docs/b.JSON (text: "json")',
+            ],
             $report->describe($report->formatLinks)
         );
         $this->assertSame([], $report->missingPages);
@@ -205,7 +228,7 @@ final class ContentLinkAuditTest extends TestCase
 
         $report = $audit->audit(['/docs/a'], selector: 'main');
 
-        $this->assertSame(['/docs/a => /docs/gone'], $report->describe($report->missingPages));
+        $this->assertSame(['/docs/a => /docs/gone (text: "content")'], $report->describe($report->missingPages));
         $this->assertSame(1, $report->linksChecked);
     }
 
@@ -216,7 +239,7 @@ final class ContentLinkAuditTest extends TestCase
 
         $report = $audit->audit(['/docs/a'], allowed: ['/docs/a' => ['/gone']]);
 
-        $this->assertSame(['/docs/a => /other'], $report->describe($report->missingPages));
+        $this->assertSame(['/docs/a => /other (text: "2")'], $report->describe($report->missingPages));
     }
 
     #[Test]
@@ -229,7 +252,7 @@ final class ContentLinkAuditTest extends TestCase
 
         $report = $audit->audit(['/docs/a', '/docs/b'], allowed: ['/docs/a' => ['/gone']]);
 
-        $this->assertSame(['/docs/b => /gone'], $report->describe($report->missingPages));
+        $this->assertSame(['/docs/b => /gone (text: "2")'], $report->describe($report->missingPages));
     }
 
     #[Test]

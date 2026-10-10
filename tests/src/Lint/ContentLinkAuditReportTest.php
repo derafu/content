@@ -33,27 +33,15 @@ final class ContentLinkAuditReportTest extends TestCase
     }
 
     #[Test]
-    public function aLinkThatIsWrittenAsItGoesIsDescribedByWhereItIsAndWhatItSays(): void
+    public function aLinkIsDescribedByItsOwnText(): void
     {
-        $link = new ContentLink('/docs/a', '/docs/gone', '/docs/gone', null);
+        // `describe()` does not format anything itself: it is `ContentLink` that
+        // says what it is (`__toString()`), the same text that `toArray()` and the
+        // object itself give apart, for whoever wants the facts and not a line.
+        $link = new ContentLink('/docs/a', 'gone', '/docs/gone');
 
-        $this->assertSame(['/docs/a => /docs/gone'], self::report()->describe([$link]));
-    }
-
-    #[Test]
-    public function aLinkThatGoesElsewhereThanItIsWrittenSaysWhere(): void
-    {
-        $link = new ContentLink('/docs/a', './b#part', '/docs/b', 'part');
-
-        $this->assertSame(['/docs/a => ./b#part [/docs/b#part]'], self::report()->describe([$link]));
-    }
-
-    #[Test]
-    public function aFragmentOfThePageItselfIsDescribedWithItsPage(): void
-    {
-        $link = new ContentLink('/docs/a', '#gone', '/docs/a', 'gone');
-
-        $this->assertSame(['/docs/a => #gone [/docs/a#gone]'], self::report()->describe([$link]));
+        $this->assertSame([(string) $link], self::report()->describe([$link]));
+        $this->assertSame('/docs/a => /docs/gone (text: "gone")', (string) $link);
     }
 
     #[Test]
@@ -66,12 +54,10 @@ final class ContentLinkAuditReportTest extends TestCase
     public function theFindingsAreDescribedInTheirOrderAndNothingIsNothing(): void
     {
         $report = self::report();
+        $link = new ContentLink('/docs/a', '', '/gone');
 
         $this->assertSame([], $report->describe([]));
-        $this->assertSame(
-            ['/docs/x', '/docs/a => /gone'],
-            $report->describe(['/docs/x', new ContentLink('/docs/a', '/gone', '/gone', null)])
-        );
+        $this->assertSame(['/docs/x', (string) $link], $report->describe(['/docs/x', $link]));
     }
 
     #[Test]

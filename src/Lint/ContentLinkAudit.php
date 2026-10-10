@@ -46,9 +46,10 @@ final class ContentLinkAudit
 
     /**
      * What the pages that were read have: their ids and the links that are to be
-     * audited. A page that is not served is false.
+     * audited (the `href` and the text of each anchor). A page that is not
+     * served is false.
      *
-     * @var array<string, false|array{ids: array<string, true>, links: list<string>}>
+     * @var array<string, false|array{ids: array<string, true>, links: list<array{href: string, text: string}>}>
      */
     private array $pages = [];
 
@@ -87,8 +88,8 @@ final class ContentLinkAudit
                 continue;
             }
 
-            foreach ($page['links'] as $href) {
-                $link = $this->link($path, $href);
+            foreach ($page['links'] as $anchor) {
+                $link = $this->link($path, $anchor['href'], $anchor['text']);
                 if ($link === null || in_array($link->href, $allowed[$path] ?? [], true) || isset($seen[$link->identity()])) {
                     continue;
                 }
@@ -124,7 +125,7 @@ final class ContentLinkAudit
     /**
      * Reads a page, once.
      *
-     * @return false|array{ids: array<string, true>, links: list<string>}
+     * @return false|array{ids: array<string, true>, links: list<array{href: string, text: string}>}
      */
     private function page(string $path, ?string $selector): false|array
     {
@@ -151,7 +152,10 @@ final class ContentLinkAudit
 
         $links = [];
         foreach ($document->querySelectorAll(($selector !== null ? $selector . ' ' : '') . 'a[href]') as $anchor) {
-            $links[] = (string) $anchor->getAttribute('href');
+            $links[] = [
+                'href' => (string) $anchor->getAttribute('href'),
+                'text' => trim($anchor->textContent),
+            ];
         }
 
         return $this->pages[$path] = ['ids' => $ids, 'links' => $links];
@@ -161,54 +165,13 @@ final class ContentLinkAudit
      * The link of a page, resolved, or null if it does not go to a page of the site:
      * another site, another scheme (`mailto:`), or nothing.
      */
-    private function link(string $from, string $href): ?ContentLink
+    private function link(string $from, string $href, string $text): ?ContentLink
     {
         $href = trim($href);
         if ($href === '' || str_starts_with($href, '//') || preg_match('#^[a-z][a-z0-9+.-]*:#i', $href) === 1) {
             return null;
         }
 
-        $fragment = null;
-        if (($hash = strpos($href, '#')) !== false) {
-            $fragment = rawurldecode(substr($href, $hash + 1));
-            $href2 = substr($href, 0, $hash);
-        } else {
-            $href2 = $href;
-        }
-        $path = ($query = strpos($href2, '?')) !== false ? substr($href2, 0, $query) : $href2;
-        $from = ($query = strpos($from, '?')) !== false ? substr($from, 0, $query) : $from;
-
-        if ($path === '') {
-            $target = $from;
-        } elseif ($path[0] === '/') {
-            $target = $this->normalize($path);
-        } else {
-            // A relative link goes from the directory of the page, as the browser
-            // reads it: `/docs/a/b` is in `/docs/a/`, and `/docs/a/` is in itself.
-            $base = substr($from, 0, (int) strrpos($from, '/') + 1);
-            $target = $this->normalize($base . $path);
-        }
-
-        return new ContentLink($from, $href, $target, $fragment);
-    }
-
-    /**
-     * Resolves `.` and `..`, and the slashes that repeat, of a path.
-     */
-    private function normalize(string $path): string
-    {
-        $segments = [];
-        $parts = explode('/', $path);
-        foreach ($parts as $part) {
-            if ($part === '..') {
-                array_pop($segments);
-            } elseif ($part !== '.' && $part !== '') {
-                $segments[] = $part;
-            }
-        }
-
-        $last = end($parts);
-
-        return '/' . implode('/', $segments) . (($last === '' || $last === '.' || $last === '..') && $segments !== [] ? '/' : '');
+        return new ContentLink($from, $text, $href);
     }
 }

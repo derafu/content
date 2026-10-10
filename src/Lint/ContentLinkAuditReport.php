@@ -61,26 +61,21 @@ final readonly class ContentLinkAuditReport
     }
 
     /**
-     * Turns findings into lines, one each, for the message of a failed test: the
-     * page, the link as it is written and, if it is not the same, where it goes.
+     * Turns findings into lines, one each, for the message of a failed test: a
+     * path is its own line, a `ContentLink` is its `__toString()` (where it is,
+     * what it says, where it really goes and its text, when it has one).
+     *
+     * This is a convenience to read a failure; it is not the only way to get at
+     * a finding. `missingPages`, `missingAnchors` and `formatLinks` are already
+     * `list<ContentLink>`, so a test that wants the facts apart (to check one
+     * field, or to build its own message) uses `ContentLink::toArray()` or the
+     * object itself, not this method.
      *
      * @param list<ContentLink|string> $findings
      * @return list<string>
      */
     public function describe(array $findings): array
     {
-        $lines = [];
-
-        foreach ($findings as $finding) {
-            if (is_string($finding)) {
-                $lines[] = $finding;
-                continue;
-            }
-
-            $goes = $finding->target . ($finding->fragment !== null ? '#' . $finding->fragment : '');
-            $lines[] = $finding->identity() . ($goes !== $finding->href ? ' [' . $goes . ']' : '');
-        }
-
-        return $lines;
+        return array_map(strval(...), $findings);
     }
 }
