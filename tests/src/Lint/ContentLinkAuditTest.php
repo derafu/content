@@ -303,6 +303,42 @@ final class ContentLinkAuditTest extends TestCase
     }
 
     #[Test]
+    public function aPageWithoutFragmentChecksIsNotCheckedForTheFragmentItLacks(): void
+    {
+        $audit = $this->audit([
+            '/docs/a' => self::page('<a href="/docs/api#x">x</a>'),
+            '/docs/api' => self::page('<p>built by JavaScript, so it has no id of its own</p>'),
+        ]);
+
+        $report = $audit->audit(['/docs/a'], pagesWithoutFragments: ['/docs/api']);
+
+        $this->assertSame([], $report->missingAnchors);
+    }
+
+    #[Test]
+    public function aPageWithoutFragmentChecksStillHasToBeReached(): void
+    {
+        $audit = $this->audit(['/docs/a' => self::page('<a href="/docs/api#x">x</a>')]);
+
+        $report = $audit->audit(['/docs/a'], pagesWithoutFragments: ['/docs/api']);
+
+        $this->assertSame(['/docs/a => /docs/api#x (text: "x")'], $report->describe($report->missingPages));
+    }
+
+    #[Test]
+    public function aPageWithoutFragmentChecksDoesNotCoverTheOthers(): void
+    {
+        $audit = $this->audit([
+            '/docs/a' => self::page('<a href="/docs/api#x">x</a><a href="/docs/b#not-there">y</a>'),
+            '/docs/b' => self::page('<h2 id="there">There</h2>'),
+        ]);
+
+        $report = $audit->audit(['/docs/a'], pagesWithoutFragments: ['/docs/api']);
+
+        $this->assertSame(['/docs/a => /docs/b#not-there (text: "y")'], $report->describe($report->missingAnchors));
+    }
+
+    #[Test]
     public function aSiteWithoutLinksProvesNothing(): void
     {
         $report = $this->audit(['/docs/a' => self::page('<p>no links</p>')])->audit(['/docs/a']);

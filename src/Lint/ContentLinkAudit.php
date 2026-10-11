@@ -70,9 +70,17 @@ final class ContentLinkAudit
      * @param string|null $selector A CSS selector: only the links inside what it
      * selects are checked (`main`, for the content of the page and not the menu or
      * the footer, that every page repeats). Without it, all of them.
+     * @param list<string> $pagesWithoutFragments Pages that a link still has to
+     * reach, but whose fragment is never checked: a page whose content a browser
+     * builds afterwards (with JavaScript), so the site never serves an id that is
+     * in it.
      */
-    public function audit(array $paths, array $allowed = [], ?string $selector = null): ContentLinkAuditReport
-    {
+    public function audit(
+        array $paths,
+        array $allowed = [],
+        ?string $selector = null,
+        array $pagesWithoutFragments = []
+    ): ContentLinkAuditReport {
         $this->pages = [];
         $unreachable = [];
         $missingPages = [];
@@ -113,7 +121,11 @@ final class ContentLinkAudit
                 }
 
                 // An empty fragment and `top` always go to the top of the page (HTML).
-                if ($link->fragment !== null && $link->fragment !== '' && $link->fragment !== 'top' && !isset($target['ids'][$link->fragment])) {
+                if (
+                    $link->fragment !== null && $link->fragment !== '' && $link->fragment !== 'top'
+                    && !isset($target['ids'][$link->fragment])
+                    && !in_array($link->target, $pagesWithoutFragments, true)
+                ) {
                     $missingAnchors[] = $link;
                 }
             }
