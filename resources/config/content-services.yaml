@@ -11,7 +11,7 @@ parameters:
             # mcp: ~
             # pages: ~
             # search: ~
-            # sitemap: ~
+            sitemap: ~
             storage: ~
 
 services:
