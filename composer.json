@@ -32,6 +32,7 @@
         "derafu/config": "dev-main",
         "derafu/http": "dev-main",
         "derafu/translation": "dev-main",
+        "derafu/twig-components": "dev-main",
         "psr/cache": "^3.0",
         "psr/http-client": "^1.0",
         "symfony/cache": "^8.1"

@@ -19,6 +19,7 @@ use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Twig\Extension\RoutingExtension;
 use Derafu\Twig\Extension\TranslationExtension;
 use Derafu\Twig\Extension\TwigExtension;
+use Derafu\Twig\Provider\DirectoryComponentProvider;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
@@ -78,9 +79,13 @@ final class RendererFixture
             'paths' => [
                 ContentFixtures::templatesPath(),
                 dirname(__DIR__, 3) . '/resources/templates',
+                dirname(__DIR__, 3) . '/vendor/derafu/twig-components/resources/templates',
             ],
             'engines' => ['twig', 'markdown', 'pdf'],
             'extensions' => $extensions,
+            'components' => new DirectoryComponentProvider(
+                dirname(__DIR__, 3) . '/vendor/derafu/twig-components/src/Component'
+            ),
         ]);
     }
 }
