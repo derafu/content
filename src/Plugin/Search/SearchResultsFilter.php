@@ -17,7 +17,7 @@ use Derafu\Content\Contract\ContentServiceInterface;
 use Throwable;
 
 /**
- * Filters raw upstream search engine results (Qdrant, in production)
+ * Filters raw upstream search engine results
  * against the local content registry, shared by every consumer of
  * SearchEngine::query() (SearchController, the MCP search_content tool).
  */
@@ -42,13 +42,19 @@ final class SearchResultsFilter
         return array_values(array_filter(
             $results,
             function (array $result) use ($contentService): bool {
+                $type = $result['type'] ?? null;
+                $uri = $result['uri'] ?? null;
+                if (!is_string($type) || !is_string($uri)) {
+                    return false;
+                }
+
                 try {
-                    $plugin = $contentService->plugin((string) ($result['type'] ?? ''));
+                    $plugin = $contentService->plugin($type);
                     if (!$plugin instanceof ContentPluginInterface) {
                         return false;
                     }
 
-                    $item = $plugin->registry()->get((string) ($result['uri'] ?? ''));
+                    $item = $plugin->registry()->get($uri);
                 } catch (Throwable) {
                     return false;
                 }

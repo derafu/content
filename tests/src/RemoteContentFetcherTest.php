@@ -44,7 +44,7 @@ final class RemoteContentFetcherTest extends TestCase
 
         $body = $fetcher->fetch(self::$server->url() . '/?scenario=academy_test_ok');
 
-        $this->assertStringContainsString('Cuestionario remoto', $body);
+        $this->assertStringContainsString('Remote quiz', $body);
     }
 
     public function testUnreachableHostThrows(): void

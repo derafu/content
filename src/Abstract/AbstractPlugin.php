@@ -45,6 +45,7 @@ abstract class AbstractPlugin implements PluginInterface
      * Constructor of the plugin.
      *
      * @param ContentContext $context Context of the content website.
+     * @param array<string, mixed> $options
      */
     public function __construct(ContentContext $context, array $options = [])
     {
@@ -65,7 +66,7 @@ abstract class AbstractPlugin implements PluginInterface
      */
     public function name(): string
     {
-        return $this->options->get('name');
+        return $this->options->requireString('name');
     }
 
     /**
@@ -90,6 +91,8 @@ abstract class AbstractPlugin implements PluginInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<string, mixed> $options
      */
     public static function validateOptions(array $options): void
     {
@@ -100,7 +103,7 @@ abstract class AbstractPlugin implements PluginInterface
     /**
      * Get the schema of the options of the plugin.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     protected static function getSchema(): array
     {

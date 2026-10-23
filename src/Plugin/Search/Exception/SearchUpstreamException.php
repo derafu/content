@@ -34,7 +34,7 @@ class SearchUpstreamException extends TranslatableRuntimeException implements Ht
     /**
      * Constructor.
      *
-     * @param string|array|TranslatableInterface $message The exception message.
+     * @param string|array<int|string, mixed>|TranslatableInterface $message The exception message.
      * @param Throwable|null $previous The previous throwable used for
      * exception chaining.
      */

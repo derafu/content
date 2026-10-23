@@ -1,0 +1,133 @@
+openapi: 3.1.0
+info:
+  title: Full API
+  description: An API with a bit of everything.
+  version: 2.0.0
+servers:
+  - url: https://api.example.test
+  - url: https://sandbox.example.test
+tags:
+  - name: Widgets
+    description: Everything about the widgets.
+  - name: Empty
+    description: A tag without operations.
+paths:
+  /widgets/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identifier of the widget.
+        schema:
+          type: string
+      - name: q
+        in: query
+        schema:
+          type: string
+    get:
+      tags: [Widgets]
+      summary: Get a widget
+      description: Returns **one** widget.
+      parameters:
+        - name: q
+          in: query
+          description: Overridden by the operation.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The widget.
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Widgets]
+      responses:
+        '204':
+          description: Deleted.
+  /widgets:
+    post:
+      tags: [Widgets]
+      summary: Create a widget
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: filter
+          in: query
+          schema:
+            type: object
+        - name: ratio
+          in: query
+          schema:
+            type: number
+        - name: dry
+          in: query
+          schema:
+            type: boolean
+        - name: kind
+          in: query
+          schema:
+            $ref: '#/components/schemas/Kind'
+        - name: free
+          in: query
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Widget
+              quantity: 3
+      responses:
+        '201':
+          description: Created.
+  /gadgets:
+    get:
+      tags: [Gadgets]
+      summary: List gadgets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+          text/plain:
+            examples:
+              none:
+                summary: Without value
+              first:
+                value:
+                  gadget: true
+      responses:
+        default:
+          description: Whatever happens.
+  /text:
+    put:
+      tags: [Gadgets]
+      requestBody:
+        content:
+          text/plain:
+            example: plain text
+      responses:
+        '200':
+          description: Stored.
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Alive.
+components:
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+  responses:
+    NotFound:
+      description: The widget does not exist.
+  schemas:
+    Kind:
+      type: string

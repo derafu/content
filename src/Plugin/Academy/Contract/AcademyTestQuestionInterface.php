@@ -78,14 +78,14 @@ interface AcademyTestQuestionInterface extends JsonSerializable, Stringable
     /**
      * Get the question as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array;
 
     /**
      * Get the question as a JSON serializable array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array;
 

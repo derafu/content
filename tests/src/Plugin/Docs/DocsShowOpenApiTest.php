@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsContent\Plugin\Docs;
 
 use Derafu\Content\ContentLoader;
+use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Renderer\Factory\RendererFactory;
 use Derafu\Routing\ValueObject\RequestContext;
@@ -34,7 +35,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversNothing]
 final class DocsShowOpenApiTest extends TestCase
 {
-    private function render(string $template, string $pathInfo): string
+    private function render(string $template, string $pathInfo, ?DocsDoc $doc = null): string
     {
         $plugin = new DocsPlugin(
             ContentFixtures::contentContext(),
@@ -59,7 +60,7 @@ final class DocsShowOpenApiTest extends TestCase
 
         $data = [
             'plugin' => $plugin,
-            'doc' => $plugin->registry()->get('api'),
+            'doc' => $doc ?? $plugin->registry()->get('api'),
             'full' => false,
         ];
 
@@ -76,7 +77,7 @@ final class DocsShowOpenApiTest extends TestCase
         $this->assertStringContainsString('List widgets', $html);
         $this->assertStringContainsString('<code>q</code>', $html);
         $this->assertStringContainsString('A list of widgets.', $html);
-        $this->assertStringContainsString('&quot;name&quot;: &quot;Widget de prueba&quot;', $html);
+        $this->assertStringContainsString('&quot;name&quot;: &quot;Test widget&quot;', $html);
     }
 
     /**
@@ -93,7 +94,7 @@ final class DocsShowOpenApiTest extends TestCase
             '<h3 class="pdf-openapi-group-title">Widgets</h3>',
             $html
         );
-        $this->assertStringContainsString('<li>Requiere autenticaci', $html);
+        $this->assertStringContainsString('<li>Requires test authentication', $html);
         $this->assertStringContainsString(
             '<h3 class="pdf-openapi-group-title">Other</h3>',
             $html
@@ -117,10 +118,10 @@ final class DocsShowOpenApiTest extends TestCase
     {
         $html = $this->render('docs/show.pdf.twig', '/docs/api.pdf');
 
-        $this->assertStringContainsString('<strong>Importante</strong>', $html);
+        $this->assertStringContainsString('<strong>Important</strong>', $html);
         $this->assertStringContainsString('<li>Supports free-text filtering via <code>q</code>.</li>', $html);
         $this->assertStringContainsString('Free-text filter, e.g. <code>q=foo</code>.', $html);
-        $this->assertStringNotContainsString('**Importante**', $html);
+        $this->assertStringNotContainsString('**Important**', $html);
     }
 
     /**
@@ -186,7 +187,7 @@ final class DocsShowOpenApiTest extends TestCase
         $this->assertStringContainsString('#### GET /widgets', $markdown);
         $this->assertStringContainsString('- `q` (query, string)', $markdown);
         $this->assertStringContainsString('- `200` — A list of widgets.', $markdown);
-        $this->assertStringContainsString('"name": "Widget de prueba"', $markdown);
+        $this->assertStringContainsString('"name": "Test widget"', $markdown);
     }
 
     /**
@@ -199,7 +200,7 @@ final class DocsShowOpenApiTest extends TestCase
         $markdown = $this->render('docs/show.md.twig', '/docs/api.md');
 
         $this->assertStringContainsString('### Widgets', $markdown);
-        $this->assertStringContainsString('Requiere autenticaci', $markdown);
+        $this->assertStringContainsString('Requires test authentication', $markdown);
         $this->assertStringContainsString('### Other', $markdown);
         $this->assertStringContainsString('#### GET /gadgets', $markdown);
 
@@ -218,7 +219,7 @@ final class DocsShowOpenApiTest extends TestCase
     {
         $markdown = $this->render('docs/show.md.twig', '/docs/api.md');
 
-        $this->assertStringContainsString('**Importante**', $markdown);
+        $this->assertStringContainsString('**Important**', $markdown);
         $this->assertStringContainsString('- Supports free-text filtering via `q`.', $markdown);
     }
 
@@ -236,5 +237,24 @@ final class DocsShowOpenApiTest extends TestCase
         $this->assertStringContainsString('  - List widgets', $markdown);
         $this->assertStringContainsString("- Other\n", $markdown);
         $this->assertStringContainsString('  - List gadgets', $markdown);
+    }
+
+    /**
+     * The parameters of the path are the ones of every operation of the path,
+     * with the type of each one, and the references of the spec are resolved.
+     */
+    public function testMarkdownHasTheParametersOfThePathAndTheResolvedReferences(): void
+    {
+        $doc = new DocsDoc(dirname(__DIR__, 3) . '/fixtures/openapi/full.md');
+
+        $markdown = $this->render('docs/show.md.twig', '/docs/full.md', $doc);
+
+        $this->assertStringContainsString("#### DELETE /widgets/{id}\n\nParameters:\n\n- `id` (path, string, required) — Identifier of the widget.\n- `q` (query, string)", $markdown);
+        $this->assertStringContainsString('- `q` (query, integer) — Overridden by the operation.', $markdown);
+        $this->assertStringContainsString('- `limit` (query, integer)', $markdown);
+        $this->assertStringContainsString('- `kind` (query, Kind)', $markdown);
+        $this->assertStringContainsString('- `404` — The widget does not exist.', $markdown);
+        $this->assertStringContainsString('- `default` — Whatever happens.', $markdown);
+        $this->assertStringContainsString('Servers: https://api.example.test, https://sandbox.example.test', $markdown);
     }
 }

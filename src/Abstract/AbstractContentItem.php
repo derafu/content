@@ -20,7 +20,6 @@ use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentHtmlTag;
 use Derafu\Content\ContentHtmlTags;
 use Derafu\Content\ContentSplFileInfo;
-use Derafu\Content\ContentSplFileObject;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentAttachmentInterface;
 use Derafu\Content\Contract\ContentAuthorInterface;
@@ -28,9 +27,13 @@ use Derafu\Content\Contract\ContentHtmlTagsInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\RemoteContentFetcher;
 use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Support\ArrayReader;
+use Derafu\Support\ArrayType;
 use Derafu\Support\Str;
 use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -62,13 +65,6 @@ abstract class AbstractContentItem implements ContentItemInterface
     private ContentSplFileInfo $info;
 
     /**
-     * Representation of the content file data.
-     *
-     * @var ContentSplFileObject
-     */
-    private ContentSplFileObject $file;
-
-    /**
      * Name of the content.
      *
      * @var string
@@ -97,9 +93,17 @@ abstract class AbstractContentItem implements ContentItemInterface
     private Options $metadata;
 
     /**
+     * Reader of the frontmatter, that checks the type of what it reads and says
+     * which content it is when a value is not valid.
+     *
+     * @var ArrayReader
+     */
+    private ArrayReader $frontmatter;
+
+    /**
      * Schema of the metadata of the content.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected array $metadataSchema = [
         '__allowUndefinedKeys' => true,
@@ -138,7 +142,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * Route of the content.
      *
-     * @var object
+     * @var object{name: string, params: array<string, string>}
      */
     private object $route;
 
@@ -159,7 +163,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * Keywords of the content.
      *
-     * @var array
+     * @var array<string>
      */
     private array $keywords;
 
@@ -243,7 +247,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * Deprecated date of the content.
      *
-     * @var DateTimeInterface|bool
+     * @var DateTimeInterface|false
      */
     private DateTimeInterface|bool $deprecatedAt;
 
@@ -299,7 +303,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * Sidebar custom props of the content.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     private array $sidebar_custom_props;
 
@@ -371,10 +375,9 @@ abstract class AbstractContentItem implements ContentItemInterface
             if (!$this->info->isFile() || !$this->info->isReadable()) {
                 throw new InvalidArgumentException([
                     'Path {path} must be a readable file content.',
-                    'path' => $this->info->getRealPath(),
+                    'path' => $this->info->getPathname(),
                 ]);
             }
-            $this->info->setFileClass(ContentSplFileObject::class);
         } else {
             $this->info = $info;
         }
@@ -388,22 +391,6 @@ abstract class AbstractContentItem implements ContentItemInterface
     protected function info(): ContentSplFileInfo
     {
         return $this->info;
-    }
-
-    /**
-     * Get the file of the content.
-     *
-     * @return ContentSplFileObject
-     */
-    protected function file(): ContentSplFileObject
-    {
-        if (!isset($this->file)) {
-            $file = $this->info()->openFile();
-            assert($file instanceof ContentSplFileObject);
-            $this->file = $file;
-        }
-
-        return $this->file;
     }
 
     /**
@@ -438,7 +425,7 @@ abstract class AbstractContentItem implements ContentItemInterface
         $data = get_object_vars($this);
 
         $data['info'] = $this->info->getPathname();
-        unset($data['file']);
+        unset($data['file'], $data['frontmatter']);
 
         return $data;
     }
@@ -450,11 +437,10 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     public function __unserialize(array $data): void
     {
-        $path = $data['info'];
+        $path = ArrayReader::from($data, 'content snapshot')->require('info', ArrayType::string());
         unset($data['info']);
 
         $this->info = new ContentSplFileInfo($path);
-        $this->info->setFileClass(ContentSplFileObject::class);
 
         foreach ($data as $key => $value) {
             $this->$key = $value;
@@ -516,7 +502,15 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function raw(): string
     {
         if (!isset($this->raw)) {
-            $this->raw = file_get_contents($this->info()->getRealPath());
+            $raw = file_get_contents($this->info()->getRealPath());
+            if ($raw === false) {
+                throw new RuntimeException([
+                    'The file "{path}" could not be read.',
+                    'path' => $this->info()->getPathname(),
+                ]);
+            }
+
+            $this->raw = $raw;
         }
 
         return $this->raw;
@@ -530,9 +524,8 @@ abstract class AbstractContentItem implements ContentItemInterface
         if (!isset($this->metadata)) {
             $data = $this->raw();
             if (preg_match('/^---\n(.*?)\n---\n/s', $data, $matches)) {
-                $yaml = $matches[1];
                 $this->metadata = new Options(
-                    Yaml::parse($yaml),
+                    $this->parseFrontmatter($matches[1]),
                     $this->metadataSchema
                 );
             } else {
@@ -548,12 +541,53 @@ abstract class AbstractContentItem implements ContentItemInterface
     }
 
     /**
+     * The frontmatter, read with the type that each value must have.
+     *
+     * A value of another type is an error that names the key and the content.
+     * A key that is not there, or is `null`, is absent.
+     *
+     * @return ArrayReader
+     */
+    protected function frontmatter(): ArrayReader
+    {
+        if (!isset($this->frontmatter)) {
+            // The metadata is loaded the first time that it is asked.
+            $this->metadata();
+
+            $this->frontmatter = ArrayReader::from($this->metadata->all(), $this->source());
+        }
+
+        return $this->frontmatter;
+    }
+
+    /**
+     * Says which content it is, for the errors: its type and the names of its
+     * files from the top of the hierarchy (`docs/guide/getting-started`).
+     *
+     * It does not use the metadata (the URI does, through the slug), because it
+     * is what names the content when the metadata is not valid.
+     *
+     * @return string
+     */
+    private function source(): string
+    {
+        $names = [];
+        $item = $this;
+        do {
+            $names[] = $item->name();
+            $item = $item->parent();
+        } while ($item !== null);
+
+        return $this->type() . '/' . implode('/', array_reverse($names));
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function data(array $options = []): string
     {
         if (!isset($this->data)) {
-            $this->data = trim(preg_replace('/^---\n(.*?)\n---\n/s', '', $this->raw()));
+            $this->data = trim($this->replace('/^---\n(.*?)\n---\n/s', '', $this->raw()));
         }
 
         $assetBaseUrl = $options['asset_base_url'] ?? null;
@@ -617,13 +651,13 @@ abstract class AbstractContentItem implements ContentItemInterface
         ?string $linkBaseUrl
     ): string {
         if ($assetBaseUrl !== null) {
-            $markdown = preg_replace_callback(
+            $markdown = $this->replaceCallback(
                 '/!\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/',
                 fn (array $m) => '![' . $m[1] . '](' . $this->resolveUrl($m[2], $assetBaseUrl) . $m[3] . ')',
                 $markdown
             );
 
-            $markdown = preg_replace_callback(
+            $markdown = $this->replaceCallback(
                 '/\bsrc="([^"]+)"/',
                 fn (array $m) => 'src="' . $this->resolveUrl($m[1], $assetBaseUrl) . '"',
                 $markdown
@@ -631,13 +665,13 @@ abstract class AbstractContentItem implements ContentItemInterface
         }
 
         if ($linkBaseUrl !== null) {
-            $markdown = preg_replace_callback(
+            $markdown = $this->replaceCallback(
                 '/(?<!!)\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/',
                 fn (array $m) => '[' . $m[1] . '](' . $this->resolveUrl($m[2], $linkBaseUrl) . $m[3] . ')',
                 $markdown
             );
 
-            $markdown = preg_replace_callback(
+            $markdown = $this->replaceCallback(
                 '/\bhref="([^"]+)"/',
                 fn (array $m) => 'href="' . $this->resolveUrl($m[1], $linkBaseUrl) . '"',
                 $markdown
@@ -648,12 +682,98 @@ abstract class AbstractContentItem implements ContentItemInterface
     }
 
     /**
+     * Replaces with `preg_replace()` in the text of the content, and says which
+     * content it was when PCRE can not process it.
+     *
+     * @param string $pattern Pattern.
+     * @param string $replacement Replacement.
+     * @param string $subject Text to replace in.
+     * @return string
+     * @throws RuntimeException If PCRE can not process the text.
+     */
+    private function replace(string $pattern, string $replacement, string $subject): string
+    {
+        return preg_replace($pattern, $replacement, $subject)
+            ?? throw $this->unprocessable();
+    }
+
+    /**
+     * Replaces with `preg_replace_callback()` in the text of the content, and
+     * says which content it was when PCRE can not process it.
+     *
+     * @param string $pattern Pattern.
+     * @param callable(array<int|string, string>): string $callback Replacement.
+     * @param string $subject Text to replace in.
+     * @return string
+     * @throws RuntimeException If PCRE can not process the text.
+     */
+    private function replaceCallback(string $pattern, callable $callback, string $subject): string
+    {
+        return preg_replace_callback($pattern, $callback, $subject)
+            ?? throw $this->unprocessable();
+    }
+
+    /**
+     * The error of a text that PCRE can not process (a pattern that is stopped by
+     * its limits, a text that is too big...).
+     *
+     * @return RuntimeException
+     */
+    private function unprocessable(): RuntimeException
+    {
+        return new RuntimeException([
+            'The content "{content}" could not be processed: {error}',
+            'content' => $this->source(),
+            'error' => preg_last_error_msg(),
+        ]);
+    }
+
+    /**
+     * Parses the YAML of the frontmatter into the array of the metadata.
+     *
+     * An empty frontmatter is an empty array. A YAML that is not valid, or that
+     * is not an object (a text, a list), is an error that says which content it
+     * is.
+     *
+     * @param string $yaml YAML of the frontmatter.
+     * @return array<string, mixed>
+     * @throws InvalidArgumentException If it is not an object.
+     */
+    private function parseFrontmatter(string $yaml): array
+    {
+        try {
+            $data = Yaml::parse($yaml);
+        } catch (ParseException $e) {
+            throw new InvalidArgumentException([
+                'The frontmatter of "{content}" is not valid YAML: {error}',
+                'content' => $this->source(),
+                'error' => $e->getMessage(),
+            ], previous: $e);
+        }
+
+        if ($data === null) {
+            return [];
+        }
+
+        if (!is_array($data) || ($data !== [] && array_is_list($data))) {
+            throw new InvalidArgumentException([
+                'The frontmatter of "{content}" must be an object, {type} given.',
+                'content' => $this->source(),
+                'type' => is_array($data) ? 'list' : get_debug_type($data),
+            ]);
+        }
+
+        /** @var array<string, mixed> $data */
+        return $data;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function has_twig(): bool
     {
         if (!isset($this->has_twig)) {
-            $this->has_twig = $this->metadata('has_twig')
+            $this->has_twig = $this->frontmatter()->bool('has_twig')
                 // Supported by default Twig components.
                 ?? str_contains($this->data(), '<twig:')
             ;
@@ -700,7 +820,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function slug(): string
     {
         if (!isset($this->slug)) {
-            $this->slug = $this->metadata('slug') ?? Str::slug($this->name());
+            $this->slug = $this->frontmatter()->string('slug') ?? Str::slug($this->name());
         }
 
         return $this->slug;
@@ -735,7 +855,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function title(): string
     {
         if (!isset($this->title)) {
-            $this->title = $this->metadata('title') ?? $this->name();
+            $this->title = $this->frontmatter()->string('title') ?? $this->name();
         }
 
         return $this->title;
@@ -747,8 +867,8 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function description(): string
     {
         if (!isset($this->description)) {
-            $this->description = $this->metadata('description')
-                ?? $this->metadata('summary') // TODO: Remove this in the future.
+            $this->description = $this->frontmatter()->string('description')
+                ?? $this->frontmatter()->string('summary') // TODO: Remove this in the future.
                 ?? $this->preview()
             ;
         }
@@ -762,7 +882,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function keywords(): array
     {
         if (!isset($this->keywords)) {
-            $this->keywords = $this->metadata('keywords') ?? [];
+            $this->keywords = $this->frontmatter()->stringList('keywords') ?? [];
         }
 
         return $this->keywords;
@@ -779,10 +899,13 @@ abstract class AbstractContentItem implements ContentItemInterface
 
             // Divide the content into paragraphs by double line break.
             $paragraphs = preg_split("/\n\s*\n/", $content, 2);
+            if ($paragraphs === false) {
+                throw $this->unprocessable();
+            }
             $preview = $paragraphs[0] ?? '';
 
             // Clean titles and lists from preview.
-            $preview = preg_replace('/^(#|\*|-|\d+\.)\s*/m', '', $preview);
+            $preview = $this->replace('/^(#|\*|-|\d+\.)\s*/m', '', $preview);
 
             // If the preview is shorter than the limit, return it complete.
             if (mb_strlen($preview) <= $maxLength) {
@@ -823,7 +946,12 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function image(array $options = []): ?string
     {
         if (!isset($this->image)) {
-            $this->image = $this->metadata('image', false);
+            // A text, or `false` for a content that has no image.
+            $this->image = $this->frontmatter()->get(
+                'image',
+                ArrayType::oneOf(ArrayType::string(), ArrayType::literal(false)),
+                false
+            );
         }
 
         return $this->resolveUrl($this->image ?: null, $options['asset_base_url'] ?? null);
@@ -835,13 +963,18 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function video(array $options = []): ?string
     {
         if (!isset($this->video)) {
-            $this->video = $this->metadata('video', false);
+            // A text, or `false` for a content that has no video.
+            $this->video = $this->frontmatter()->get(
+                'video',
+                ArrayType::oneOf(ArrayType::string(), ArrayType::literal(false)),
+                false
+            );
 
             if ($this->video) {
                 $url = parse_url($this->video);
                 if (isset($url['host']) && str_ends_with($url['host'], 'youtube.com')) {
                     parse_str($url['query'] ?? '', $query);
-                    if (isset($query['v'])) {
+                    if (isset($query['v']) && is_string($query['v'])) {
                         $videoId = $query['v'];
                         $this->video = "https://www.youtube.com/embed/$videoId";
                     }
@@ -860,7 +993,7 @@ abstract class AbstractContentItem implements ContentItemInterface
         if (!isset($this->tags)) {
             $this->tags = array_map(
                 fn (string $tag) => new ContentTag($tag),
-                $this->metadata('tags')?->all() ?? []
+                $this->frontmatter()->stringList('tags') ?? []
             );
         }
 
@@ -874,20 +1007,31 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->authors)) {
             $this->authors = [];
-            $authors = $this->metadata('authors')
-                ?? $this->metadata('author') // TODO: Remove this in the future.
+            $reader = $this->frontmatter();
+
+            // A name, or a list whose items are a name, an object with `name`
+            // and `slug`, or a list of the name and the slug.
+            $type = ArrayType::oneOf(ArrayType::string(), ArrayType::list());
+            $authors = $reader->get('authors', $type)
+                ?? $reader->get('author', $type) // TODO: Remove this in the future.
                 ?? []
             ;
             if (!empty($authors)) {
                 if (is_string($authors)) {
                     $authors = [$authors];
                 }
-                foreach ($authors as $author) {
+                foreach ($authors as $index => $author) {
                     if (is_string($author)) {
                         $this->authors[] = new ContentAuthor($author);
                     } else {
-                        $name = $author['name'] ?? $author[0];
-                        $slug = $author['slug'] ?? $author[1] ?? null;
+                        $path = 'authors.' . $index;
+                        $entry = new ArrayReader(
+                            ArrayType::array()->parse($author, $path, $this->source()),
+                            $path,
+                            $this->source()
+                        );
+                        $name = $entry->string('name') ?? $entry->require('0', ArrayType::string());
+                        $slug = $entry->string('slug') ?? $entry->string('1');
                         $this->authors[] = new ContentAuthor($name, $slug);
                     }
                 }
@@ -906,7 +1050,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->time)) {
             // Get the time from the metadata (accurate).
-            $this->time = $this->metadata('time', -1);
+            $this->time = $this->frontmatter()->int('time', -1);
 
             // If the time is not set, calculate it from the content (rough).
             if ($this->time === -1) {
@@ -952,7 +1096,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function draft(): bool
     {
         if (!isset($this->draft)) {
-            $this->draft = $this->metadata('draft', false);
+            $this->draft = $this->frontmatter()->bool('draft', false);
         }
 
         return $this->draft;
@@ -964,7 +1108,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function unlisted(): bool
     {
         if (!isset($this->unlisted)) {
-            $this->unlisted = $this->metadata('unlisted', false);
+            $this->unlisted = $this->frontmatter()->bool('unlisted', false);
         }
 
         return $this->unlisted;
@@ -977,18 +1121,11 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->date)) {
             $date =
-                $this->metadata('date')
-                ?? $this->metadata('created') // TODO: Remove this in the future.
-                ?? null
+                $this->frontmatter()->dateTime('date')
+                ?? $this->frontmatter()->dateTime('created') // TODO: Remove this in the future.
             ;
 
-            if ($date) {
-                if (is_string($date)) {
-                    $date = new DateTime($date);
-                } elseif (is_int($date)) {
-                    $date = new DateTime('@' . $date);
-                }
-            } else {
+            if ($date === null) {
                 $date = preg_match('/^(\d{4}-\d{2}-\d{2})-/', $this->name(), $matches)
                     ? new DateTime($matches[1])
                     : new DateTime('@' . $this->info()->getCTime())
@@ -1007,17 +1144,9 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function last_update(): DateTimeInterface
     {
         if (!isset($this->last_update)) {
-            $last_update = $this->metadata('last_update');
-
-            if ($last_update) {
-                if (is_string($last_update)) {
-                    $last_update = new DateTime($last_update);
-                } elseif (is_int($last_update)) {
-                    $last_update = new DateTime('@' . $last_update);
-                }
-            } else {
-                $last_update = new DateTime('@' . $this->info()->getMTime());
-            }
+            $last_update = $this->frontmatter()->dateTime('last_update')
+                ?? new DateTime('@' . $this->info()->getMTime())
+            ;
 
             $this->last_update = $last_update;
         }
@@ -1031,16 +1160,16 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function deprecatedAt(): ?DateTimeInterface
     {
         if (!isset($this->deprecatedAt)) {
-            $deprecated = $this->metadata('deprecated', false);
+            // `false` for a content that is not deprecated, `true` for one that is
+            // since its file was last modified, or the date since it is.
+            $deprecated = $this->frontmatter()->get(
+                'deprecated',
+                ArrayType::oneOf(ArrayType::bool(), ArrayType::dateTime()),
+                false
+            );
 
-            if ($deprecated) {
-                if (is_string($deprecated)) {
-                    $deprecated = new DateTime($deprecated);
-                } elseif (is_int($deprecated)) {
-                    $deprecated = new DateTime('@' . $deprecated);
-                } elseif ($deprecated === true) {
-                    $deprecated = new DateTime('@' . $this->info()->getMTime());
-                }
+            if ($deprecated === true) {
+                $deprecated = new DateTime('@' . $this->info()->getMTime());
             }
 
             $this->deprecatedAt = $deprecated;
@@ -1065,7 +1194,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function indexable(): bool
     {
         if (!isset($this->indexable)) {
-            $indexable = $this->metadata('indexable');
+            $indexable = $this->frontmatter()->bool('indexable');
 
             if ($indexable === null) {
                 $this->indexable = !($this->draft() || $this->unlisted() || $this->deprecated());
@@ -1086,7 +1215,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function searchable(): bool
     {
         if (!isset($this->searchable)) {
-            $searchable = $this->metadata('searchable');
+            $searchable = $this->frontmatter()->bool('searchable');
 
             if ($searchable === null) {
                 $this->searchable = !($this->draft() || $this->unlisted() || $this->deprecated());
@@ -1117,7 +1246,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->pagination_label)) {
             $this->pagination_label =
-                $this->metadata('pagination_label')
+                $this->frontmatter()->string('pagination_label')
                 ?? $this->title()
             ;
         }
@@ -1131,7 +1260,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function sidebar_label(): string
     {
         if (!isset($this->sidebar_label)) {
-            $this->sidebar_label = $this->metadata('sidebar_label', $this->title());
+            $this->sidebar_label = $this->frontmatter()->string('sidebar_label', $this->title());
         }
 
         return $this->sidebar_label;
@@ -1144,8 +1273,8 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->sidebar_position)) {
             $this->sidebar_position =
-                $this->metadata('sidebar_position')
-                ?? $this->metadata('order') // TODO: Remove this in the future.
+                $this->frontmatter()->int('sidebar_position')
+                ?? $this->frontmatter()->int('order') // TODO: Remove this in the future.
                 ?? -1
             ;
 
@@ -1164,7 +1293,11 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function sidebar_class_name(): ?string
     {
         if (!isset($this->sidebar_class_name)) {
-            $this->sidebar_class_name = $this->metadata('sidebar_class_name', false);
+            $this->sidebar_class_name = $this->frontmatter()->get(
+                'sidebar_class_name',
+                ArrayType::oneOf(ArrayType::string(), ArrayType::literal(false)),
+                false
+            );
         }
 
         return $this->sidebar_class_name ?: null;
@@ -1172,12 +1305,14 @@ abstract class AbstractContentItem implements ContentItemInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function sidebar_custom_props(): array
     {
         if (!isset($this->sidebar_custom_props)) {
             $this->sidebar_custom_props =
-                $this->metadata('sidebar_custom_props')?->all()
+                $this->frontmatter()->map('sidebar_custom_props')
                 ?? []
             ;
         }
@@ -1191,7 +1326,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function hide_title(): bool
     {
         if (!isset($this->hide_title)) {
-            $this->hide_title = $this->metadata('hide_title', false);
+            $this->hide_title = $this->frontmatter()->bool('hide_title', false);
         }
 
         return $this->hide_title;
@@ -1203,7 +1338,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function hide_table_of_contents(): bool
     {
         if (!isset($this->hide_table_of_contents)) {
-            $this->hide_table_of_contents = $this->metadata('hide_table_of_contents', false);
+            $this->hide_table_of_contents = $this->frontmatter()->bool('hide_table_of_contents', false);
         }
 
         return $this->hide_table_of_contents;
@@ -1215,7 +1350,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function toc_min_heading_level(): int
     {
         if (!isset($this->toc_min_heading_level)) {
-            $this->toc_min_heading_level = min(6, max(2, $this->metadata('toc_min_heading_level', 2)));
+            $this->toc_min_heading_level = min(6, max(2, $this->frontmatter()->int('toc_min_heading_level', 2)));
         }
 
         return $this->toc_min_heading_level;
@@ -1227,7 +1362,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function toc_max_heading_level(): int
     {
         if (!isset($this->toc_max_heading_level)) {
-            $this->toc_max_heading_level = min(6, max(2, $this->metadata('toc_max_heading_level', 6)));
+            $this->toc_max_heading_level = min(6, max(2, $this->frontmatter()->int('toc_max_heading_level', 6)));
         }
 
         return $this->toc_max_heading_level;
@@ -1357,7 +1492,14 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->attachments)) {
             $this->attachments = [];
-            $files = glob($this->directory() . '/' . $this->name() . '/_attachments/*');
+            $directory = $this->directory() . '/' . $this->name() . '/_attachments';
+            $files = glob($directory . '/*');
+            if ($files === false) {
+                throw new RuntimeException([
+                    'The directory "{path}" could not be listed.',
+                    'path' => $directory,
+                ]);
+            }
             foreach ($files as $file) {
                 $this->attachments[basename($file)] = new ContentAttachment($file, $this);
             }
@@ -1388,7 +1530,7 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     protected function resolveReferenceContent(string $metadataKey): ?string
     {
-        $value = $this->metadata($metadataKey);
+        $value = $this->frontmatter()->string($metadataKey);
 
         if ($value === null) {
             return null;
@@ -1411,6 +1553,8 @@ abstract class AbstractContentItem implements ContentItemInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, array{href: string}>
      */
     public function links(RouterInterface $router): array
     {
@@ -1489,7 +1633,7 @@ abstract class AbstractContentItem implements ContentItemInterface
         }
 
         // <meta name="author" content="...">
-        if ($this->authors() || $this->tags()) {
+        if ($this->authors()) {
             $htmlTags->addHeadTag(new ContentHtmlTag('meta', [
                 'name' => 'author',
                 'content' => implode(',', array_map(fn ($author) => $author->name(), $this->authors())),
@@ -1534,6 +1678,8 @@ abstract class AbstractContentItem implements ContentItemInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function toArray(?RouterInterface $router = null): array
     {
@@ -1574,6 +1720,8 @@ abstract class AbstractContentItem implements ContentItemInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {
@@ -1585,6 +1733,6 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     public function __toString(): string
     {
-        return $this->data;
+        return $this->data();
     }
 }

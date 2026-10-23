@@ -44,14 +44,14 @@ interface AcademyTestOptionInterface extends JsonSerializable, Stringable
     /**
      * Get the option as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array;
 
     /**
      * Get the option as a JSON serializable array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array;
 

@@ -83,67 +83,69 @@
 {%- if item.openapiSpec is defined and item.openapiSpec %}
 {%- set spec = item.openapiSpec %}
 
-## {{ spec.title }}
+## {{ spec.info.title }}
 
-{% if spec.description -%}
-{{ spec.description | raw }}
+{% if spec.info.description -%}
+{{ spec.info.description | raw }}
 
 {% endif -%}
 {% if spec.servers | length > 0 -%}
-{{ 'Servers: {servers}'|trans({'servers': spec.servers | join(', ')}) }}
+{{ 'Servers: {servers}'|trans({'servers': spec.servers | map(server => server.url) | join(', ')}) }}
 
 {% endif -%}
-{%- set groups = spec.endpointGroups %}
+{%- set groups = item.openapiGroups %}
 {% if groups | length > 0 -%}
 {{ 'Index:'|trans }}
 
 {% for group in groups -%}
-- {{ group.tagName ?: 'Other'|trans }}
-{% for endpoint in group.endpoints -%}
-{{ '  - ' }}{{ endpoint.summary ?: (endpoint.method ~ ' ' ~ endpoint.path) }}
+- {{ group.name ?: 'Other'|trans }}
+{% for operation in group.operations -%}
+{{ '  - ' }}{{ operation.summary ?: (operation.method.value | upper ~ ' ' ~ operation.path) }}
 
 {% endfor %}
 {% endfor %}
 {% endif -%}
 {% for group in groups -%}
-### {{ group.tagName ?: 'Other'|trans }}
+### {{ group.name ?: 'Other'|trans }}
 
-{% if group.tagDescription -%}
-{{ group.tagDescription | raw }}
-
-{% endif -%}
-{% for endpoint in group.endpoints -%}
-#### {{ endpoint.method }} {{ endpoint.path }}
-
-{% if endpoint.summary -%}
-{{ endpoint.summary }}
+{% if group.description -%}
+{{ group.description | raw }}
 
 {% endif -%}
-{% if endpoint.description -%}
-{{ endpoint.description | raw }}
+{% for operation in group.operations -%}
+#### {{ operation.method.value | upper }} {{ operation.path }}
+
+{% if operation.summary -%}
+{{ operation.summary }}
 
 {% endif -%}
-{% if endpoint.parameters | length > 0 -%}
+{% if operation.description -%}
+{{ operation.description | raw }}
+
+{% endif -%}
+{% if operation.parameters | length > 0 -%}
 {{ 'Parameters:'|trans }}
 
-{% for parameter in endpoint.parameters -%}
-- `{{ parameter.name }}` ({{ parameter.in }}{% if parameter.type %}, {{ parameter.type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %}){% if parameter.description %} — {{ parameter.description | raw }}{% endif %}
+{% for parameter in operation.parameters -%}
+{%- set type = item.openapiTypeLabel(parameter.schema) -%}
+- `{{ parameter.name }}` ({{ parameter.location.value }}{% if type %}, {{ type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %}){% if parameter.description %} — {{ parameter.description | raw }}{% endif %}
 
 {% endfor %}
 {% endif -%}
-{% if endpoint.requestBodyExample -%}
+{%- set example = item.openapiRequestExample(operation) -%}
+{% if example -%}
 {{ 'Request body example:'|trans }}
 
 ```
-{{ endpoint.requestBodyExample | raw }}
+{{ example | raw }}
 ```
 
 {% endif -%}
-{% if endpoint.responses | length > 0 -%}
+{% if operation.responses | length > 0 -%}
 {{ 'Responses:'|trans }}
 
-{% for response in endpoint.responses -%}
-- `{{ response.statusCode }}`{% if response.description %} — {{ response.description | raw }}{% endif %}
+{% for status, response in operation.responses -%}
+- `{{ status }}`{% if response.description %} — {{ response.description | raw }}{% endif %}
 
 {% endfor %}
 {% endif -%}

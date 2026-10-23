@@ -93,6 +93,8 @@ class ContentTag implements ContentTagInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -105,6 +107,8 @@ class ContentTag implements ContentTagInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {

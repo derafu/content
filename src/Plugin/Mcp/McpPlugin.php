@@ -32,7 +32,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
     /**
      * Schema of the options of the plugin.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     private const OPTIONS_SCHEMA = [
         // Name of the plugin.
@@ -107,7 +107,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
      */
     public function serverName(): string
     {
-        return $this->options->get('server_name');
+        return $this->options->requireString('server_name');
     }
 
     /**
@@ -118,7 +118,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
      */
     public function serverVersion(): string
     {
-        return $this->options->get('server_version');
+        return $this->options->requireString('server_version');
     }
 
     /**
@@ -128,7 +128,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
      */
     public function sessionPath(): string
     {
-        return $this->options->get('session_path')
+        return $this->options->getString('session_path')
             ?? sys_get_temp_dir() . '/derafu-content-mcp-sessions'
         ;
     }
@@ -140,7 +140,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
      */
     public function sessionTtl(): int
     {
-        return $this->options->get('session_ttl');
+        return $this->options->requireInt('session_ttl');
     }
 
     /**
@@ -155,6 +155,8 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     protected static function getSchema(): array
     {

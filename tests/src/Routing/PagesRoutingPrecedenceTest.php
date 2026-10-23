@@ -42,9 +42,11 @@ final class PagesRoutingPrecedenceTest extends TestCase
 
         $match = $router->match('/legal');
 
+        $handler = $match->getHandler();
+        $this->assertIsString($handler);
         $this->assertStringEndsWith(
             'templates/pages/legal.html.twig',
-            (string) $match->getHandler()
+            $handler
         );
     }
 
@@ -60,8 +62,8 @@ final class PagesRoutingPrecedenceTest extends TestCase
 
     public function testHandWrittenStaticRoutesAreNeverShadowedRegardlessOfPagesConfiguration(): void
     {
-        // Simulates a website's own hand-written route (e.g. LibreDTE's
-        // "/legal"), registered alongside this package's content routes.
+        // Simulates a website's own hand-written route (e.g. "/legal"),
+        // registered alongside this package's content routes.
         $router = RouterFixture::create([
             'legal' => [
                 'path' => '/legal',
@@ -94,17 +96,19 @@ final class PagesRoutingPrecedenceTest extends TestCase
         $match = $router->match('/legal');
 
         $this->assertSame('pages_page_unprefixed', $match->getName());
-        $this->assertStringNotContainsString('legal.html.twig', (string) $match->getHandler());
+        $handler = $match->getHandler();
+        $this->assertIsString($handler);
+        $this->assertStringNotContainsString('legal.html.twig', $handler);
     }
 
     public function testRealContentDocRouteResolvesThroughDynamicParser(): void
     {
         $router = RouterFixture::create();
 
-        $match = $router->match('/docs/guia/primeros-pasos');
+        $match = $router->match('/docs/guide/getting-started');
 
         $this->assertSame('docs_doc', $match->getName());
-        $this->assertSame(['doc' => 'guia/primeros-pasos'], $match->getParameters());
+        $this->assertSame(['doc' => 'guide/getting-started'], $match->getParameters());
     }
 
     public function testUnmatchedUriThrowsRouteNotFoundException(): void

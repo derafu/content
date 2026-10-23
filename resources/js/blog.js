@@ -1,13 +1,72 @@
 // blog.js - Simple component to consume blog API and display cards.
 
 /**
+ * Texts of the component, in English. The template blog/_cards.html.twig draws
+ * the container with the texts already translated. Each one can be replaced with the JSON
+ * of the data-messages attribute of the container, for example
+ * data-messages='{"readMore": "Leer más"}', or with the messages argument of
+ * initBlogCards(). The text "byline" has the placeholders {authors}, {date} and
+ * {time}.
+ */
+const defaultMessages = {
+    loadError: 'Error loading data. Please try again later.',
+    readMore: 'Read more',
+    byline: 'By {authors} on {date} • {time} min read',
+};
+
+/**
+ * Gets the texts of the component: the defaults, then the JSON of the
+ * data-messages attribute of the container and then the messages that were
+ * given.
+ * @param {HTMLElement} container - Container of the component.
+ * @param {Object} messages - Texts that replace the others.
+ * @returns {Object}
+ */
+function getMessages(container, messages = {}) {
+    let fromContainer = {};
+    if (container.dataset.messages !== undefined) {
+        try {
+            fromContainer = JSON.parse(container.dataset.messages);
+        } catch (error) {
+            console.error('Attribute data-messages must be a JSON object.', error);
+        }
+    }
+
+    return { ...defaultMessages, ...fromContainer, ...messages };
+}
+
+/**
+ * Replaces the placeholders ({name}) of a text with their values.
+ * @param {string} text - Text with placeholders.
+ * @param {Object} values - Value of each placeholder.
+ * @returns {string}
+ */
+function format(text, values) {
+    return text.replace(/\{(\w+)\}/g, (match, name) => (name in values ? values[name] : match));
+}
+
+/**
+ * Escapes a text to be put in HTML.
+ * @param {string} text - Text to escape.
+ * @returns {string}
+ */
+function escapeHtml(text) {
+    const element = document.createElement('div');
+    element.textContent = text;
+
+    return element.innerHTML;
+}
+
+/**
  * Initializes blog cards by consuming the specified API.
  * @param {HTMLElement} container - Container where cards will be displayed.
  * The container must have a data-api attribute with the API URL.
  * The container can have a data-base-path attribute with the base path for images and links.
- * The container can have a data-read-more attribute with the text for the read more button.
+ * The container can have a data-messages attribute with the texts of the
+ * component as JSON (see defaultMessages).
+ * @param {Object} messages - Texts of the component (see defaultMessages).
  */
-function initBlogCards(container) {
+function initBlogCards(container, messages = {}) {
     // If no container is provided, use the default container.
     if (container === undefined) {
         container = document.getElementById('blog-posts');
@@ -21,7 +80,7 @@ function initBlogCards(container) {
     // Get the API URL and base path from the container.
     const apiUrl = container.dataset.api;
     const basePath = container.dataset.basePath || '';
-    const readMore = container.dataset.readMore || 'Read more';
+    const texts = getMessages(container, messages);
 
     // Validate required parameters.
     if (!apiUrl) {
@@ -39,13 +98,13 @@ function initBlogCards(container) {
         })
         .then(data => {
             // Render the cards.
-            renderBlogCards(container, data.data || data, basePath, readMore);
+            renderBlogCards(container, data.data || data, basePath, texts);
         })
         .catch(error => {
             console.error('Error loading data:', error);
             container.innerHTML = `
                 <div class="col-12">
-                    <div class="alert alert-danger">Error loading data. Please try again later.</div>
+                    <div class="alert alert-danger">${escapeHtml(texts.loadError)}</div>
                 </div>
             `;
     });
@@ -56,9 +115,15 @@ function initBlogCards(container) {
  * @param {HTMLElement} container - Container where cards will be displayed.
  * @param {Array} posts - Array of blog posts.
  * @param {string} basePath - Base path for images and links.
- * @param {string} readMore - Text for the read more button.
+ * @param {Object|string} messages - Texts of the component (see defaultMessages),
+ * or just the text for the read more button.
  */
-function renderBlogCards(container, posts, basePath, readMore) {
+function renderBlogCards(container, posts, basePath, messages = {}) {
+    const texts = {
+        ...defaultMessages,
+        ...(typeof messages === 'string' ? { readMore: messages } : messages),
+    };
+
     // Clear the container.
     container.innerHTML = '';
 
@@ -87,12 +152,16 @@ function renderBlogCards(container, posts, basePath, readMore) {
                 <div class="card-body">
                     <h5 class="card-title">${post.title}</h5>
                     <div class="text-muted small mb-2">
-                        By ${post.authors.map(author => author.name).join(', ')} on ${formattedDate} • ${post.time} min read
+                        ${escapeHtml(format(texts.byline, {
+                            authors: post.authors.map(author => author.name).join(', '),
+                            date: formattedDate,
+                            time: post.time,
+                        }))}
                     </div>
                     <p class="card-text">${post.description}</p>
                 </div>
                 <div class="card-footer bg-transparent border-top-0">
-                    <a href="${basePath}/blog/${post.uri}" class="btn btn-primary w-100">${readMore}</a>
+                    <a href="${basePath}/blog/${post.uri}" class="btn btn-primary w-100">${escapeHtml(texts.readMore)}</a>
                 </div>
             </div>
         `;

@@ -83,21 +83,21 @@ interface ContentConfigInterface
     /**
      * Get the markdown configuration of the content website.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function markdown(): array;
 
     /**
      * Get the plugins of the content website.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function plugins(): array;
 
     /**
      * Get the i18n configuration of the content website.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function i18n(): array;
 

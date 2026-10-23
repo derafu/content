@@ -17,6 +17,7 @@ use Derafu\Content\Contract\ContentAttachmentInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyLessonInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyModuleInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyTestInterface;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 
 /**
  * Class that represents an academy lesson.
@@ -63,11 +64,21 @@ class AcademyLesson extends AbstractContentItem implements AcademyLessonInterfac
      */
     public function route(): object
     {
+        $module = $this->parent();
+        $course = $module?->parent();
+
+        if ($module === null || $course === null) {
+            throw new RuntimeException([
+                'The lesson "{content}" must be in a module of a course to have a route.',
+                'content' => $this->uri(),
+            ]);
+        }
+
         return (object) [
             'name' => $this->type() . '_' . $this->category(),
             'params' => [
-                'course' => $this->parent()->parent()->slug(),
-                'module' => $this->parent()->slug(),
+                'course' => $course->slug(),
+                'module' => $module->slug(),
                 'lesson' => $this->slug(),
             ],
         ];
@@ -123,7 +134,7 @@ class AcademyLesson extends AbstractContentItem implements AcademyLessonInterfac
      */
     private function resolveTestAttachment(): ?ContentAttachmentInterface
     {
-        $test = $this->metadata('test');
+        $test = $this->frontmatter()->string('test');
 
         if ($test === null) {
             return null;

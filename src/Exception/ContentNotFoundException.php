@@ -36,7 +36,7 @@ class ContentNotFoundException extends TranslatableRuntimeException implements H
     /**
      * Constructor.
      *
-     * @param string|array|TranslatableInterface $message The exception message.
+     * @param string|array<int|string, mixed>|TranslatableInterface $message The exception message.
      * @param Throwable|null $previous The previous throwable used for
      * exception chaining.
      */

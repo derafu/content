@@ -112,53 +112,54 @@
     {% if item.openapiSpec is defined and item.openapiSpec %}
         {% set spec = item.openapiSpec %}
         <div class="pdf-openapi">
-            <h2>{{ spec.title }}</h2>
-            {% if spec.description %}
-                <div class="pdf-openapi-description">{{ spec.description | markdown }}</div>
+            <h2>{{ spec.info.title }}</h2>
+            {% if spec.info.description %}
+                <div class="pdf-openapi-description">{{ spec.info.description | markdown }}</div>
             {% endif %}
             {% if spec.servers | length > 0 %}
-                <p class="pdf-openapi-servers">{{ 'Servers: {servers}'|trans({'servers': spec.servers | join(', ')}) }}</p>
+                <p class="pdf-openapi-servers">{{ 'Servers: {servers}'|trans({'servers': spec.servers | map(server => server.url) | join(', ')}) }}</p>
             {% endif %}
-            {% set groups = spec.endpointGroups %}
+            {% set groups = item.openapiGroups %}
             {% if groups | length > 0 %}
                 <tocpagebreak name="{{ item.downloadFilename }}-openapi-toc" links="on" toc-preHTML="&lt;h3&gt;{{ 'Index'|trans }}&lt;/h3&gt;" />
             {% endif %}
             {% for group in groups %}
                 <div class="pdf-openapi-group">
                     <tocentry
-                        content="{{ group.tagName ?: 'Other'|trans }}"
+                        content="{{ group.name ?: 'Other'|trans }}"
                         level="0"
                         name="{{ item.downloadFilename }}-openapi-toc"
                     />
-                    <h3 class="pdf-openapi-group-title">{{ group.tagName ?: 'Other'|trans }}</h3>
-                    {% if group.tagDescription %}
-                        <div class="pdf-openapi-group-description">{{ group.tagDescription | markdown }}</div>
+                    <h3 class="pdf-openapi-group-title">{{ group.name ?: 'Other'|trans }}</h3>
+                    {% if group.description %}
+                        <div class="pdf-openapi-group-description">{{ group.description | markdown }}</div>
                     {% endif %}
-                    {% for endpoint in group.endpoints %}
+                    {% for operation in group.operations %}
                         <div class="pdf-openapi-endpoint">
                             <tocentry
-                                content="{{ endpoint.summary ?: (endpoint.method ~ ' ' ~ endpoint.path) }}"
+                                content="{{ operation.summary ?: (operation.method.value | upper ~ ' ' ~ operation.path) }}"
                                 level="1"
                                 name="{{ item.downloadFilename }}-openapi-toc"
                             />
                             <div class="pdf-openapi-endpoint-header">
-                                <span class="pdf-openapi-method">{{ endpoint.method }}</span>
-                                <span class="pdf-openapi-path">{{ endpoint.path }}</span>
+                                <span class="pdf-openapi-method">{{ operation.method.value | upper }}</span>
+                                <span class="pdf-openapi-path">{{ operation.path }}</span>
                             </div>
-                            {% if endpoint.summary %}
-                                <div class="pdf-openapi-summary">{{ endpoint.summary }}</div>
+                            {% if operation.summary %}
+                                <div class="pdf-openapi-summary">{{ operation.summary }}</div>
                             {% endif %}
-                            {% if endpoint.description %}
-                                <div class="pdf-openapi-endpoint-description">{{ endpoint.description | markdown }}</div>
+                            {% if operation.description %}
+                                <div class="pdf-openapi-endpoint-description">{{ operation.description | markdown }}</div>
                             {% endif %}
-                            {% if endpoint.parameters | length > 0 %}
+                            {% if operation.parameters | length > 0 %}
                                 <div class="pdf-openapi-parameters">
                                     <strong>{{ 'Parameters'|trans }}</strong>
                                     <ul>
-                                        {% for parameter in endpoint.parameters %}
+                                        {% for parameter in operation.parameters %}
+                                            {% set type = item.openapiTypeLabel(parameter.schema) %}
                                             <li>
                                                 <code>{{ parameter.name }}</code>
-                                                ({{ parameter.in }}{% if parameter.type %}, {{ parameter.type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %})
+                                                ({{ parameter.location.value }}{% if type %}, {{ type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %})
                                                 {% if parameter.description %}
                                                     <div class="pdf-openapi-parameter-description">{{ parameter.description | markdown }}</div>
                                                 {% endif %}
@@ -167,19 +168,20 @@
                                     </ul>
                                 </div>
                             {% endif %}
-                            {% if endpoint.requestBodyExample %}
+                            {% set example = item.openapiRequestExample(operation) %}
+                            {% if example %}
                                 <div class="pdf-openapi-request-body">
                                     <strong>{{ 'Request body example'|trans }}</strong>
-                                    <pre>{{ endpoint.requestBodyExample }}</pre>
+                                    <pre>{{ example }}</pre>
                                 </div>
                             {% endif %}
-                            {% if endpoint.responses | length > 0 %}
+                            {% if operation.responses | length > 0 %}
                                 <div class="pdf-openapi-responses">
                                     <strong>{{ 'Responses'|trans }}</strong>
                                     <ul>
-                                        {% for response in endpoint.responses %}
+                                        {% for status, response in operation.responses %}
                                             <li>
-                                                <code>{{ response.statusCode }}</code>
+                                                <code>{{ status }}</code>
                                                 {% if response.description %}
                                                     <div class="pdf-openapi-response-description">{{ response.description | markdown }}</div>
                                                 {% endif %}

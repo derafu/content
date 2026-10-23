@@ -34,9 +34,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Exercises SitemapController — implemented this session, only ever
- * manually curl-tested against the real LibreDTE site — with real
- * fixture content and a real Router/Twig render, producing actual XML.
+ * Exercises SitemapController with real fixture content and a real
+ * Router/Twig render, producing actual XML.
  */
 #[CoversClass(SitemapController::class)]
 #[UsesClass(SitemapPlugin::class)]
@@ -84,27 +83,26 @@ final class SitemapControllerTest extends TestCase
         // The sitemap uses a default (unprefixed) XML namespace, which
         // SimpleXML's xpath() only matches if it is explicitly registered
         // or, more simply, matched by local name instead.
-        $locations = array_map(
-            'strval',
-            $document->xpath("//*[local-name()='url']/*[local-name()='loc']")
-        );
+        $nodes = $document->xpath("//*[local-name()='url']/*[local-name()='loc']");
+        $this->assertIsArray($nodes);
+        $locations = array_map('strval', $nodes);
 
         // All three real docs fixtures are long enough to be indexable.
-        $this->assertContains('http://localhost/docs/guia/primeros-pasos', $locations);
-        $this->assertContains('http://localhost/docs/guia', $locations);
+        $this->assertContains('http://localhost/docs/guide/getting-started', $locations);
+        $this->assertContains('http://localhost/docs/guide', $locations);
         $this->assertContains('http://localhost/docs/index', $locations);
 
-        // "docs/huerfano/hijo-perdido.md" exists on disk but has no
-        // matching "docs/huerfano.md", so it is never loaded at all (see
+        // "docs/orphan/lost-child.md" exists on disk but has no
+        // matching "docs/orphan.md", so it is never loaded at all (see
         // the content hierarchy test) — it must not leak into the sitemap.
-        $this->assertNotContains('http://localhost/docs/huerfano/hijo-perdido', $locations);
+        $this->assertNotContains('http://localhost/docs/orphan/lost-child', $locations);
 
         // Unlike ApiController (which does not hardcode the "indexable"
         // filter), SitemapController hardcodes ['indexable' => true], so
         // both an explicitly non-indexable doc and an unlisted one
         // (unlisted defaults indexable to false too) must be excluded
         // here regardless of any query string.
-        $this->assertNotContains('http://localhost/docs/no-indexable', $locations);
-        $this->assertNotContains('http://localhost/docs/no-listado', $locations);
+        $this->assertNotContains('http://localhost/docs/not-indexable', $locations);
+        $this->assertNotContains('http://localhost/docs/not-listed', $locations);
     }
 }

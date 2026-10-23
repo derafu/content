@@ -93,14 +93,24 @@
                         </div>
                     {% endif %}
 
+                    {# The texts of the widget of the test (resources/js/academy.js), translated here: the widget reads them from the data-messages attribute of its container. #}
+                    {% set testMessages = {
+                        'loadError': 'Error loading data. Please try again later.'|trans,
+                        'true': 'True'|trans,
+                        'false': 'False'|trans,
+                        'reviewAnswers': 'Review answers'|trans,
+                        'correct': 'Correct'|trans,
+                        'incorrect': 'Incorrect'|trans,
+                        'result': 'Result: {correct} / {total} ({percent}%)'|trans,
+                    } %}
                     {% if lesson.testAttachment %}
                         <div class="card shadow p-4">
-                            <div id="academy-test-container" data-api="{{ path('content_storage_download', {'type': 'academy', 'uri': lesson.uri, 'attachment': lesson.testAttachment.name ~ '.' ~ lesson.testAttachment.extension}) }}"></div>
+                            <div id="academy-test-container" data-api="{{ path('content_storage_download', {'type': 'academy', 'uri': lesson.uri, 'attachment': lesson.testAttachment.name ~ '.' ~ lesson.testAttachment.extension}) }}" data-messages="{{ testMessages|json_encode|e('html_attr') }}"></div>
                         </div>
                     {% elseif lesson.metadata.test %}
                         {# "test" metadata does not point to a local attachment (e.g. an external quiz URL) — fall back to it as-is. #}
                         <div class="card shadow p-4">
-                            <div id="academy-test-container" data-api="{{ lesson.metadata.test }}"></div>
+                            <div id="academy-test-container" data-api="{{ lesson.metadata.test }}" data-messages="{{ testMessages|json_encode|e('html_attr') }}"></div>
                         </div>
                     {% endif %}
 

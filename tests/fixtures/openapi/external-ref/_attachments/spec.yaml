@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: External API
+  version: 1.0.0
+paths:
+  /a:
+    get:
+      parameters:
+        - $ref: 'https://example.test/common.yaml#/components/parameters/Id'
+      responses:
+        '200':
+          description: Ok.

@@ -82,10 +82,10 @@ final class AcademyLessonRemoteTestSourceTest extends TestCase
         $test = $lesson->test();
 
         $this->assertNotNull($test);
-        $this->assertSame('Cuestionario remoto', $test->title());
+        $this->assertSame('Remote quiz', $test->title());
         $this->assertCount(1, $test->questions());
         $this->assertSame(
-            'Sí, fue servido por el fixture HTTP de los tests.',
+            'Yes, it was served by the HTTP fixture of the tests.',
             $test->questions()[0]->explanation()
         );
     }

@@ -72,14 +72,14 @@ interface BlogArchiveInterface extends JsonSerializable, Stringable
     /**
      * Get the archive as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array;
 
     /**
      * Get the archive as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array;
 

@@ -27,7 +27,7 @@ interface ContentHtmlTagInterface
     /**
      * Get the attributes of the tag.
      *
-     * @return array<string, mixed>
+     * @return array<string, string|bool>
      */
     public function attributes(): array;
 

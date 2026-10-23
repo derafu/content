@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -59,6 +60,7 @@ final class RouteNamesTest extends TestCase
         $used = [];
         foreach ($scanner->scanDirectory($this->packagePath('resources/templates')) as $reference) {
             if (!$reference->isDynamic()) {
+                $this->assertNotNull($reference->name);
                 $used[$reference->name][$reference->template] = $reference->template;
             }
         }
@@ -103,7 +105,11 @@ final class RouteNamesTest extends TestCase
     public function testNoInternalPathIsWrittenByHandInPhpSources(): void
     {
         $sections = [];
-        foreach (Yaml::parseFile($this->packagePath('resources/config/content-routes.yaml')) as $route) {
+        $routes = Yaml::parseFile($this->packagePath('resources/config/content-routes.yaml'));
+        $this->assertIsArray($routes);
+        foreach ($routes as $route) {
+            $this->assertIsArray($route);
+            $this->assertIsString($route['path']);
             $segment = explode('/', ltrim($route['path'], '/'))[0];
             if ($segment !== '' && !str_contains($segment, '{')) {
                 $sections[$segment] = preg_quote($segment, '/');
@@ -189,6 +195,7 @@ final class RouteNamesTest extends TestCase
         );
 
         foreach ($files as $file) {
+            $this->assertInstanceOf(SplFileInfo::class, $file);
             if ($file->getExtension() !== $extension) {
                 continue;
             }

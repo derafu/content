@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Academy;
 
 use Derafu\Content\Abstract\AbstractContentController;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Exception\ContentNotFoundException;
@@ -62,7 +63,7 @@ class AcademyController extends AbstractContentController
      *
      * @param Request $request Request.
      * @param string $course Course.
-     * @return string|array
+     * @return string|array<string, mixed>
      */
     public function course(Request $request, string $course): string|array
     {
@@ -98,7 +99,7 @@ class AcademyController extends AbstractContentController
      * @param Request $request Request.
      * @param string $course Course.
      * @param string $module Module.
-     * @return string|array
+     * @return string|array<string, mixed>
      */
     public function module(
         Request $request,
@@ -155,7 +156,7 @@ class AcademyController extends AbstractContentController
      * @param string $course Course.
      * @param string $module Module.
      * @param string $lesson Lesson.
-     * @return string|array
+     * @return string|array<string, mixed>
      */
     public function lesson(
         Request $request,
@@ -224,7 +225,7 @@ class AcademyController extends AbstractContentController
         $plugin = $this->contentService->plugin('academy');
         assert($plugin instanceof AcademyPlugin);
 
-        $filters = array_filter($request->all(), fn ($value) => $value !== '');
+        $filters = ContentFilters::fromRequest($request->all());
         $tags = $plugin->registry()->tags();
         $contentTag = $tags[$tag] ?? new ContentTag($tag);
         $filters['tag'] = $contentTag->slug();

@@ -43,6 +43,7 @@ abstract class AbstractContentPlugin extends AbstractPlugin implements ContentPl
      * Constructor of the plugin.
      *
      * @param ContentContext $context Context of the content website.
+     * @param array<string, mixed> $options
      */
     public function __construct(ContentContext $context, array $options = [])
     {
@@ -63,7 +64,7 @@ abstract class AbstractContentPlugin extends AbstractPlugin implements ContentPl
      */
     public function getPathsToWatch(): array
     {
-        return [$this->options->get('path')];
+        return [$this->options->requireString('path')];
     }
 
     /**

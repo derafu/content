@@ -14,8 +14,11 @@ namespace Derafu\Content\Plugin\Search;
 
 use Derafu\Content\Plugin\Search\Contract\LlmClientInterface;
 use Derafu\Content\Plugin\Search\Exception\SearchUpstreamException;
+use Derafu\Support\ArrayReader;
+use Derafu\Support\ArrayType;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Psr7\Request;
+use InvalidArgumentException;
 use Psr\Http\Client\ClientInterface as HttpClientInterface;
 use Throwable;
 
@@ -125,14 +128,36 @@ class OpenAiCompatibleLlmClient implements LlmClientInterface
             true
         );
 
-        if (!isset($decodedResponse['choices'][0]['message']['content'])) {
+        $content = null;
+        if (is_array($decodedResponse)) {
+            try {
+                $choice = ArrayReader::from($decodedResponse)->readers('choices')[0] ?? null;
+                $content = $choice?->reader('message')?->get('content', ArrayType::mixed());
+            } catch (InvalidArgumentException $e) {
+                throw new SearchUpstreamException([
+                    'The LLM backend at "{url}" returned an invalid response: {error}',
+                    'url' => $url,
+                    'error' => $e->getMessage(),
+                ], $e);
+            }
+        }
+
+        if ($content === null) {
             throw new SearchUpstreamException([
                 'The LLM backend at "{url}" returned a response without a "choices[0].message.content" field.',
                 'url' => $url,
             ]);
         }
 
-        return $decodedResponse['choices'][0]['message']['content'];
+        if (!is_string($content)) {
+            throw new SearchUpstreamException([
+                'The LLM backend at "{url}" returned a "choices[0].message.content" that is not a text, {type} given.',
+                'url' => $url,
+                'type' => get_debug_type($content),
+            ]);
+        }
+
+        return $content;
     }
 
     /**
@@ -176,7 +201,7 @@ class OpenAiCompatibleLlmClient implements LlmClientInterface
             }
 
             if (is_array($detail)) {
-                return json_encode($detail);
+                return json_encode($detail) ?: null;
             }
         }
 

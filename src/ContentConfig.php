@@ -56,7 +56,7 @@ class ContentConfig implements ContentConfigInterface
         // content website.
         'baseUrl' => [
             'types' => 'string',
-            'required' => false, // It's not required because it can be inferred from the URL.
+            'required' => false, // It's empty when it is not configured.
         ],
 
         // Favicon of the content website.
@@ -177,7 +177,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function title(): string
     {
-        return $this->config->get('title');
+        return $this->config->requireString('title');
     }
 
     /**
@@ -185,7 +185,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function url(): string
     {
-        return $this->config->get('url');
+        return $this->config->requireString('url');
     }
 
     /**
@@ -193,7 +193,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function baseUrl(): string
     {
-        return $this->config->get('baseUrl');
+        return $this->config->getString('baseUrl') ?? '';
     }
 
     /**
@@ -201,7 +201,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function favicon(): string|null
     {
-        return $this->config->get('favicon');
+        return $this->config->getString('favicon');
     }
 
     /**
@@ -209,7 +209,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function titleDelimiter(): string
     {
-        return $this->config->get('titleDelimiter');
+        return $this->config->requireString('titleDelimiter');
     }
 
     /**
@@ -217,7 +217,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function tagline(): string|null
     {
-        return $this->config->get('tagline');
+        return $this->config->getString('tagline');
     }
 
     /**
@@ -225,7 +225,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function uriFormat(): string
     {
-        return $this->config->get('uriFormat');
+        return $this->config->requireString('uriFormat');
     }
 
     /**
@@ -233,7 +233,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function noIndex(): bool
     {
-        return $this->config->get('noIndex');
+        return $this->config->requireBool('noIndex');
     }
 
     /**
@@ -241,31 +241,37 @@ class ContentConfig implements ContentConfigInterface
      */
     public function onBrokenLinks(): string
     {
-        return $this->config->get('onBrokenLinks');
+        return $this->config->requireString('onBrokenLinks');
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function markdown(): array
     {
-        return $this->config->get('markdown');
+        return $this->config->requireContainer('markdown')->all();
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function plugins(): array
     {
-        return $this->config->get('plugins')->all();
+        return $this->config->requireContainer('plugins')->all();
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function i18n(): array
     {
-        return $this->config->get('i18n')->all();
+        return $this->config->requireContainer('i18n')->all();
     }
 
     /**
@@ -273,7 +279,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function cacheEnabled(): bool
     {
-        return $this->config->get('cache.enabled');
+        return $this->config->requireBool('cache.enabled');
     }
 
     /**
@@ -281,7 +287,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function customFields(): array
     {
-        return $this->config->get('customFields')->all();
+        return $this->config->requireContainer('customFields')->all();
     }
 
     /**

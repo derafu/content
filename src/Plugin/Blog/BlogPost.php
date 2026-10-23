@@ -22,6 +22,8 @@ class BlogPost extends AbstractContentItem implements BlogPostInterface
 {
     /**
      * {@inheritDoc}
+     *
+     * @var array<string, mixed>
      */
     protected array $metadataSchema = [
         '__allowUndefinedKeys' => true,

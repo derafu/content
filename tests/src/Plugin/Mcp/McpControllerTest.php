@@ -23,6 +23,7 @@ use Derafu\Content\ContentService;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
+use Derafu\Content\Plugin\Academy\AcademyCourse;
 use Derafu\Content\Plugin\Academy\AcademyLesson;
 use Derafu\Content\Plugin\Academy\AcademyModule;
 use Derafu\Content\Plugin\Academy\AcademyPlugin;
@@ -30,9 +31,15 @@ use Derafu\Content\Plugin\Academy\AcademyRegistry;
 use Derafu\Content\Plugin\Academy\AcademyTest;
 use Derafu\Content\Plugin\Academy\AcademyTestOption;
 use Derafu\Content\Plugin\Academy\AcademyTestQuestion;
+use Derafu\Content\Plugin\Blog\BlogPlugin;
+use Derafu\Content\Plugin\Blog\BlogPost;
+use Derafu\Content\Plugin\Blog\BlogRegistry;
 use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
+use Derafu\Content\Plugin\Faq\FaqPlugin;
+use Derafu\Content\Plugin\Faq\FaqQuestion;
+use Derafu\Content\Plugin\Faq\FaqRegistry;
 use Derafu\Content\Plugin\Mcp\McpController;
 use Derafu\Content\Plugin\Mcp\McpPlugin;
 use Derafu\Content\Plugin\Mcp\Tool\AskTool;
@@ -41,6 +48,9 @@ use Derafu\Content\Plugin\Mcp\Tool\GetContentTool;
 use Derafu\Content\Plugin\Mcp\Tool\ListContentTool;
 use Derafu\Content\Plugin\Mcp\Tool\ListTagsTool;
 use Derafu\Content\Plugin\Mcp\Tool\SearchContentTool;
+use Derafu\Content\Plugin\Pages\PagesPage;
+use Derafu\Content\Plugin\Pages\PagesPlugin;
+use Derafu\Content\Plugin\Pages\PagesRegistry;
 use Derafu\Content\Plugin\Search\Exception\SearchUpstreamException;
 use Derafu\Content\Plugin\Search\OpenAiCompatibleLlmClient;
 use Derafu\Content\Plugin\Search\SearchEngine;
@@ -58,15 +68,15 @@ use Derafu\TestsContent\Support\FixtureHttpServer;
 use Derafu\TestsContent\Support\FixturePluginLoader;
 use Derafu\TestsContent\Support\RendererFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Drives the real MCP JSON-RPC protocol (initialize → tools/list →
  * tools/call) through McpController, backed by a real DocsPlugin loaded
- * from fixture content and a real (file-based) MCP session store — the
- * exact chain that surfaced the session-persistence bug during this
- * session's manual smoke testing, now pinned down permanently. No mocks:
+ * from fixture content and a real (file-based) MCP session store, which
+ * pins down the persistence of the session between requests. No mocks:
  * the only "fake" here is a minimal real RouterInterface implementation
  * (there is no HTTP server, so there is nothing to generate real URLs
  * against).
@@ -84,6 +94,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(DocsDoc::class)]
 #[UsesClass(AcademyPlugin::class)]
 #[UsesClass(AcademyRegistry::class)]
+#[UsesClass(AcademyCourse::class)]
 #[UsesClass(AcademyLesson::class)]
 #[UsesClass(AcademyModule::class)]
 #[UsesClass(AcademyTest::class)]
@@ -104,6 +115,15 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(OpenAiCompatibleLlmClient::class)]
 #[UsesClass(SearchEngine::class)]
 #[UsesClass(SearchResultsFilter::class)]
+#[UsesClass(BlogPlugin::class)]
+#[UsesClass(BlogPost::class)]
+#[UsesClass(BlogRegistry::class)]
+#[UsesClass(FaqPlugin::class)]
+#[UsesClass(FaqQuestion::class)]
+#[UsesClass(FaqRegistry::class)]
+#[UsesClass(PagesPage::class)]
+#[UsesClass(PagesPlugin::class)]
+#[UsesClass(PagesRegistry::class)]
 final class McpControllerTest extends TestCase
 {
     private static FixtureHttpServer $searchServer;
@@ -135,8 +155,12 @@ final class McpControllerTest extends TestCase
      * tool.
      * @return McpController
      */
-    private function buildController(bool $askEnabled, string $url = 'http://localhost'): McpController
-    {
+    private function buildController(
+        bool $askEnabled,
+        string $url = 'http://localhost',
+        bool $allSources = false,
+        string $searchScenario = 'results_ok'
+    ): McpController {
         $context = ContentFixtures::contentContext(url: $url);
 
         $docsPlugin = new DocsPlugin(
@@ -162,9 +186,16 @@ final class McpControllerTest extends TestCase
             'mcp' => $mcpPlugin,
         ];
 
+        if ($allSources) {
+            foreach (['faq' => FaqPlugin::class, 'blog' => BlogPlugin::class, 'pages' => PagesPlugin::class] as $name => $class) {
+                $plugins[$name] = new $class($context, ['path' => $name]);
+                $plugins[$name]->loadContent(new ContentLoader(ContentFixtures::contentPath()));
+            }
+        }
+
         if ($askEnabled) {
             $plugins['search'] = new SearchPlugin($context, [
-                'url' => self::$searchServer->url() . '/?scenario=results_ok&text=%s',
+                'url' => self::$searchServer->url() . '/?scenario=' . $searchScenario . '&text=%s',
                 'llm_url' => self::$searchServer->url(),
                 'llm_model' => 'fixture-model',
                 'llm_completions_path' => '/?scenario=chat_ok',
@@ -179,7 +210,8 @@ final class McpControllerTest extends TestCase
     }
 
     /**
-     * @return array{0: array<string,mixed>, 1: string} The decoded JSON-RPC
+     * @param array<string, mixed> $payload
+     * @return array{0: array<array-key, mixed>, 1: string} The decoded JSON-RPC
      * response body and the Mcp-Session-Id header.
      */
     private function callMcp(
@@ -205,10 +237,73 @@ final class McpControllerTest extends TestCase
 
         $response = ($controller ?? $this->controller)->handle($request);
 
+        $decoded = json_decode((string) $response->getBody(), true);
+        $this->assertIsArray($decoded);
+
         return [
-            json_decode((string) $response->getBody(), true),
+            $decoded,
             $response->getHeaderLine('Mcp-Session-Id'),
         ];
+    }
+
+    /**
+     * The `result` of the response of a tool call: whether it is an error and
+     * the text of its first content.
+     *
+     * @param array<array-key, mixed> $body Decoded JSON-RPC response.
+     * @return array{isError: bool, text: string}
+     */
+    private function toolResult(array $body): array
+    {
+        $result = $body['result'] ?? null;
+        $this->assertIsArray($result);
+        $content = $result['content'] ?? null;
+        $this->assertIsArray($content);
+        $first = $content[0] ?? null;
+        $this->assertIsArray($first);
+        $text = $first['text'] ?? null;
+        $this->assertIsString($text);
+        $isError = $result['isError'] ?? null;
+        $this->assertIsBool($isError);
+
+        return ['isError' => $isError, 'text' => $text];
+    }
+
+    /**
+     * The text of a tool call, decoded: the payload that the tool returns as
+     * JSON.
+     *
+     * @param array<array-key, mixed> $body Decoded JSON-RPC response.
+     * @return array<array-key, mixed>
+     */
+    private function toolPayload(array $body): array
+    {
+        $payload = json_decode($this->toolResult($body)['text'], true);
+        $this->assertIsArray($payload);
+
+        return $payload;
+    }
+
+    /**
+     * The tools that the response of `tools/list` has.
+     *
+     * @param array<array-key, mixed> $body Decoded JSON-RPC response.
+     * @return list<array<string, mixed>>
+     */
+    private function tools(array $body): array
+    {
+        $result = $body['result'] ?? null;
+        $this->assertIsArray($result);
+        $tools = $result['tools'] ?? null;
+        $this->assertIsArray($tools);
+
+        $list = [];
+        foreach ($tools as $tool) {
+            $this->assertIsArray($tool);
+            $list[] = $tool;
+        }
+
+        return $list;
     }
 
     private function initialize(?McpController $controller = null, string $requestUrl = 'http://localhost/api/content/mcp'): string
@@ -239,7 +334,7 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/list',
         ], $sessionId);
 
-        $names = array_column($body['result']['tools'], 'name');
+        $names = array_column($this->tools($body), 'name');
 
         $this->assertContains('get_content', $names);
         $this->assertContains('list_content', $names);
@@ -264,10 +359,11 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/list',
         ], $sessionId);
 
-        $tools = array_column($body['result']['tools'], null, 'name');
+        $tools = array_column($this->tools($body), null, 'name');
 
         foreach (['search_content', 'get_content', 'list_content', 'list_tags'] as $name) {
             $annotations = $tools[$name]['annotations'];
+            $this->assertIsArray($annotations);
 
             $this->assertTrue($annotations['readOnlyHint'], "$name readOnlyHint");
             $this->assertFalse($annotations['destructiveHint'], "$name destructiveHint");
@@ -286,14 +382,15 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/call',
             'params' => [
                 'name' => 'get_content',
-                'arguments' => ['source' => 'docs', 'uri' => 'guia/primeros-pasos'],
+                'arguments' => ['source' => 'docs', 'uri' => 'guide/getting-started'],
             ],
         ], $sessionId);
 
-        $this->assertFalse($body['result']['isError']);
-        $payload = json_decode($body['result']['content'][0]['text'], true);
-        $this->assertSame('guia/primeros-pasos', $payload['uri']);
-        $this->assertStringContainsString('primeros pasos, hijo', $payload['markdown']);
+        $this->assertFalse($this->toolResult($body)['isError']);
+        $payload = $this->toolPayload($body);
+        $this->assertSame('guide/getting-started', $payload['uri']);
+        $this->assertIsString($payload['markdown']);
+        $this->assertStringContainsString('getting started, child', $payload['markdown']);
     }
 
     /**
@@ -315,13 +412,54 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/call',
             'params' => [
                 'name' => 'get_content',
-                'arguments' => ['source' => 'academy', 'uri' => 'curso-demo/modulo-uno/leccion-uno'],
+                'arguments' => ['source' => 'academy', 'uri' => 'demo-course/module-one/lesson-one'],
             ],
         ], $sessionId);
 
-        $this->assertFalse($body['result']['isError']);
-        $payload = json_decode($body['result']['content'][0]['text'], true);
-        $this->assertSame('curso-demo/modulo-uno/leccion-uno', $payload['uri']);
+        $this->assertFalse($this->toolResult($body)['isError']);
+        $payload = $this->toolPayload($body);
+        $this->assertSame('demo-course/module-one/lesson-one', $payload['uri']);
+    }
+
+    /**
+     * @return array<string, array{string, string, string, string}>
+     */
+    public static function provideContentOfEverySource(): array
+    {
+        return [
+            'a question of the faq' => ['faq', 'question-one', 'question', 'How is this package tested?'],
+            'a post of the blog' => ['blog', '2026-01-15-first-post', 'post', 'First post'],
+            'a page' => ['pages', 'about', 'page', 'About us'],
+            'a course of the academy' => ['academy', 'demo-course', 'course', 'Demo Course'],
+            'a module of the academy' => ['academy', 'demo-course/module-one', 'module', 'Module One'],
+        ];
+    }
+
+    #[DataProvider('provideContentOfEverySource')]
+    public function testGetContentToolGivesTheMarkdownOfEachKindOfContent(
+        string $source,
+        string $uri,
+        string $category,
+        string $title
+    ): void {
+        $controller = $this->buildController(askEnabled: false, allSources: true);
+        $sessionId = $this->initialize($controller);
+
+        [$body] = $this->callMcp([
+            'jsonrpc' => '2.0',
+            'id' => 3,
+            'method' => 'tools/call',
+            'params' => ['name' => 'get_content', 'arguments' => ['source' => $source, 'uri' => $uri]],
+        ], $sessionId, $controller);
+
+        $this->assertFalse($this->toolResult($body)['isError']);
+        $payload = $this->toolPayload($body);
+        $this->assertSame($category, $payload['category']);
+        $this->assertSame($title, $payload['title']);
+        $this->assertIsString($payload['markdown']);
+        $this->assertStringContainsString($title, $payload['markdown']);
+        $this->assertIsString($payload['url']);
+        $this->assertStringStartsWith('http://localhost', $payload['url']);
     }
 
     public function testGetContentToolOnUnknownUriReturnsAGracefulToolError(): void
@@ -334,12 +472,12 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/call',
             'params' => [
                 'name' => 'get_content',
-                'arguments' => ['source' => 'docs', 'uri' => 'no-existe'],
+                'arguments' => ['source' => 'docs', 'uri' => 'does-not-exist'],
             ],
         ], $sessionId);
 
-        $this->assertTrue($body['result']['isError']);
-        $this->assertStringContainsString('not found', $body['result']['content'][0]['text']);
+        $this->assertTrue($this->toolResult($body)['isError']);
+        $this->assertStringContainsString('not found', $this->toolResult($body)['text']);
     }
 
     public function testListContentToolFiltersByTag(): void
@@ -352,15 +490,15 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/call',
             'params' => [
                 'name' => 'list_content',
-                'arguments' => ['source' => 'docs', 'tag' => 'guia'],
+                'arguments' => ['source' => 'docs', 'tag' => 'guide'],
             ],
         ], $sessionId);
 
-        $items = json_decode($body['result']['content'][0]['text'], true);
+        $items = $this->toolPayload($body);
         $uris = array_column($items, 'uri');
 
-        $this->assertContains('guia', $uris);
-        $this->assertContains('guia/primeros-pasos', $uris);
+        $this->assertContains('guide', $uris);
+        $this->assertContains('guide/getting-started', $uris);
         $this->assertNotContains('index', $uris);
     }
 
@@ -378,15 +516,14 @@ final class McpControllerTest extends TestCase
             ],
         ], $sessionId);
 
-        $tags = json_decode($body['result']['content'][0]['text'], true);
+        $tags = $this->toolPayload($body);
         $byName = array_column($tags, 'count', 'name');
 
-        $this->assertSame(2, $byName['guia']);
+        $this->assertSame(2, $byName['guide']);
     }
 
     /**
-     * The exact bug found this session: each HTTP request builds a new
-     * Server instance, so an in-memory session store would forget the
+     * Each HTTP request builds a new Server instance, so an in-memory session store would forget the
      * session between the initialize call and the very next one. This
      * asserts the session set up in setUp() (a real FileSessionStore on
      * disk) survives across two independent McpController::handle() calls.
@@ -420,9 +557,10 @@ final class McpControllerTest extends TestCase
             ],
         ], $sessionId, $controller);
 
-        $this->assertFalse($body['result']['isError']);
-        $results = json_decode($body['result']['content'][0]['text'], true);
+        $this->assertFalse($this->toolResult($body)['isError']);
+        $results = $this->toolPayload($body);
         $this->assertCount(2, $results);
+        $this->assertIsArray($results[0]);
         $this->assertSame('Fixture result one', $results[0]['title']);
         $this->assertSame(0.91, $results[0]['score']);
     }
@@ -434,6 +572,28 @@ final class McpControllerTest extends TestCase
      * source even when it did not actually know where the answer was,
      * silently missing it instead of finding it via the broader search.
      */
+    public function testSearchContentToolShortensALongPreviewAndLeavesOutATextThatIsNotOne(): void
+    {
+        $controller = $this->buildController(askEnabled: true, searchScenario: 'results_long_data');
+        $sessionId = $this->initialize($controller);
+
+        [$body] = $this->callMcp([
+            'jsonrpc' => '2.0',
+            'id' => 3,
+            'method' => 'tools/call',
+            'params' => ['name' => 'search_content', 'arguments' => ['query' => 'hola']],
+        ], $sessionId, $controller);
+
+        $results = $this->toolPayload($body);
+        $previews = array_column($results, 'preview', 'uri');
+
+        $this->assertSame(303, mb_strlen($previews['guide']));
+        $this->assertStringEndsWith('...', $previews['guide']);
+        $this->assertStringStartsWith('word xxx', $previews['guide']);
+        $this->assertSame('', $previews['index']);
+        $this->assertSame('Short text.', $previews['guide/getting-started']);
+    }
+
     public function testSearchContentToolSourceAllReturnsEveryResultJustLikeOmittingSource(): void
     {
         $controller = $this->buildController(askEnabled: true);
@@ -449,8 +609,8 @@ final class McpControllerTest extends TestCase
             ],
         ], $sessionId, $controller);
 
-        $this->assertFalse($body['result']['isError']);
-        $results = json_decode($body['result']['content'][0]['text'], true);
+        $this->assertFalse($this->toolResult($body)['isError']);
+        $results = $this->toolPayload($body);
         $this->assertCount(2, $results);
     }
 
@@ -476,8 +636,8 @@ final class McpControllerTest extends TestCase
             ],
         ], $sessionId, $controller);
 
-        $this->assertFalse($body['result']['isError']);
-        $results = json_decode($body['result']['content'][0]['text'], true);
+        $this->assertFalse($this->toolResult($body)['isError']);
+        $results = $this->toolPayload($body);
         $this->assertCount(0, $results);
     }
 
@@ -492,7 +652,7 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/list',
         ], $sessionId, $controller);
 
-        $names = array_column($body['result']['tools'], 'name');
+        $names = array_column($this->tools($body), 'name');
 
         $this->assertContains('ask', $names);
     }
@@ -516,8 +676,9 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/list',
         ], $sessionId, $controller);
 
-        $tools = array_column($body['result']['tools'], null, 'name');
+        $tools = array_column($this->tools($body), null, 'name');
         $annotations = $tools['ask']['annotations'];
+        $this->assertIsArray($annotations);
 
         $this->assertTrue($annotations['readOnlyHint']);
         $this->assertFalse($annotations['destructiveHint']);
@@ -536,20 +697,19 @@ final class McpControllerTest extends TestCase
             'method' => 'tools/call',
             'params' => [
                 'name' => 'ask',
-                'arguments' => ['question' => '¿Cómo anulo un DTE?'],
+                'arguments' => ['question' => 'How do I cancel an invoice?'],
             ],
         ], $sessionId, $controller);
 
-        $this->assertFalse($body['result']['isError']);
+        $this->assertFalse($this->toolResult($body)['isError']);
         $this->assertSame(
-            'Hola, esta es una respuesta de prueba.',
-            $body['result']['content'][0]['text']
+            'Hello, this is a test answer.',
+            $this->toolResult($body)['text']
         );
     }
 
     /**
-     * Reproduces this session's real chat.derafu.ai outage: the LLM
-     * backend answers, but with an error — "ask" must surface a graceful
+     * The LLM backend answers, but with an error — "ask" must surface a graceful
      * tool error, not crash the whole MCP request.
      */
     public function testAskToolSurfacesAGracefulErrorWhenTheLlmBackendFails(): void
@@ -588,13 +748,12 @@ final class McpControllerTest extends TestCase
             ],
         ], $sessionId, $controller);
 
-        $this->assertTrue($body['result']['isError']);
-        $this->assertStringContainsString('Model not found', $body['result']['content'][0]['text']);
+        $this->assertTrue($this->toolResult($body)['isError']);
+        $this->assertStringContainsString('Model not found', $this->toolResult($body)['text']);
     }
 
     /**
-     * The exact bug found this session: StreamableHttpTransport's default
-     * middleware only allows Host/Origin in ['localhost', '127.0.0.1',
+     * StreamableHttpTransport's default middleware only allows Host/Origin in ['localhost', '127.0.0.1',
      * '[::1]'] (DNS rebinding protection meant for locally-run MCP
      * servers), which silently rejected every real request to the live
      * production site — completely masked in this test suite because
@@ -604,15 +763,15 @@ final class McpControllerTest extends TestCase
      */
     public function testRequestFromTheConfiguredSiteHostIsAllowed(): void
     {
-        $controller = $this->buildController(askEnabled: false, url: 'https://www.libredte.cl');
+        $controller = $this->buildController(askEnabled: false, url: 'https://example.com');
 
-        $sessionId = $this->initialize($controller, 'https://www.libredte.cl/api/content/mcp');
+        $sessionId = $this->initialize($controller, 'https://example.com/api/content/mcp');
 
         [$body] = $this->callMcp([
             'jsonrpc' => '2.0',
             'id' => 12,
             'method' => 'tools/list',
-        ], $sessionId, $controller, 'https://www.libredte.cl/api/content/mcp');
+        ], $sessionId, $controller, 'https://example.com/api/content/mcp');
 
         $this->assertArrayHasKey('result', $body);
         $this->assertArrayNotHasKey('error', $body);
@@ -625,7 +784,7 @@ final class McpControllerTest extends TestCase
      */
     public function testRequestFromAnUntrustedHostIsRejected(): void
     {
-        $controller = $this->buildController(askEnabled: false, url: 'https://www.libredte.cl');
+        $controller = $this->buildController(askEnabled: false, url: 'https://example.com');
 
         $request = new Request(
             'POST',
@@ -677,7 +836,10 @@ final class McpControllerTest extends TestCase
 
             public function generate(string $name, array $parameters = [], UrlReferenceType $referenceType = UrlReferenceType::ABSOLUTE_PATH): string
             {
-                return 'http://localhost/' . ($parameters['doc'] ?? '');
+                $doc = $parameters['doc'] ?? '';
+                assert(is_string($doc));
+
+                return 'http://localhost/' . $doc;
             }
 
             public function setContext(RequestContextInterface $context): static

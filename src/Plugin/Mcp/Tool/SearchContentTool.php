@@ -22,7 +22,7 @@ use Throwable;
 
 /**
  * MCP tool that searches the content indexed in the semantic search engine
- * (Qdrant, through the "search" plugin), the same engine used by the
+ * (through the "search" plugin), the same engine used by the
  * `/api/content/search.json` endpoint and the website's search page.
  *
  * Its errors are `ToolCallException` of the MCP SDK (a `final` class, so they
@@ -89,7 +89,7 @@ class SearchContentTool
                 'title' => $result['title'] ?? null,
                 'url' => $result['url'] ?? null,
                 'score' => $result['score'] ?? null,
-                'preview' => $this->preview((string) ($result['data'] ?? '')),
+                'preview' => $this->preview(is_string($result['data'] ?? null) ? $result['data'] : ''),
             ],
             $results
         );

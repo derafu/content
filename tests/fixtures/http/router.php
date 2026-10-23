@@ -17,10 +17,12 @@ header('Content-Type: application/json');
 // outside, exactly which URL a client actually requested (e.g. a custom
 // "llm_completions_path"), without the client's own return value having
 // to carry that information.
-if (isset($_GET['log_to'])) {
+$logTo = $_GET['log_to'] ?? null;
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+if (is_string($logTo) && is_string($requestUri)) {
     file_put_contents(
-        $_GET['log_to'],
-        parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) . "\n",
+        $logTo,
+        parse_url($requestUri, PHP_URL_PATH) . "\n",
         FILE_APPEND
     );
 }
@@ -33,38 +35,60 @@ $scenario = $_GET['scenario'] ?? 'results_ok';
     // through unchanged — this scenario is about the raw engine response
     // shape, not about the post-filter, which has its own scenario below.
     'results_ok' => [200, ['results' => [
-        ['id' => 'doc-1', 'type' => 'docs', 'uri' => 'guia', 'title' => 'Fixture result one', 'score' => 0.91],
+        ['id' => 'doc-1', 'type' => 'docs', 'uri' => 'guide', 'title' => 'Fixture result one', 'score' => 0.91],
         ['id' => 'doc-2', 'type' => 'docs', 'uri' => 'index', 'title' => 'Fixture result two', 'score' => 0.77],
     ]]],
     // Mixed results for SearchController's post-filter: one real,
-    // fully-visible doc ("guia"), one searchable:false, one draft (stale
+    // fully-visible doc ("guide"), one searchable:false, one draft (stale
     // index entry that later became draft), one unlisted, and one whose
     // uri no longer exists in the registry at all (another stale entry).
     'results_mixed_searchability' => [200, ['results' => [
-        ['type' => 'docs', 'uri' => 'guia', 'title' => 'Guía', 'score' => 0.95],
-        ['type' => 'docs', 'uri' => 'no-buscable', 'title' => 'No Buscable', 'score' => 0.9],
-        ['type' => 'docs', 'uri' => 'borrador-padre', 'title' => 'Sección borrador', 'score' => 0.85],
-        ['type' => 'docs', 'uri' => 'no-listado', 'title' => 'No Listado', 'score' => 0.8],
-        ['type' => 'docs', 'uri' => 'fantasma-inexistente', 'title' => 'Fantasma', 'score' => 0.75],
+        ['type' => 'docs', 'uri' => 'guide', 'title' => 'Guide', 'score' => 0.95],
+        ['type' => 'docs', 'uri' => 'not-searchable', 'title' => 'Not Searchable', 'score' => 0.9],
+        ['type' => 'docs', 'uri' => 'draft-parent', 'title' => 'Draft section', 'score' => 0.85],
+        ['type' => 'docs', 'uri' => 'not-listed', 'title' => 'Not Listed', 'score' => 0.8],
+        ['type' => 'docs', 'uri' => 'ghost-nonexistent', 'title' => 'Ghost', 'score' => 0.75],
     ]]],
     'results_missing_field' => [200, ['unexpected' => true]],
+    // Results with a long text, and with a text that is not one.
+    'results_long_data' => [200, ['results' => [
+        ['type' => 'docs', 'uri' => 'guide', 'title' => 'Guide', 'data' => '  ' . 'word ' . str_repeat('x', 400) . '  '],
+        ['type' => 'docs', 'uri' => 'index', 'title' => 'Index', 'data' => ['not', 'a', 'text']],
+        ['type' => 'docs', 'uri' => 'guide/getting-started', 'title' => 'Child', 'data' => 'Short text.'],
+    ]]],
+    'results_not_list' => [200, ['results' => 'none']],
+    'results_item_not_object' => [200, ['results' => [['type' => 'docs', 'uri' => 'guide'], 'guide']]],
+    // Results whose type or uri is not a text: SearchResultsFilter drops them.
+    'results_bad_types' => [200, ['results' => [
+        ['type' => 5, 'uri' => 'guide'],
+        ['type' => 'docs', 'uri' => ['guide']],
+        ['type' => 'docs', 'uri' => 'guide', 'title' => 'Guide'],
+    ]]],
     'results_bad_status' => [503, ['detail' => 'Search backend unavailable']],
+    'results_bad_status_unknown' => [502, ['unexpected' => true]],
+    'results_bad_status_text' => [502, null],
+    'results_bad_status_message' => [500, ['message' => 'Index is rebuilding']],
     'chat_ok' => [200, ['choices' => [
-        ['message' => ['content' => 'Hola, esta es una respuesta de prueba.']],
+        ['message' => ['content' => 'Hello, this is a test answer.']],
     ]]],
     'chat_missing_field' => [200, ['unexpected' => true]],
+    'chat_content_not_text' => [200, ['choices' => [['message' => ['content' => ['not', 'a', 'text']]]]]],
+    'chat_choices_not_list' => [200, ['choices' => 'none']],
     'chat_error_detail' => [400, ['detail' => 'Model not found']],
     'chat_error_object' => [429, ['error' => ['message' => 'Rate limited', 'type' => 'rate_limit_error']]],
     'chat_error_string' => [400, ['error' => 'Bad request']],
+    'chat_error_list' => [422, ['detail' => [['msg' => 'field required']]]],
+    'chat_error_unknown' => [500, ['unexpected' => true]],
+    'chat_error_text' => [502, null],
     'invalid_json' => [200, null],
     'academy_test_ok' => [200, [
-        'title' => 'Cuestionario remoto',
+        'title' => 'Remote quiz',
         'questions' => [
             [
                 'type' => 'true_false',
-                'text' => '¿Este cuestionario vino de un servidor remoto?',
+                'text' => 'Did this quiz come from a remote server?',
                 'answer' => true,
-                'explanation' => 'Sí, fue servido por el fixture HTTP de los tests.',
+                'explanation' => 'Yes, it was served by the HTTP fixture of the tests.',
             ],
         ],
     ]],
@@ -72,6 +96,16 @@ $scenario = $_GET['scenario'] ?? 'results_ok';
 };
 
 http_response_code($status);
+
+if ($scenario === 'results_bad_status_text') {
+    echo 'Bad gateway';
+    exit;
+}
+
+if ($scenario === 'chat_error_text') {
+    echo 'Bad gateway';
+    exit;
+}
 
 if ($scenario === 'invalid_json') {
     echo '{this is not valid json';

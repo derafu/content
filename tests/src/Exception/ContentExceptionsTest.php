@@ -19,7 +19,6 @@ use Derafu\Content\ContentContext;
 use Derafu\Content\ContentService;
 use Derafu\Content\Plugin\Academy\AcademyTest;
 use Derafu\Content\Plugin\Docs\DocsDoc;
-use Derafu\Content\Plugin\Docs\DocsOpenApiSpec;
 use Derafu\Content\Plugin\Search\SearchController;
 use Derafu\Content\Plugin\Search\SearchPlugin;
 use Derafu\Content\RemoteContentFetcher;
@@ -40,7 +39,6 @@ use Throwable;
 #[CoversClass(ContentService::class)]
 #[CoversClass(ContentAttachment::class)]
 #[CoversClass(DocsDoc::class)]
-#[CoversClass(DocsOpenApiSpec::class)]
 #[CoversClass(AcademyTest::class)]
 #[CoversClass(SearchController::class)]
 #[CoversClass(SearchPlugin::class)]
@@ -50,7 +48,7 @@ use Throwable;
 final class ContentExceptionsTest extends TestCase
 {
     /**
-     * @return array<string, array{Closure, class-string<Throwable>, string}>
+     * @return array<string, array{Closure, class-string<Throwable>, non-empty-string}>
      */
     public static function failuresProvider(): array
     {
@@ -61,19 +59,14 @@ final class ContentExceptionsTest extends TestCase
                 'Plugin "missing" not found. Available plugins: .',
             ],
             'attachment that is not a file' => [
-                fn () => new ContentAttachment('/does/not/exist.pdf', new DocsDoc(ContentFixtures::contentPath() . '/docs/guia.md')),
+                fn () => new ContentAttachment('/does/not/exist.pdf', new DocsDoc(ContentFixtures::contentPath() . '/docs/guide.md')),
                 \InvalidArgumentException::class,
-                'Path  must be a readable attachment.',
+                'Path /does/not/exist.pdf must be a readable attachment.',
             ],
             'content that is not a file' => [
                 fn () => new DocsDoc('/does/not/exist.md'),
                 \InvalidArgumentException::class,
-                'Path  must be a readable file content.',
-            ],
-            'invalid openapi' => [
-                fn () => DocsOpenApiSpec::fromRaw("openapi: 3.0.3\n  bad indent: ["),
-                \RuntimeException::class,
-                'Invalid OpenAPI document: ',
+                'Path /does/not/exist.md must be a readable file content.',
             ],
             'invalid academy test' => [
                 fn () => AcademyTest::fromJson('{not json'),
@@ -101,6 +94,7 @@ final class ContentExceptionsTest extends TestCase
 
     /**
      * @param class-string<Throwable> $class
+     * @param non-empty-string $message
      */
     #[DataProvider('failuresProvider')]
     public function testTheFailureIsATranslatableErrorThatSaysTheSame(Closure $failure, string $class, string $message): void

@@ -1,8 +1,8 @@
 ---
-title: "Lección con test remoto inalcanzable"
-description: "Fixture aislado: 'test' apunta a un puerto sin nada escuchando, para probar que icon() no dispara el fetch HTTP solo para elegir el ícono."
+title: "Lesson with an unreachable remote test"
+description: "An isolated fixture: 'test' points to a port where nothing is listening, to check that icon() does not trigger the HTTP fetch just to choose the icon."
 test: "http://127.0.0.1:19899/"
 ---
-Contenido de una lección aislada usada solo por
-`AcademyLessonRemoteTestSourceTest` para probar `icon()` cuando el
-"test" remoto es inalcanzable.
+The content of an isolated lesson used only by
+`AcademyLessonRemoteTestSourceTest` to check `icon()` when the remote "test"
+is unreachable.

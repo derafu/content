@@ -17,6 +17,7 @@ use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentLoader;
 use Derafu\Content\ContentService;
 use Derafu\Content\ContentSplFileInfo;
@@ -36,8 +37,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Exercises StorageController — never exercised at all this session — by
- * actually downloading the real quiz.json attachment of the Academy
+ * Exercises StorageController by actually downloading the real quiz.json
+ * attachment of the Academy
  * fixture lesson through the full attachment-resolution path.
  */
 #[CoversClass(StorageController::class)]
@@ -57,6 +58,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
 #[UsesClass(ContentNotFoundException::class)]
+#[UsesClass(ContentFilters::class)]
 final class StorageControllerTest extends TestCase
 {
     private StorageController $controller;
@@ -79,12 +81,12 @@ final class StorageControllerTest extends TestCase
 
     public function testDownloadsTheRealAttachmentFile(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno/leccion-uno/_attachments/quiz.json');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one/lesson-one/_attachments/quiz.json');
 
         $response = $this->controller->download(
             $request,
             'academy',
-            'curso-demo/modulo-uno/leccion-uno',
+            'demo-course/module-one/lesson-one',
             'quiz.json'
         );
 
@@ -93,24 +95,34 @@ final class StorageControllerTest extends TestCase
 
     public function testUnknownContentUriThrowsContentNotFoundException(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/no-existe/_attachments/quiz.json');
+        $request = new Request('GET', 'http://localhost/academy/does-not-exist/_attachments/quiz.json');
 
         $this->expectException(ContentNotFoundException::class);
 
-        $this->controller->download($request, 'academy', 'no-existe', 'quiz.json');
+        $this->controller->download($request, 'academy', 'does-not-exist', 'quiz.json');
+    }
+
+    public function testAnAttachmentWithoutNameIsNotFound(): void
+    {
+        $request = new Request('GET', 'http://localhost/academy/demo-course/_attachments/');
+
+        $this->expectException(ContentNotFoundException::class);
+        $this->expectExceptionMessage('Attachment not found.');
+
+        $this->controller->download($request, 'academy', 'demo-course', '');
     }
 
     public function testUnknownAttachmentThrowsContentNotFoundException(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno/leccion-uno/_attachments/no-existe.json');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one/lesson-one/_attachments/does-not-exist.json');
 
         $this->expectException(ContentNotFoundException::class);
 
         $this->controller->download(
             $request,
             'academy',
-            'curso-demo/modulo-uno/leccion-uno',
-            'no-existe.json'
+            'demo-course/module-one/lesson-one',
+            'does-not-exist.json'
         );
     }
 }

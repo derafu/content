@@ -53,6 +53,8 @@ class PagesPage extends AbstractContentItem implements PagesPageInterface
      * the router has no route that builds `/{uri}`: the route named
      * `pages_page` is another path (`/pages/{uri}`) and using it would change
      * the links that are delivered.
+     *
+     * @return array<string, array{href: string}>
      */
     public function links(RouterInterface $router): array
     {

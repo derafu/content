@@ -50,9 +50,18 @@ class PluginLoader implements PluginLoaderInterface
         // the options of the plugin against the schema of the plugin.
         $pluginsList = $contentService->context()->config()->plugins();
         foreach ($pluginsList as $pluginName => $pluginOptions) {
+            $pluginOptions ??= [];
+            if (!is_array($pluginOptions)) {
+                throw new InvalidArgumentException([
+                    'The options of the plugin "{plugin}" must be an object, {type} given.',
+                    'plugin' => $pluginName,
+                    'type' => get_debug_type($pluginOptions),
+                ]);
+            }
+
             $plugins[$pluginName] = $this->load(
-                $pluginName,
-                $pluginOptions ?? [],
+                (string) $pluginName,
+                $pluginOptions,
                 $contentService->context()
             );
         }
@@ -86,7 +95,7 @@ class PluginLoader implements PluginLoaderInterface
      * Load a plugin.
      *
      * @param string $name Name of the plugin.
-     * @param array $options Options of the plugin.
+     * @param array<array-key, mixed> $options Options of the plugin.
      * @param ContentContextInterface $contentContext Content context.
      * @return PluginInterface
      */
@@ -97,6 +106,13 @@ class PluginLoader implements PluginLoaderInterface
     ): PluginInterface {
         if (!empty($options['class'])) {
             $class = $options['class'];
+            if (!is_string($class)) {
+                throw new InvalidArgumentException([
+                    'The "class" of the plugin "{plugin}" must be a class name, {type} given.',
+                    'plugin' => $name,
+                    'type' => get_debug_type($class),
+                ]);
+            }
         } else {
             $plugin = ucfirst($name);
             $class = 'Derafu\Content\Plugin\\'
@@ -104,6 +120,26 @@ class PluginLoader implements PluginLoaderInterface
                 . $plugin . 'Plugin'
             ;
         }
+
+        if (!class_exists($class)) {
+            throw new InvalidArgumentException([
+                'The class "{class}" of the plugin "{plugin}" does not exist.',
+                'class' => $class,
+                'plugin' => $name,
+            ]);
+        }
+
+        if (!is_subclass_of($class, PluginInterface::class)) {
+            throw new InvalidArgumentException([
+                'The class "{class}" of the plugin "{plugin}" must implement {interface}.',
+                'class' => $class,
+                'plugin' => $name,
+                'interface' => PluginInterface::class,
+            ]);
+        }
+
+        // The class is a key of the loader: the plugin does not have it.
+        unset($options['class']);
 
         return new $class($contentContext, $options);
     }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content;
 
 use Derafu\Content\Contract\ContentLoaderInterface;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 
 /**
  * Content loader from filesystem.
@@ -31,6 +32,10 @@ class ContentLoader implements ContentLoaderInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<string> $exclude
+     * @param array<string> $include
+     * @return array<int|string, mixed>
      */
     public function scan(string $path, array $include, array $exclude): array
     {
@@ -47,12 +52,15 @@ class ContentLoader implements ContentLoaderInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<int|string, mixed> $hierarchy
      */
     public function load(string $class, array $hierarchy): array
     {
         $items = [];
 
         foreach ($hierarchy as $files) {
+            /** @var array<int|string, mixed> $files The file of the item at 0, the children by name. */
             // Skip if no main file is found.
             // This will happen if a directory exists with content but there is
             // no a file content related (same name) to the directory. This is
@@ -65,6 +73,7 @@ class ContentLoader implements ContentLoaderInterface
             }
 
             // Create the item from the first file.
+            /** @var ContentSplFileInfo $self */
             $self = $files[0];
             $item = new $class($self);
 
@@ -93,7 +102,7 @@ class ContentLoader implements ContentLoaderInterface
      * @param string $path Base path of the content.
      * @param array<string> $include Include patterns.
      * @param array<string> $exclude Exclude patterns.
-     * @return array
+     * @return array<int, string>
      */
     private function findFiles(string $path, array $include, array $exclude): array
     {
@@ -136,8 +145,8 @@ class ContentLoader implements ContentLoaderInterface
      * Build a hierarchical tree structure from flat file paths array.
      *
      * @param string $path Base path of the content.
-     * @param array $files Array of file paths from a flat array.
-     * @return array Hierarchical tree structure.
+     * @param array<int, string> $files Array of file paths from a flat array.
+     * @return array<int|string, mixed> Hierarchical tree structure.
      */
     private function buildHierarchy(string $path, array $files): array
     {
@@ -145,18 +154,18 @@ class ContentLoader implements ContentLoaderInterface
 
         foreach ($files as $file) {
             $fileInfo = new ContentSplFileInfo($path . $file);
-            $fileInfo->setFileClass(ContentSplFileObject::class);
             $fileUri = $fileInfo->getUri($path);
 
             $keys = explode('/', $fileUri);
 
-            /** @var array<string, mixed> $current */
+            /** @var array<int|string, mixed> $current */
             $current = &$tree;
 
             foreach ($keys as $key) {
                 if (!isset($current[$key])) {
                     $current[$key] = [];
                 }
+                /** @var array<int|string, mixed> $current */
                 $current = &$current[$key];
             }
 
@@ -172,13 +181,19 @@ class ContentLoader implements ContentLoaderInterface
      * @param string $path Base path.
      * @param string $pattern Pattern.
      * @param int $flags Flags.
-     * @return array
+     * @return array<int, string>
      */
     private function rglob(string $path, string $pattern, int $flags = 0): array
     {
         $path = rtrim($path, '/') . '/';
 
         $files = glob($path . $pattern, $flags);
+        if ($files === false) {
+            throw new RuntimeException([
+                'The directory "{path}" could not be listed.',
+                'path' => $path,
+            ]);
+        }
 
         $dirs = glob($path . '*', GLOB_ONLYDIR);
         if (is_array($dirs)) {

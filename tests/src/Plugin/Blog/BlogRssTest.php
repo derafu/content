@@ -26,15 +26,21 @@ use Derafu\Content\Plugin\Blog\BlogPost;
 use Derafu\Content\Plugin\Blog\BlogRegistry;
 use Derafu\Http\Request;
 use Derafu\Http\Response;
+use Derafu\Renderer\Contract\EngineInterface;
+use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\Support\File;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RendererFixture;
 use Derafu\TestsContent\Support\RouterFixture;
+use Derafu\Translation\Contract\TranslatableInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Throwable;
 
 /**
  * The feed takes the name and the URL of the website from the configuration
@@ -66,15 +72,15 @@ final class BlogRssTest extends TestCase
         mkdir($this->contentPath . '/blog', 0777, true);
 
         file_put_contents(
-            $this->contentPath . '/blog/2026-03-01-post-con-enlaces.md',
+            $this->contentPath . '/blog/2026-03-01-post-with-links.md',
             <<<'MARKDOWN'
             ---
-            title: "Post con enlaces"
-            description: "Post con enlaces y una imagen relativos a la raíz."
+            title: "Post with links"
+            description: "A post with links and an image relative to the root."
             ---
-            Lea la [guía](/docs/guia) y mire la imagen: ![logo](/img/logo.png).
-            Contenido de relleno para superar el largo mínimo indexable de cien
-            caracteres en total, como en los demás posts de prueba.
+            Read the [guide](/docs/guide) and look at the image: ![logo](/img/logo.png).
+            Filler content to exceed the minimum indexable length of one hundred
+            characters in total, like the other test posts.
             MARKDOWN
         );
     }
@@ -95,7 +101,7 @@ final class BlogRssTest extends TestCase
         array $query = [],
         array $headers = []
     ): Response {
-        $context = ContentFixtures::contentContext('Mi Sitio', $url);
+        $context = ContentFixtures::contentContext('My Site', $url);
 
         $plugin = new BlogPlugin($context, ['path' => 'blog', 'feedOptions' => $feedOptions]);
         $plugin->loadContent(new ContentLoader($this->contentPath));
@@ -130,14 +136,14 @@ final class BlogRssTest extends TestCase
     {
         $xml = $this->rss('https://example.com');
 
-        $this->assertStringContainsString('<title>Blog of Mi Sitio</title>', $xml);
+        $this->assertStringContainsString('<title>Blog of My Site</title>', $xml);
     }
 
     public function testRootRelativeLinksAndImagesBecomeAbsoluteWithTheConfiguredUrl(): void
     {
         $xml = $this->rss('https://example.com');
 
-        $this->assertStringContainsString('href="https://example.com/docs/guia"', $xml);
+        $this->assertStringContainsString('href="https://example.com/docs/guide"', $xml);
         $this->assertStringContainsString('src="https://example.com/img/logo.png"', $xml);
     }
 
@@ -145,7 +151,7 @@ final class BlogRssTest extends TestCase
     {
         $xml = $this->rss('https://example.com/');
 
-        $this->assertStringContainsString('href="https://example.com/docs/guia"', $xml);
+        $this->assertStringContainsString('href="https://example.com/docs/guide"', $xml);
         $this->assertStringNotContainsString('https://example.com//', $xml);
     }
 
@@ -163,8 +169,8 @@ final class BlogRssTest extends TestCase
             file_put_contents(
                 $this->contentPath . '/blog/2026-04-' . $number . '-post-' . $number . '.md',
                 "---\ntitle: \"Post {$number}\"\nlast_update: 2026-05-{$number}\n{$tags}---\n"
-                . "Contenido de relleno del post {$number} para superar el largo mínimo "
-                . "indexable de cien caracteres en total, como en los demás posts de prueba.\n"
+                . "Filler content of post {$number} to exceed the minimum "
+                . "indexable length of one hundred characters in total, like the other test posts.\n"
             );
         }
     }
@@ -265,10 +271,12 @@ final class BlogRssTest extends TestCase
 
         $xml = $this->rss('https://example.com');
 
-        preg_match('#<lastBuildDate>(.*?)</lastBuildDate>#', $xml, $build);
-        preg_match('#<item>.*?<pubDate>(.*?)</pubDate>#s', $xml, $newest);
-
-        $this->assertNotEmpty($build, 'The feed has no lastBuildDate.');
+        if (preg_match('#<lastBuildDate>(.*?)</lastBuildDate>#', $xml, $build) !== 1) {
+            $this->fail('The feed has no lastBuildDate.');
+        }
+        if (preg_match('#<item>.*?<pubDate>(.*?)</pubDate>#s', $xml, $newest) !== 1) {
+            $this->fail('The feed has no posts.');
+        }
         $this->assertSame($newest[1], $build[1]);
     }
 
@@ -278,7 +286,9 @@ final class BlogRssTest extends TestCase
 
         $xml = $this->rss('https://example.com', ['sortPosts' => 'ascending']);
 
-        preg_match('#<lastBuildDate>(.*?)</lastBuildDate>#', $xml, $build);
+        if (preg_match('#<lastBuildDate>(.*?)</lastBuildDate>#', $xml, $build) !== 1) {
+            $this->fail('The feed has no lastBuildDate.');
+        }
         preg_match_all('#<pubDate>(.*?)</pubDate>#', $xml, $dates);
 
         $this->assertSame(end($dates[1]), $build[1]);
@@ -317,14 +327,14 @@ final class BlogRssTest extends TestCase
     public function testTitleDescriptionAndCopyrightOfTheFeedCanBeConfigured(): void
     {
         $xml = $this->rss('https://example.com', [
-            'title' => 'Novedades & más',
-            'description' => 'Lo último del sitio',
-            'copyright' => '© 2026 Mi Sitio',
+            'title' => 'News & more',
+            'description' => 'The latest of the site',
+            'copyright' => '© 2026 My Site',
         ]);
 
-        $this->assertStringContainsString('<title>Novedades &amp; más</title>', $xml);
-        $this->assertStringContainsString('<description>Lo último del sitio</description>', $xml);
-        $this->assertStringContainsString('<copyright>© 2026 Mi Sitio</copyright>', $xml);
+        $this->assertStringContainsString('<title>News &amp; more</title>', $xml);
+        $this->assertStringContainsString('<description>The latest of the site</description>', $xml);
+        $this->assertStringContainsString('<copyright>© 2026 My Site</copyright>', $xml);
     }
 
     public function testThereIsNoCopyrightWhenItIsNotConfigured(): void
@@ -334,7 +344,10 @@ final class BlogRssTest extends TestCase
 
     private function lastModifiedOf(string $date): string
     {
-        return gmdate('D, d M Y H:i:s', strtotime($date . ' UTC')) . ' GMT';
+        $timestamp = strtotime($date . ' UTC');
+        $this->assertNotFalse($timestamp);
+
+        return gmdate('D, d M Y H:i:s', $timestamp) . ' GMT';
     }
 
     public function testTheFeedSaysWhenItWasLastModified(): void
@@ -357,8 +370,8 @@ final class BlogRssTest extends TestCase
         file_put_contents(
             $this->contentPath . '/blog/2026-04-05-post-05.md',
             "---\ntitle: \"Post 05\"\nlast_update: 2026-06-01\n---\n"
-            . "Contenido de relleno editado del post 05 para superar el largo mínimo "
-            . "indexable de cien caracteres en total, como en los demás posts de prueba.\n"
+            . "Edited filler content of post 05 to exceed the minimum "
+            . "indexable length of one hundred characters in total, like the other test posts.\n"
         );
 
         $response = $this->respond('https://example.com');
@@ -372,8 +385,8 @@ final class BlogRssTest extends TestCase
         file_put_contents(
             $this->contentPath . '/blog/2026-04-01-post-01.md',
             "---\ntitle: \"Post 01\"\nlast_update: 2026-08-30\n---\n"
-            . "Contenido de relleno editado del post 01 para superar el largo mínimo "
-            . "indexable de cien caracteres en total, como en los demás posts de prueba.\n"
+            . "Edited filler content of post 01 to exceed the minimum "
+            . "indexable length of one hundred characters in total, like the other test posts.\n"
         );
 
         // Post 01 is not among the ten latest, so editing it changes nothing.
@@ -388,8 +401,8 @@ final class BlogRssTest extends TestCase
         file_put_contents(
             $this->contentPath . '/blog/2026-04-02-post-02.md',
             "---\ntitle: \"Post 02\"\nlast_update: 2099-01-01\n---\n"
-            . "Contenido de relleno del post 02 para superar el largo mínimo indexable "
-            . "de cien caracteres en total, como en los demás posts de prueba.\n"
+            . "Filler content of post 02 to exceed the minimum indexable "
+            . "length of one hundred characters in total, like the other test posts.\n"
         );
 
         $response = $this->respond('https://example.com');
@@ -536,8 +549,8 @@ final class BlogRssTest extends TestCase
             'another tag' => [[], ['tag' => 'demo'], 'https://example.com'],
             'another number of posts' => [[], ['limit' => '3'], 'https://example.com'],
             'another order' => [['sortPosts' => 'ascending'], [], 'https://example.com'],
-            'another title of the feed' => [['title' => 'Otro título'], [], 'https://example.com'],
-            'another description of the feed' => [['description' => 'Otra descripción'], [], 'https://example.com'],
+            'another title of the feed' => [['title' => 'Another title'], [], 'https://example.com'],
+            'another description of the feed' => [['description' => 'Another description'], [], 'https://example.com'],
             'a language' => [['language' => 'es-CL'], [], 'https://example.com'],
             'a copyright' => [['copyright' => '© Otro'], [], 'https://example.com'],
             'another url of the website' => [[], [], 'https://otro.example.com'],
@@ -566,8 +579,8 @@ final class BlogRssTest extends TestCase
         file_put_contents(
             $this->contentPath . '/blog/2026-04-12-post-12.md',
             "---\ntitle: \"Post 12\"\nlast_update: 2026-05-12\n---\n"
-            . "Texto corregido del post 12, con las mismas fechas, para superar el largo "
-            . "mínimo indexable de cien caracteres en total, como en los demás posts de prueba.\n"
+            . "Corrected text of post 12, with the same dates, to exceed the minimum "
+            . "indexable length of one hundred characters in total, like the other test posts.\n"
         );
 
         $this->assertNotSame($before, $this->etag());
@@ -582,8 +595,8 @@ final class BlogRssTest extends TestCase
         file_put_contents(
             $this->contentPath . '/blog/2026-04-01-post-01.md',
             "---\ntitle: \"Post 01\"\nlast_update: 2026-05-01\n---\n"
-            . "Texto corregido del post 01, que no está entre los diez últimos, para superar el "
-            . "largo mínimo indexable de cien caracteres en total, como en los demás posts de prueba.\n"
+            . "Corrected text of post 01, which is not among the last ten, to exceed the "
+            . "minimum indexable length of one hundred characters in total, like the other test posts.\n"
         );
 
         $this->assertSame($before, $this->etag());
@@ -595,10 +608,10 @@ final class BlogRssTest extends TestCase
         $before = $this->etag();
 
         file_put_contents(
-            $this->contentPath . '/blog/2026-04-20-post-nuevo.md',
-            "---\ntitle: \"Post nuevo\"\nlast_update: 2026-05-20\n---\n"
-            . "Contenido de relleno del post nuevo para superar el largo mínimo indexable de "
-            . "cien caracteres en total, como en los demás posts de prueba.\n"
+            $this->contentPath . '/blog/2026-04-20-new-post.md',
+            "---\ntitle: \"New post\"\nlast_update: 2026-05-20\n---\n"
+            . "Filler content of the new post to exceed the minimum indexable length of "
+            . "one hundred characters in total, like the other test posts.\n"
         );
 
         $this->assertNotSame($before, $this->etag());
@@ -707,13 +720,82 @@ final class BlogRssTest extends TestCase
         // Same posts, so the same Last-Modified, but another title of the feed.
         $after = $this->respond(
             'https://example.com',
-            ['title' => 'Un título nuevo'],
+            ['title' => 'A new title'],
             [],
             ['If-Modified-Since' => $before->getHeaderLine('Last-Modified'), 'If-None-Match' => $before->getHeaderLine('ETag')]
         );
 
         $this->assertSame($before->getHeaderLine('Last-Modified'), $after->getHeaderLine('Last-Modified'));
         $this->assertSame(200, $after->getStatusCode());
-        $this->assertStringContainsString('<title>Un título nuevo</title>', (string) $after->getBody());
+        $this->assertStringContainsString('<title>A new title</title>', (string) $after->getBody());
+    }
+
+    /**
+     * Runs in its own process: PHP keeps the compiled patterns (with the JIT
+     * that they had when they were compiled) for the whole process, and the
+     * JIT does not use the limit of backtracking.
+     *
+     * The renderer answers with a feed and, right after, lowers the limits of
+     * PCRE, so only the rewrite of the links of the controller is affected.
+     */
+    #[RunInSeparateProcess]
+    public function testAFeedThatPcreCanNotProcessIsAnErrorThatSaysWhich(): void
+    {
+        $context = ContentFixtures::contentContext('My Site', 'https://example.com');
+        $plugin = new BlogPlugin($context, ['path' => 'blog']);
+        $plugin->loadContent(new ContentLoader($this->contentPath));
+
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/blog/rss.xml'));
+
+        $renderer = new class () implements RendererInterface {
+            public function render(string $template, array $data = [], array $options = []): string
+            {
+                ini_set('pcre.jit', '0');
+                ini_set('pcre.backtrack_limit', '1');
+
+                return '<rss><description><img src="/img/logo.png"></description></rss>';
+            }
+
+            public function renderFromString(string $content, array $data = [], array $options = []): string
+            {
+                return '';
+            }
+
+            public function getEngine(string $name): EngineInterface
+            {
+                throw new RuntimeException('There are no engines.');
+            }
+
+            public function addEngine(string $name, EngineInterface $engine): static
+            {
+                return $this;
+            }
+        };
+
+        $controller = new BlogController(
+            new ContentService($context, new \Derafu\TestsContent\Support\FixturePluginLoader(['blog' => $plugin])),
+            $renderer,
+            $router
+        );
+
+        $jit = (string) ini_get('pcre.jit');
+        $limit = (string) ini_get('pcre.backtrack_limit');
+        $exception = null;
+        try {
+            $controller->rss(new Request('GET', 'http://localhost/blog/rss.xml'));
+        } catch (Throwable $e) {
+            $exception = $e;
+        } finally {
+            ini_set('pcre.jit', $jit);
+            ini_set('pcre.backtrack_limit', $limit);
+        }
+
+        $this->assertInstanceOf(RuntimeException::class, $exception);
+        $this->assertInstanceOf(TranslatableInterface::class, $exception);
+        $this->assertSame(
+            'The content "blog/rss.xml.twig" could not be processed: Backtrack limit exhausted',
+            $exception->getMessage()
+        );
     }
 }

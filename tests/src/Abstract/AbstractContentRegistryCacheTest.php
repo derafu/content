@@ -41,7 +41,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
- * Exercises the registry caching added this session — real cache pools
+ * Exercises the registry caching — real cache pools
  * (Symfony's ArrayAdapter/FilesystemAdapter, no mocks), a real counting
  * ContentLoader decorator to prove a filesystem scan is actually skipped
  * on a cache hit, and a real disk round trip through
@@ -99,7 +99,7 @@ final class AbstractContentRegistryCacheTest extends TestCase
         // No new scan: the second registry's all() was served from the
         // cache, it never touched the filesystem loader's scan() again.
         $this->assertSame(0, $loader->scansSinceLastCheck());
-        $this->assertSame('Guía', $items['guia']->title());
+        $this->assertSame('Guide', $items['guide']->title());
     }
 
     public function testDifferentContentPathsDoNotShareACacheEntryEvenWithTheSameCachePool(): void
@@ -110,10 +110,10 @@ final class AbstractContentRegistryCacheTest extends TestCase
         $docs = new DocsRegistry($loader, 'docs', ['**.{markdown,md}'], [], $cache);
         $faq = new FaqRegistry($loader, 'faq', ['**.{markdown,md}'], [], $cache);
 
-        $this->assertArrayHasKey('guia', $docs->all());
-        $this->assertArrayNotHasKey('guia', $faq->all());
-        $this->assertArrayHasKey('pregunta-uno', $faq->all());
-        $this->assertArrayNotHasKey('pregunta-uno', $docs->all());
+        $this->assertArrayHasKey('guide', $docs->all());
+        $this->assertArrayNotHasKey('guide', $faq->all());
+        $this->assertArrayHasKey('question-one', $faq->all());
+        $this->assertArrayNotHasKey('question-one', $docs->all());
     }
 
     /**
@@ -153,19 +153,19 @@ final class AbstractContentRegistryCacheTest extends TestCase
                 [],
                 $cache
             );
-            $course = $second->all()['curso-demo'];
+            $course = $second->all()['demo-course'];
 
             $this->assertSame(0, $loader->scansSinceLastCheck());
             $this->assertInstanceOf(AcademyCourse::class, $course);
-            $this->assertSame('Curso Demo', $course->title());
+            $this->assertSame('Demo Course', $course->title());
 
-            $module = $course->modules()['modulo-uno'];
+            $module = $course->modules()['module-one'];
             $this->assertSame($course, $module->course());
             $this->assertSame($course, $module->parent());
 
             $lessons = $module->lessons();
             $this->assertCount(2, $lessons);
-            $this->assertSame(7, $lessons['leccion-uno']->time());
+            $this->assertSame(7, $lessons['lesson-one']->time());
 
             // AcademyCourse::lessons()/time() are private caches declared
             // on AcademyCourse itself: not restored by the generic
@@ -173,11 +173,12 @@ final class AbstractContentRegistryCacheTest extends TestCase
             // this proves they still recompute correctly on demand from
             // the restored children() tree.
             $this->assertCount(2, $course->lessons());
-            $expectedTime = $lessons['leccion-uno']->time() + $lessons['leccion-dos']->time();
+            $expectedTime = $lessons['lesson-one']->time() + $lessons['lesson-two']->time();
             $this->assertSame($expectedTime, $module->time());
             $this->assertSame($expectedTime, $course->time());
 
-            $test = $lessons['leccion-uno']->testAttachment();
+            $test = $lessons['lesson-one']->testAttachment();
+            $this->assertNotNull($test);
             $this->assertStringContainsString('"questions"', $test->raw());
         } finally {
             File::rmdir($cacheDir);

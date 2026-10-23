@@ -1,9 +1,9 @@
 ---
-title: "Lección con test remoto"
-description: "Fixture aislado: no vive bajo tests/fixtures/content/academy/ a propósito, para que ningún otro test que recorra ese árbol dispare el fetch HTTP de este 'test' remoto."
+title: "Lesson with a remote test"
+description: "An isolated fixture: it does not live under tests/fixtures/content/academy/ on purpose, so that no other test that walks that tree triggers the HTTP fetch of this remote 'test'."
 test: "http://127.0.0.1:19802/?scenario=academy_test_ok"
 ---
-Contenido de una lección aislada usada solo por
-`AcademyLessonRemoteTestSourceTest`, construida directamente (sin
-plugin/registry) para que este escenario no se mezcle con el árbol de
-contenido compartido por el resto de la suite de Academy.
+The content of an isolated lesson used only by
+`AcademyLessonRemoteTestSourceTest`, built directly (without a
+plugin/registry) so that this scenario is not mixed with the content tree
+shared by the rest of the Academy suite.

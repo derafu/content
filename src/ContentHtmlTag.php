@@ -23,7 +23,7 @@ class ContentHtmlTag implements ContentHtmlTagInterface
      * Constructor.
      *
      * @param string $tagName The name of the tag.
-     * @param array<string, mixed> $attributes The attributes of the tag.
+     * @param array<string, string|bool> $attributes The attributes of the tag.
      */
     public function __construct(
         private string $tagName,
@@ -55,9 +55,9 @@ class ContentHtmlTag implements ContentHtmlTagInterface
         $html = '<' . $this->tagName;
 
         foreach ($this->attributes as $name => $value) {
-            if (is_bool($value)) {
+            if ($value === true) {
                 $html .= ' ' . $name;
-            } else {
+            } elseif ($value !== false) {
                 $html .= ' ' . $name . '="' . htmlspecialchars($value) . '"';
             }
         }

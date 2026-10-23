@@ -1,9 +1,9 @@
 ---
-title: "Sobre nosotros"
-description: "Página de prueba para el plugin Pages."
+title: "About us"
+description: "A test page for the Pages plugin."
 date: "2026-01-03"
 ---
-# Sobre nosotros
+# About us
 
-Página de prueba usada por los tests automatizados del plugin Pages, para
-validar el registry, el controller y el negociado de formato.
+Test page used by the automated tests of the Pages plugin, to check the
+registry, the controller and the negotiation of the format.

@@ -27,7 +27,7 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
     /**
      * Schema of the options of the plugin.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     private const OPTIONS_SCHEMA = [
         // Name of the plugin.
@@ -109,9 +109,9 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
     {
         if (!isset($this->engine)) {
             $this->engine = new SearchEngine(
-                $this->options['url'],
-                $this->options['collection'],
-                $this->options['base_url']
+                $this->options->requireString('url'),
+                $this->options->getString('collection'),
+                $this->options->getString('base_url')
             );
         }
 
@@ -135,10 +135,10 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
             }
 
             $this->llm = new OpenAiCompatibleLlmClient(
-                $this->options['llm_url'],
-                $this->options['llm_model'],
-                $this->options['llm_api_key'] ?? null,
-                $this->options['llm_completions_path'] ?? '/v1/chat/completions'
+                $this->options->requireString('llm_url'),
+                $this->options->requireString('llm_model'),
+                $this->options->getString('llm_api_key'),
+                $this->options->getString('llm_completions_path') ?? '/v1/chat/completions'
             );
         }
 
@@ -147,6 +147,8 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     protected static function getSchema(): array
     {

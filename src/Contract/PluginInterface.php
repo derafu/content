@@ -58,7 +58,7 @@ interface PluginInterface
      * consequence, should not validate the options if this method is
      * implemented.
      *
-     * @param array $options Options of the plugin.
+     * @param array<string, mixed> $options Options of the plugin.
      * @return void
      */
     public static function validateOptions(array $options): void;

@@ -15,6 +15,7 @@ namespace Derafu\Content;
 use Derafu\Content\Contract\ContentAttachmentInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Http\Enum\ContentType;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 
 class ContentAttachment implements ContentAttachmentInterface
@@ -32,13 +33,6 @@ class ContentAttachment implements ContentAttachmentInterface
      * @var ContentSplFileInfo
      */
     private ContentSplFileInfo $info;
-
-    /**
-     * Representation of the attachment file data.
-     *
-     * @var ContentSplFileObject
-     */
-    private ContentSplFileObject $file;
 
     /**
      * Raw content of the attachment.
@@ -67,10 +61,9 @@ class ContentAttachment implements ContentAttachmentInterface
             if (!$this->info->isFile() || !$this->info->isReadable()) {
                 throw new InvalidArgumentException([
                     'Path {path} must be a readable attachment.',
-                    'path' => $this->info->getRealPath(),
+                    'path' => $this->info->getPathname(),
                 ]);
             }
-            $this->info->setFileClass(ContentSplFileObject::class);
         } else {
             $this->info = $info;
         }
@@ -89,28 +82,20 @@ class ContentAttachment implements ContentAttachmentInterface
     }
 
     /**
-     * Get the file of the content.
-     *
-     * @return ContentSplFileObject
-     */
-    protected function file(): ContentSplFileObject
-    {
-        if (!isset($this->file)) {
-            $file = $this->info()->openFile();
-            assert($file instanceof ContentSplFileObject);
-            $this->file = $file;
-        }
-
-        return $this->file;
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function id(): string
     {
         if (!isset($this->id)) {
-            $this->id = hash_file('sha256', $this->path());
+            $id = hash_file('sha256', $this->path());
+            if ($id === false) {
+                throw new RuntimeException([
+                    'The file "{path}" could not be read.',
+                    'path' => $this->path(),
+                ]);
+            }
+
+            $this->id = $id;
         }
 
         return $this->id;
@@ -162,7 +147,15 @@ class ContentAttachment implements ContentAttachmentInterface
     public function raw(): string
     {
         if (!isset($this->raw)) {
-            $this->raw = file_get_contents($this->info()->getRealPath());
+            $raw = file_get_contents($this->path());
+            if ($raw === false) {
+                throw new RuntimeException([
+                    'The file "{path}" could not be read.',
+                    'path' => $this->path(),
+                ]);
+            }
+
+            $this->raw = $raw;
         }
 
         return $this->raw;

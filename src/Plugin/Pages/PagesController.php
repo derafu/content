@@ -42,7 +42,7 @@ class PagesController extends AbstractContentController
      *
      * @param Request $request Request.
      * @param string $page Page.
-     * @return string|array
+     * @return string|array<string, mixed>
      */
     public function show(Request $request, string $page): string|array
     {

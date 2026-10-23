@@ -16,6 +16,7 @@ use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentLoader;
 use Derafu\Content\ContentService;
 use Derafu\Content\ContentSplFileInfo;
@@ -37,9 +38,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Exercises ApiController — refactored this session to use
- * ContentService::allContent() instead of the removed
- * ApiPlugin::knowledge() — against two real content plugins at once
+ * Exercises ApiController, which uses ContentService::allContent(),
+ * against two real content plugins at once
  * (Docs and Pages), with a real Router (its "link" field needs real URL
  * generation, including for Pages' own route which lives outside this
  * package's own content-routes.yaml import chain).
@@ -60,6 +60,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentLoader::class)]
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
+#[UsesClass(ContentFilters::class)]
 final class ApiControllerTest extends TestCase
 {
     private ApiController $controller;
@@ -120,8 +121,8 @@ final class ApiControllerTest extends TestCase
         $byUri = array_column($result['data'], null, 'uri');
 
         $this->assertSame(
-            'http://localhost/docs/guia.json',
-            $byUri['guia']['link']
+            'http://localhost/docs/guide.json',
+            $byUri['guide']['link']
         );
         $this->assertSame(
             'http://localhost/pages/about.json',
@@ -137,7 +138,7 @@ final class ApiControllerTest extends TestCase
 
         $uris = array_column($result['data'], 'uri');
 
-        $this->assertNotContains('borrador', $uris);
+        $this->assertNotContains('draft', $uris);
     }
 
     public function testFilterQueryParameterNarrowsTheExportToOneType(): void
@@ -146,13 +147,13 @@ final class ApiControllerTest extends TestCase
 
         $result = $this->controller->index($request);
 
-        $types = array_unique(array_column($result['data'], 'type'));
+        $types = array_unique(array_column($result['data'], 'type'), SORT_REGULAR);
 
         $this->assertSame(['pages'], $types);
     }
 
     /**
-     * "no-indexable" is a docs fixture with `indexable: false` explicit
+     * "not-indexable" is a docs fixture with `indexable: false` explicit
      * in its frontmatter, NOT draft, NOT unlisted. Per its documented
      * purpose ("Whether the item should be considered for the
      * /api/content.json export and, from there, external indexing"),
@@ -168,6 +169,6 @@ final class ApiControllerTest extends TestCase
 
         $uris = array_column($result['data'], 'uri');
 
-        $this->assertNotContains('no-indexable', $uris);
+        $this->assertNotContains('not-indexable', $uris);
     }
 }

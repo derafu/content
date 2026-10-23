@@ -18,6 +18,8 @@ use Derafu\Content\Contract\ContentLoaderInterface;
 use Derafu\Content\Contract\ContentRegistryInterface;
 use Derafu\Content\Contract\ContentTagInterface;
 use Derafu\Content\Exception\ContentNotFoundException;
+use Derafu\Support\ArrayReader;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Psr\Cache\CacheItemPoolInterface;
 
 /**
@@ -61,8 +63,8 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
      * Constructor.
      *
      * @param string $path Path to root directory of the content items.
-     * @param array $include Glob patterns to include.
-     * @param array $exclude Glob patterns to exclude.
+     * @param array<string> $include Glob patterns to include.
+     * @param array<string> $exclude Glob patterns to exclude.
      */
     public function __construct(
         protected ContentLoaderInterface $contentLoader,
@@ -81,6 +83,13 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
     {
         // Remove file extension if present (handles any extension at the end)
         $uriWithoutExtension = preg_replace('/\.[^\/.]+$/', '', $uri);
+        if ($uriWithoutExtension === null) {
+            throw new RuntimeException([
+                'The content "{content}" could not be processed: {error}',
+                'content' => $uri,
+                'error' => preg_last_error_msg(),
+            ]);
+        }
 
         // The id has implicitly the hierarchy of the content item.
         $uriParts = explode('/', $uriWithoutExtension);
@@ -137,8 +146,14 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             } else {
                 $item = $this->cache->getItem($this->cacheKey());
 
-                if ($item->isHit()) {
-                    $this->items = $item->get();
+                $cached = $item->isHit() ? $item->get() : null;
+
+                // A cache entry that is not a tree of items (another version
+                // of the package wrote it, or something else did) is as if it
+                // was not there.
+                if (is_array($cached) && array_all($cached, fn ($value) => $value instanceof ContentItemInterface)) {
+                    /** @var array<string, ContentItemInterface> $cached */
+                    $this->items = $cached;
                 } else {
                     $this->items = $this->load();
                     $this->cache->save(
@@ -200,9 +215,10 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         });
 
         // Limit items.
-        if (isset($filters['limit'])) {
-            $page = (int) ($filters['page'] ?? 1);
-            $limit = (int) $filters['limit'];
+        $reader = ArrayReader::from($filters, 'filters');
+        $limit = $reader->int('limit');
+        if ($limit !== null) {
+            $page = $reader->int('page', 1);
             $offset = ($page - 1) * $limit;
 
             return array_slice($matched, $offset, $limit);
@@ -276,6 +292,10 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             $this->authors = [];
 
             $this->walk(function (ContentItemInterface $item) {
+                if (!$item->allowed() || $item->unlisted()) {
+                    return;
+                }
+
                 foreach ($item->authors() as $author) {
                     $slug = $author->slug();
                     if (!isset($this->authors[$slug])) {
@@ -299,6 +319,10 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             $this->tags = [];
 
             $this->walk(function (ContentItemInterface $item) {
+                if (!$item->allowed() || $item->unlisted()) {
+                    return;
+                }
+
                 foreach ($item->tags() as $tag) {
                     $slug = $tag->slug();
                     if (!isset($this->tags[$slug])) {
@@ -317,7 +341,7 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
     /**
      * Get the content class.
      *
-     * @return string
+     * @return class-string<ContentItemInterface>
      */
     abstract protected function getContentClass(): string;
 
@@ -351,51 +375,45 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             return false;
         }
 
+        $filters = ArrayReader::from($filters, 'filters');
+        $id = $filters->string('id');
+        $uri = $filters->string('uri');
+
         // Filter by unlisted.
-        if (empty($filters['id']) && empty($filters['uri'])) {
+        if (!$id && !$uri) {
             if ($item->unlisted()) {
                 return false;
             }
         }
 
         // Filter by type.
-        if (!empty($filters['type'])) {
-            if ($item->type() !== $filters['type']) {
-                return false;
-            }
+        if (($type = $filters->string('type')) && $item->type() !== $type) {
+            return false;
         }
 
         // Filter by category.
-        if (!empty($filters['category'])) {
-            if ($item->category() !== $filters['category']) {
-                return false;
-            }
+        if (($category = $filters->string('category')) && $item->category() !== $category) {
+            return false;
         }
 
         // Filter by ID.
-        if (!empty($filters['id'])) {
-            if ($item->id() !== $filters['id']) {
-                return false;
-            }
+        if ($id && $item->id() !== $id) {
+            return false;
         }
 
         // Filter by URI.
-        if (!empty($filters['uri'])) {
-            if ($item->uri() !== $filters['uri']) {
-                return false;
-            }
+        if ($uri && $item->uri() !== $uri) {
+            return false;
         }
 
         // Filter by slug.
-        if (!empty($filters['slug'])) {
-            if ($item->slug() !== $filters['slug']) {
-                return false;
-            }
+        if (($slug = $filters->string('slug')) && $item->slug() !== $slug) {
+            return false;
         }
 
         // Filter by text (title, description or content data).
-        if (!empty($filters['search'])) {
-            $search = mb_strtolower($filters['search']);
+        if ($search = $filters->string('search')) {
+            $search = mb_strtolower($search);
             $text = mb_strtolower($item->title() . ' ' . $item->description() . ' ' . $item->data());
             if (mb_strpos($text, $search) === false) {
                 return false;
@@ -403,38 +421,39 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         }
 
         // Filter by author.
-        if (!empty($filters['author'])) {
-            if (!isset($item->authors()[$filters['author']])) {
+        if ($author = $filters->string('author')) {
+            $slugs = array_map(fn (ContentAuthorInterface $a) => $a->slug(), $item->authors());
+            if (!in_array($author, $slugs, true)) {
                 return false;
             }
         }
 
         // Filter by tag.
-        if (!empty($filters['tag'])) {
-            if (!in_array($filters['tag'], array_map(fn (ContentTagInterface $tag) => $tag->slug(), $item->tags()), true)) {
+        if ($tag = $filters->string('tag')) {
+            if (!in_array($tag, array_map(fn (ContentTagInterface $tag) => $tag->slug(), $item->tags()), true)) {
                 return false;
             }
         }
 
         // Filter by date.
-        if (!empty($filters['year']) && !empty($filters['month'])) {
-            if ($item->date()->format('Y-m') !== sprintf('%04d-%02d', $filters['year'], $filters['month'])) {
+        $year = $filters->int('year');
+        $month = $filters->int('month');
+        if ($year && $month) {
+            if ($item->date()->format('Y-m') !== sprintf('%04d-%02d', $year, $month)) {
                 return false;
             }
         }
 
         // Filter by indexable.
-        if (isset($filters['indexable'])) {
-            if ($item->indexable() !== (bool) $filters['indexable']) {
-                return false;
-            }
+        $indexable = $filters->bool('indexable');
+        if ($indexable !== null && $item->indexable() !== $indexable) {
+            return false;
         }
 
         // Filter by searchable.
-        if (isset($filters['searchable'])) {
-            if ($item->searchable() !== (bool) $filters['searchable']) {
-                return false;
-            }
+        $searchable = $filters->bool('searchable');
+        if ($searchable !== null && $item->searchable() !== $searchable) {
+            return false;
         }
 
         return true;
@@ -444,7 +463,7 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
      * Search the index of the content item in the flattened registry.
      *
      * @param string $uri URI of the content item.
-     * @param array<string, ContentItemInterface>|null $items Items.
+     * @param array<int|string, ContentItemInterface>|null $items Items.
      * @return int|null
      */
     protected function search(string $uri, ?array $items = null): ?int

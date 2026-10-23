@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content;
 
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use SplFileInfo;
 
 /**
@@ -62,7 +63,15 @@ class ContentSplFileInfo extends SplFileInfo
     public function getChecksum(): string
     {
         if (!isset($this->checksum)) {
-            $this->checksum = hash_file('sha256', $this->getRealPath());
+            $checksum = hash_file('sha256', $this->getRealPath());
+            if ($checksum === false) {
+                throw new RuntimeException([
+                    'The file "{path}" could not be read.',
+                    'path' => $this->getPathname(),
+                ]);
+            }
+
+            $this->checksum = $checksum;
         }
 
         return $this->checksum;

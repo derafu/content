@@ -1,0 +1,20 @@
+{#
+    Container of the latest blog posts as cards, drawn by resources/js/blog.js.
+
+    The texts of the cards are translated here and the script reads them from
+    the data-messages attribute, so a site that includes this template does not
+    translate anything.
+
+    Variables (all optional):
+      - limit: number of posts (4 by default).
+      - base_path: base path for the images and the links of the posts ('' by default).
+
+    Usage: {% include 'blog/_cards.html.twig' %}
+#}
+{% trans_default_domain 'content+intl-icu' %}
+{% set cardMessages = {
+    'loadError': 'Error loading data. Please try again later.'|trans,
+    'readMore': 'Read more'|trans,
+    'byline': 'By {authors} on {date} • {time} min read'|trans,
+} %}
+<div id="blog-posts" data-api="{{ path('content_api') ~ '?type=blog&limit=' ~ limit|default(4) }}" data-base-path="{{ base_path|default('') }}" data-messages="{{ cardMessages|json_encode|e('html_attr') }}"></div>

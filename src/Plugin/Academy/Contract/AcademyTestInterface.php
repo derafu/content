@@ -62,14 +62,14 @@ interface AcademyTestInterface extends JsonSerializable, Stringable
     /**
      * Get the test as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array;
 
     /**
      * Get the test as a JSON serializable array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array;
 

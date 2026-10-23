@@ -1,5 +1,5 @@
 ---
-title: "Preguntas frecuentes"
-description: "Índice de preguntas frecuentes de prueba."
+title: "Frequently asked questions"
+description: "Index of the test frequently asked questions."
 ---
-Índice de preguntas frecuentes usado por los tests automatizados.
+The index of the frequently asked questions used by the automated tests.

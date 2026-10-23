@@ -98,7 +98,7 @@ final class AbstractContentItemLinksTest extends TestCase
 
     private function course(): AcademyCourse
     {
-        $course = $this->item('academy', 'curso-demo');
+        $course = $this->item('academy', 'demo-course');
         assert($course instanceof AcademyCourse);
 
         return $course;
@@ -106,7 +106,7 @@ final class AbstractContentItemLinksTest extends TestCase
 
     private function module(): AcademyModule
     {
-        $module = $this->course()->modules()['modulo-uno'];
+        $module = $this->course()->modules()['module-one'];
         assert($module instanceof AcademyModule);
 
         return $module;
@@ -114,7 +114,7 @@ final class AbstractContentItemLinksTest extends TestCase
 
     private function lesson(): AcademyLesson
     {
-        $lesson = $this->module()->lessons()['leccion-uno'];
+        $lesson = $this->module()->lessons()['lesson-one'];
         assert($lesson instanceof AcademyLesson);
 
         return $lesson;
@@ -129,16 +129,16 @@ final class AbstractContentItemLinksTest extends TestCase
         $handler = 'App\\Controller\\AnyController::index';
 
         return RouterFixture::create([
-            'docs' => ['path' => '/documentos', 'handler' => $handler],
-            'docs_doc' => ['path' => '/documentos/{doc:.+}', 'handler' => $handler],
-            'faq' => ['path' => '/preguntas', 'handler' => $handler],
-            'faq_question' => ['path' => '/preguntas/{question:.+}', 'handler' => $handler],
-            'blog' => ['path' => '/articulos', 'handler' => $handler],
-            'blog_post' => ['path' => '/articulos/{post:.+}', 'handler' => $handler],
-            'academy' => ['path' => '/cursos', 'handler' => $handler],
-            'academy_course' => ['path' => '/cursos/{course}', 'handler' => $handler],
-            'academy_module' => ['path' => '/cursos/{course}/{module}', 'handler' => $handler],
-            'academy_lesson' => ['path' => '/cursos/{course}/{module}/{lesson}', 'handler' => $handler],
+            'docs' => ['path' => '/documents', 'handler' => $handler],
+            'docs_doc' => ['path' => '/documents/{doc:.+}', 'handler' => $handler],
+            'faq' => ['path' => '/questions', 'handler' => $handler],
+            'faq_question' => ['path' => '/questions/{question:.+}', 'handler' => $handler],
+            'blog' => ['path' => '/articles', 'handler' => $handler],
+            'blog_post' => ['path' => '/articles/{post:.+}', 'handler' => $handler],
+            'academy' => ['path' => '/courses', 'handler' => $handler],
+            'academy_course' => ['path' => '/courses/{course}', 'handler' => $handler],
+            'academy_module' => ['path' => '/courses/{course}/{module}', 'handler' => $handler],
+            'academy_lesson' => ['path' => '/courses/{course}/{module}/{lesson}', 'handler' => $handler],
         ], includeContentRoutes: false);
     }
 
@@ -149,32 +149,32 @@ final class AbstractContentItemLinksTest extends TestCase
     {
         return [
             'doc' => [
-                fn (self $t) => $t->item('docs', 'guia'),
-                ['self' => ['href' => '/docs/guia'], 'collection' => ['href' => '/docs']],
+                fn (self $t) => $t->item('docs', 'guide'),
+                ['self' => ['href' => '/docs/guide'], 'collection' => ['href' => '/docs']],
             ],
             'nested doc' => [
-                fn (self $t) => $t->item('docs', 'guia/primeros-pasos'),
-                ['self' => ['href' => '/docs/guia/primeros-pasos'], 'collection' => ['href' => '/docs']],
+                fn (self $t) => $t->item('docs', 'guide/getting-started'),
+                ['self' => ['href' => '/docs/guide/getting-started'], 'collection' => ['href' => '/docs']],
             ],
             'faq question' => [
-                fn (self $t) => $t->item('faq', 'pregunta-uno'),
-                ['self' => ['href' => '/faq/pregunta-uno'], 'collection' => ['href' => '/faq']],
+                fn (self $t) => $t->item('faq', 'question-one'),
+                ['self' => ['href' => '/faq/question-one'], 'collection' => ['href' => '/faq']],
             ],
             'blog post' => [
-                fn (self $t) => $t->item('blog', '2026-01-15-primer-post'),
-                ['self' => ['href' => '/blog/2026-01-15-primer-post'], 'collection' => ['href' => '/blog']],
+                fn (self $t) => $t->item('blog', '2026-01-15-first-post'),
+                ['self' => ['href' => '/blog/2026-01-15-first-post'], 'collection' => ['href' => '/blog']],
             ],
             'academy course' => [
                 fn (self $t) => $t->course(),
-                ['self' => ['href' => '/academy/curso-demo'], 'collection' => ['href' => '/academy']],
+                ['self' => ['href' => '/academy/demo-course'], 'collection' => ['href' => '/academy']],
             ],
             'academy module' => [
                 fn (self $t) => $t->module(),
-                ['self' => ['href' => '/academy/curso-demo/modulo-uno'], 'collection' => ['href' => '/academy']],
+                ['self' => ['href' => '/academy/demo-course/module-one'], 'collection' => ['href' => '/academy']],
             ],
             'academy lesson' => [
                 fn (self $t) => $t->lesson(),
-                ['self' => ['href' => '/academy/curso-demo/modulo-uno/leccion-uno'], 'collection' => ['href' => '/academy']],
+                ['self' => ['href' => '/academy/demo-course/module-one/lesson-one'], 'collection' => ['href' => '/academy']],
             ],
         ];
     }
@@ -196,28 +196,28 @@ final class AbstractContentItemLinksTest extends TestCase
     {
         return [
             'doc' => [
-                fn (self $t) => $t->item('docs', 'guia/primeros-pasos'),
-                ['self' => ['href' => '/documentos/guia/primeros-pasos'], 'collection' => ['href' => '/documentos']],
+                fn (self $t) => $t->item('docs', 'guide/getting-started'),
+                ['self' => ['href' => '/documents/guide/getting-started'], 'collection' => ['href' => '/documents']],
             ],
             'faq question' => [
-                fn (self $t) => $t->item('faq', 'pregunta-uno'),
-                ['self' => ['href' => '/preguntas/pregunta-uno'], 'collection' => ['href' => '/preguntas']],
+                fn (self $t) => $t->item('faq', 'question-one'),
+                ['self' => ['href' => '/questions/question-one'], 'collection' => ['href' => '/questions']],
             ],
             'blog post' => [
-                fn (self $t) => $t->item('blog', '2026-01-15-primer-post'),
-                ['self' => ['href' => '/articulos/2026-01-15-primer-post'], 'collection' => ['href' => '/articulos']],
+                fn (self $t) => $t->item('blog', '2026-01-15-first-post'),
+                ['self' => ['href' => '/articles/2026-01-15-first-post'], 'collection' => ['href' => '/articles']],
             ],
             'academy course' => [
                 fn (self $t) => $t->course(),
-                ['self' => ['href' => '/cursos/curso-demo'], 'collection' => ['href' => '/cursos']],
+                ['self' => ['href' => '/courses/demo-course'], 'collection' => ['href' => '/courses']],
             ],
             'academy module' => [
                 fn (self $t) => $t->module(),
-                ['self' => ['href' => '/cursos/curso-demo/modulo-uno'], 'collection' => ['href' => '/cursos']],
+                ['self' => ['href' => '/courses/demo-course/module-one'], 'collection' => ['href' => '/courses']],
             ],
             'academy lesson' => [
                 fn (self $t) => $t->lesson(),
-                ['self' => ['href' => '/cursos/curso-demo/modulo-uno/leccion-uno'], 'collection' => ['href' => '/cursos']],
+                ['self' => ['href' => '/courses/demo-course/module-one/lesson-one'], 'collection' => ['href' => '/courses']],
             ],
         ];
     }

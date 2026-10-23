@@ -18,6 +18,7 @@ use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentHtmlTag;
 use Derafu\Content\ContentHtmlTags;
 use Derafu\Content\ContentLoader;
@@ -71,6 +72,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
 #[UsesClass(ContentNotFoundException::class)]
+#[UsesClass(ContentFilters::class)]
 final class AcademyControllerTest extends TestCase
 {
     private AcademyController $controller;
@@ -97,25 +99,25 @@ final class AcademyControllerTest extends TestCase
     {
         $html = $this->controller->index();
 
-        $this->assertStringContainsString('Curso Demo', $html);
+        $this->assertStringContainsString('Demo Course', $html);
     }
 
     public function testCourseActionRendersTheCoursePage(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo');
+        $request = new Request('GET', 'http://localhost/academy/demo-course');
 
-        $html = $this->controller->course($request, 'curso-demo');
+        $html = $this->controller->course($request, 'demo-course');
 
         $this->assertIsString($html);
-        $this->assertStringContainsString('Curso Demo', $html);
-        $this->assertStringContainsString('Módulo Uno', $html);
-        // The course has real modules, so "completo" links must show
+        $this->assertStringContainsString('Demo Course', $html);
+        $this->assertStringContainsString('Module One', $html);
+        // The course has real modules, so "full" links must show
         // alongside the regular single-page download links.
-        $this->assertStringContainsString('href="/academy/curso-demo.pdf"', $html);
-        $this->assertStringContainsString('href="/academy/curso-demo.md"', $html);
-        $this->assertStringContainsString('href="/academy/curso-demo.pdf?full=1"', $html);
-        $this->assertStringContainsString('href="/academy/curso-demo.md?full=1"', $html);
-        $this->assertStringContainsString('data-copy-md="/academy/curso-demo.md?full=1"', $html);
+        $this->assertStringContainsString('href="/academy/demo-course.pdf"', $html);
+        $this->assertStringContainsString('href="/academy/demo-course.md"', $html);
+        $this->assertStringContainsString('href="/academy/demo-course.pdf?full=1"', $html);
+        $this->assertStringContainsString('href="/academy/demo-course.md?full=1"', $html);
+        $this->assertStringContainsString('data-copy-md="/academy/demo-course.md?full=1"', $html);
     }
 
     /**
@@ -126,21 +128,21 @@ final class AcademyControllerTest extends TestCase
      */
     public function testCourseMarkdownFormatListsModulesAndLessonsWithAbsoluteUrls(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo.md');
+        $request = new Request('GET', 'http://localhost/academy/demo-course.md');
 
-        $markdown = $this->controller->course($request, 'curso-demo.md');
+        $markdown = $this->controller->course($request, 'demo-course.md');
 
         $this->assertIsString($markdown);
         $this->assertStringContainsString(
-            '[Módulo Uno](http://localhost/academy/curso-demo/modulo-uno)',
+            '[Module One](http://localhost/academy/demo-course/module-one)',
             $markdown
         );
         $this->assertStringContainsString(
-            '[Lección Uno](http://localhost/academy/curso-demo/modulo-uno/leccion-uno)',
+            '[Lesson One](http://localhost/academy/demo-course/module-one/lesson-one)',
             $markdown
         );
         $this->assertStringContainsString(
-            '[Lección Dos](http://localhost/academy/curso-demo/modulo-uno/leccion-dos)',
+            '[Lesson Two](http://localhost/academy/demo-course/module-one/lesson-two)',
             $markdown
         );
     }
@@ -151,17 +153,17 @@ final class AcademyControllerTest extends TestCase
      */
     public function testModuleMarkdownFormatListsLessonsWithAbsoluteUrls(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno.md');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one.md');
 
-        $markdown = $this->controller->module($request, 'curso-demo', 'modulo-uno.md');
+        $markdown = $this->controller->module($request, 'demo-course', 'module-one.md');
 
         $this->assertIsString($markdown);
         $this->assertStringContainsString(
-            '[Lección Uno](http://localhost/academy/curso-demo/modulo-uno/leccion-uno)',
+            '[Lesson One](http://localhost/academy/demo-course/module-one/lesson-one)',
             $markdown
         );
         $this->assertStringContainsString(
-            '[Lección Dos](http://localhost/academy/curso-demo/modulo-uno/leccion-dos)',
+            '[Lesson Two](http://localhost/academy/demo-course/module-one/lesson-two)',
             $markdown
         );
     }
@@ -173,16 +175,16 @@ final class AcademyControllerTest extends TestCase
      */
     public function testCourseMarkdownFormatWithFullQueryParamEmbedsModulesAndLessonsBodyInline(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo.md?full=1');
+        $request = new Request('GET', 'http://localhost/academy/demo-course.md?full=1');
 
-        $markdown = $this->controller->course($request, 'curso-demo.md');
+        $markdown = $this->controller->course($request, 'demo-course.md');
 
         $this->assertIsString($markdown);
-        $this->assertStringContainsString('## Módulo Uno', $markdown);
-        $this->assertStringContainsString('### Lección Uno', $markdown);
-        $this->assertStringContainsString('### Lección Dos', $markdown);
+        $this->assertStringContainsString('## Module One', $markdown);
+        $this->assertStringContainsString('### Lesson One', $markdown);
+        $this->assertStringContainsString('### Lesson Two', $markdown);
         $this->assertStringContainsString(
-            'tiempo de lectura',
+            'reading time',
             $markdown
         );
         $this->assertStringNotContainsString('## Modules', $markdown);
@@ -194,59 +196,59 @@ final class AcademyControllerTest extends TestCase
      */
     public function testModuleMarkdownFormatWithFullQueryParamEmbedsLessonsBodyInline(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno.md?full=1');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one.md?full=1');
 
-        $markdown = $this->controller->module($request, 'curso-demo', 'modulo-uno.md');
+        $markdown = $this->controller->module($request, 'demo-course', 'module-one.md');
 
         $this->assertIsString($markdown);
-        $this->assertStringContainsString('## Lección Uno', $markdown);
-        $this->assertStringContainsString('## Lección Dos', $markdown);
+        $this->assertStringContainsString('## Lesson One', $markdown);
+        $this->assertStringContainsString('## Lesson Two', $markdown);
         $this->assertStringNotContainsString('## Lessons', $markdown);
     }
 
     public function testModuleActionRendersTheModulePage(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one');
 
-        $html = $this->controller->module($request, 'curso-demo', 'modulo-uno');
+        $html = $this->controller->module($request, 'demo-course', 'module-one');
 
         $this->assertIsString($html);
-        $this->assertStringContainsString('Módulo Uno', $html);
-        $this->assertStringContainsString('Lección Uno', $html);
-        $this->assertStringContainsString('Lección Dos', $html);
-        // The module has real lessons, so "completo" links must show
+        $this->assertStringContainsString('Module One', $html);
+        $this->assertStringContainsString('Lesson One', $html);
+        $this->assertStringContainsString('Lesson Two', $html);
+        // The module has real lessons, so "full" links must show
         // alongside the regular single-page download links.
-        $this->assertStringContainsString('href="/academy/curso-demo/modulo-uno.pdf"', $html);
-        $this->assertStringContainsString('href="/academy/curso-demo/modulo-uno.md"', $html);
-        $this->assertStringContainsString('href="/academy/curso-demo/modulo-uno.pdf?full=1"', $html);
-        $this->assertStringContainsString('href="/academy/curso-demo/modulo-uno.md?full=1"', $html);
+        $this->assertStringContainsString('href="/academy/demo-course/module-one.pdf"', $html);
+        $this->assertStringContainsString('href="/academy/demo-course/module-one.md"', $html);
+        $this->assertStringContainsString('href="/academy/demo-course/module-one.pdf?full=1"', $html);
+        $this->assertStringContainsString('href="/academy/demo-course/module-one.md?full=1"', $html);
     }
 
     public function testLessonActionRendersTheLessonPageWithItsAttachmentTest(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno/leccion-uno');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one/lesson-one');
 
-        $html = $this->controller->lesson($request, 'curso-demo', 'modulo-uno', 'leccion-uno');
+        $html = $this->controller->lesson($request, 'demo-course', 'module-one', 'lesson-one');
 
         $this->assertIsString($html);
-        $this->assertStringContainsString('Lección Uno', $html);
+        $this->assertStringContainsString('Lesson One', $html);
         // The test widget's data-api must be a real, routed download URL
         // built from the resolved attachment (AcademyLesson::testAttachment()),
         // not the raw "?attachment=quiz.json" metadata value the JS widget
         // could never fetch as-is.
         $this->assertStringContainsString('id="academy-test-container"', $html);
         $this->assertStringContainsString(
-            'data-api="/academy/curso-demo/modulo-uno/leccion-uno/_attachments/quiz.json"',
+            'data-api="/academy/demo-course/module-one/lesson-one/_attachments/quiz.json"',
             $html
         );
-        // Lessons have no "completo" concept (leaf content): only the two
+        // Lessons have no "full" concept (leaf content): only the two
         // single-page download links.
         $this->assertStringContainsString(
-            'href="/academy/curso-demo/modulo-uno/leccion-uno.pdf"',
+            'href="/academy/demo-course/module-one/lesson-one.pdf"',
             $html
         );
         $this->assertStringContainsString(
-            'href="/academy/curso-demo/modulo-uno/leccion-uno.md"',
+            'href="/academy/demo-course/module-one/lesson-one.md"',
             $html
         );
         $this->assertStringNotContainsString('full=1', $html);
@@ -254,25 +256,26 @@ final class AcademyControllerTest extends TestCase
 
     public function testLessonActionJsonFormatIncludesTheAttachmentBackedTestField(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno/leccion-uno.json');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one/lesson-one.json');
 
-        $result = $this->controller->lesson($request, 'curso-demo', 'modulo-uno', 'leccion-uno.json');
+        $result = $this->controller->lesson($request, 'demo-course', 'module-one', 'lesson-one.json');
 
         $this->assertIsArray($result);
-        $this->assertSame('leccion-uno', $result['data']['slug']);
+        $this->assertIsArray($result['data']);
+        $this->assertSame('lesson-one', $result['data']['slug']);
     }
 
     /**
-     * "leccion-dos" has a real frontmatter "video" — the .md export must
+     * "lesson-two" has a real frontmatter "video" — the .md export must
      * show it as a real, visible Markdown link (not just buried in the
      * YAML frontmatter, which a reader — or an LLM — has no reason to
      * scan closely).
      */
     public function testLessonMarkdownFormatShowsAVisibleVideoLink(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno/leccion-dos.md');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one/lesson-two.md');
 
-        $markdown = $this->controller->lesson($request, 'curso-demo', 'modulo-uno', 'leccion-dos.md');
+        $markdown = $this->controller->lesson($request, 'demo-course', 'module-one', 'lesson-two.md');
 
         $this->assertIsString($markdown);
         $this->assertStringContainsString(
@@ -282,7 +285,7 @@ final class AcademyControllerTest extends TestCase
     }
 
     /**
-     * "leccion-uno" has a real quiz attachment — the .md export must
+     * "lesson-one" has a real quiz attachment — the .md export must
      * show the FULL test (every option, not just the correct one, plus
      * the explanation) as a GFM task list, not a stripped-down FAQ-style
      * question/answer: the wrong options and the explanation are real
@@ -291,17 +294,17 @@ final class AcademyControllerTest extends TestCase
      */
     public function testLessonMarkdownFormatShowsTheFullQuizWithAllOptions(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno/leccion-uno.md');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one/lesson-one.md');
 
-        $markdown = $this->controller->lesson($request, 'curso-demo', 'modulo-uno', 'leccion-uno.md');
+        $markdown = $this->controller->lesson($request, 'demo-course', 'module-one', 'lesson-one.md');
 
         $this->assertIsString($markdown);
-        $this->assertStringContainsString('## Cuestionario de prueba', $markdown);
-        $this->assertStringContainsString('### 1. ¿Esto es un fixture?', $markdown);
-        $this->assertStringContainsString('- [x] Sí.', $markdown);
+        $this->assertStringContainsString('## Test quiz', $markdown);
+        $this->assertStringContainsString('### 1. Is this a fixture?', $markdown);
+        $this->assertStringContainsString('- [x] Yes.', $markdown);
         $this->assertStringContainsString('- [ ] No.', $markdown);
         $this->assertStringContainsString(
-            '> Sí, este archivo es un fixture usado por los tests.',
+            '> Yes, this file is a fixture used by the tests.',
             $markdown
         );
         // true_false question: both options present, not just the
@@ -320,9 +323,9 @@ final class AcademyControllerTest extends TestCase
      */
     public function testCoursePdfFormatRendersWithoutError(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo.pdf');
+        $request = new Request('GET', 'http://localhost/academy/demo-course.pdf');
 
-        $pdf = $this->controller->course($request, 'curso-demo.pdf');
+        $pdf = $this->controller->course($request, 'demo-course.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -332,15 +335,15 @@ final class AcademyControllerTest extends TestCase
     /**
      * "?full=1" dumps the whole course — every module and, nested under
      * each, every lesson — into the SAME pdf: 1 cover page + 1 TOC page +
-     * 1 for the course + 1 for "Módulo Uno" + 1 per lesson (2 lessons) +
-     * 2 for "leccion-uno"'s quiz (questions page + its own "Respuestas"
+     * 1 for the course + 1 for "Module One" + 1 per lesson (2 lessons) +
+     * 2 for "lesson-one"'s quiz (questions page + its own "Answers"
      * page-break) = 8 pages.
      */
     public function testCoursePdfFormatWithFullQueryParamIncludesModulesAndLessonsInOnePdf(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo.pdf?full=1');
+        $request = new Request('GET', 'http://localhost/academy/demo-course.pdf?full=1');
 
-        $pdf = $this->controller->course($request, 'curso-demo.pdf');
+        $pdf = $this->controller->course($request, 'demo-course.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -349,9 +352,9 @@ final class AcademyControllerTest extends TestCase
 
     public function testModulePdfFormatRendersWithoutError(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno.pdf');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one.pdf');
 
-        $pdf = $this->controller->module($request, 'curso-demo', 'modulo-uno.pdf');
+        $pdf = $this->controller->module($request, 'demo-course', 'module-one.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -361,14 +364,14 @@ final class AcademyControllerTest extends TestCase
     /**
      * "?full=1" dumps the module and every one of its lessons into the
      * SAME pdf: 1 cover page + 1 TOC page + 1 for the module + 1 per
-     * lesson (2 lessons) + 2 for "leccion-uno"'s quiz (questions page +
-     * its own "Respuestas" page-break) = 7 pages.
+     * lesson (2 lessons) + 2 for "lesson-one"'s quiz (questions page +
+     * its own "Answers" page-break) = 7 pages.
      */
     public function testModulePdfFormatWithFullQueryParamIncludesLessonsInOnePdf(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno.pdf?full=1');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one.pdf?full=1');
 
-        $pdf = $this->controller->module($request, 'curso-demo', 'modulo-uno.pdf');
+        $pdf = $this->controller->module($request, 'demo-course', 'module-one.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -376,14 +379,14 @@ final class AcademyControllerTest extends TestCase
     }
 
     /**
-     * "leccion-uno" has a real quiz attachment: the questions page plus
-     * its own "Respuestas" page-break = 2 pages.
+     * "lesson-one" has a real quiz attachment: the questions page plus
+     * its own "Answers" page-break = 2 pages.
      */
     public function testLessonPdfFormatRendersWithoutError(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno/leccion-uno.pdf');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one/lesson-one.pdf');
 
-        $pdf = $this->controller->lesson($request, 'curso-demo', 'modulo-uno', 'leccion-uno.pdf');
+        $pdf = $this->controller->lesson($request, 'demo-course', 'module-one', 'lesson-one.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -392,20 +395,20 @@ final class AcademyControllerTest extends TestCase
 
     public function testUnknownModuleBubblesAsContentNotFoundException(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/no-existe');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/does-not-exist');
 
         $this->expectException(ContentNotFoundException::class);
 
-        $this->controller->module($request, 'curso-demo', 'no-existe');
+        $this->controller->module($request, 'demo-course', 'does-not-exist');
     }
 
     public function testUnknownLessonBubblesAsContentNotFoundException(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-demo/modulo-uno/no-existe');
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one/does-not-exist');
 
         $this->expectException(ContentNotFoundException::class);
 
-        $this->controller->lesson($request, 'curso-demo', 'modulo-uno', 'no-existe');
+        $this->controller->lesson($request, 'demo-course', 'module-one', 'does-not-exist');
     }
 
     public function testTagActionFiltersCoursesByTag(): void
@@ -414,11 +417,11 @@ final class AcademyControllerTest extends TestCase
 
         $html = $this->controller->tag($request, 'demo');
 
-        $this->assertStringContainsString('Curso Demo', $html);
+        $this->assertStringContainsString('Demo Course', $html);
     }
 
     /**
-     * "curso-borrador" is a draft top-level course. The index page feeds
+     * "draft-course" is a draft top-level course. The index page feeds
      * its own template plugin->registry()->all(), which returns every
      * loaded course regardless of allowed() — the same real bug reported
      * for this package, applied to Academy's course grid.
@@ -427,24 +430,25 @@ final class AcademyControllerTest extends TestCase
     {
         $html = $this->controller->index();
 
-        $this->assertStringNotContainsString('Curso Borrador', $html);
+        $this->assertStringNotContainsString('Draft Course', $html);
     }
 
     /**
-     * "curso-con-modulo-borrador" has a draft module ("modulo-borrador")
-     * alongside a non-draft one ("modulo-visible"). The course page's own
+     * "course-with-draft-module" has a draft module ("draft-module")
+     * alongside a non-draft one ("visible-module"). The course page's own
      * sidebar/tabs list modules via course.modules directly (not through
      * the registry), so this exercises AcademyCourse::modules() itself,
      * not the controller.
      */
     public function testCourseActionDoesNotListADraftModule(): void
     {
-        $request = new Request('GET', 'http://localhost/academy/curso-con-modulo-borrador');
+        $request = new Request('GET', 'http://localhost/academy/course-with-draft-module');
 
-        $html = $this->controller->course($request, 'curso-con-modulo-borrador');
+        $html = $this->controller->course($request, 'course-with-draft-module');
+        $this->assertIsString($html);
 
-        $this->assertStringContainsString('Módulo Visible', $html);
-        $this->assertStringNotContainsString('Módulo Borrador', $html);
+        $this->assertStringContainsString('Visible Module', $html);
+        $this->assertStringNotContainsString('Draft Module', $html);
     }
 
     /**
@@ -458,12 +462,12 @@ final class AcademyControllerTest extends TestCase
     {
         $request = new Request(
             'GET',
-            'http://localhost/academy/curso-con-modulo-borrador/modulo-borrador'
+            'http://localhost/academy/course-with-draft-module/draft-module'
         );
 
         $this->expectException(ContentNotFoundException::class);
 
-        $this->controller->module($request, 'curso-con-modulo-borrador', 'modulo-borrador');
+        $this->controller->module($request, 'course-with-draft-module', 'draft-module');
     }
 
     /**
@@ -475,21 +479,48 @@ final class AcademyControllerTest extends TestCase
     {
         $request = new Request(
             'GET',
-            'http://localhost/academy/curso-con-modulo-borrador/modulo-borrador/leccion-visible'
+            'http://localhost/academy/course-with-draft-module/draft-module/visible-lesson'
         );
 
         $this->expectException(ContentNotFoundException::class);
 
         $this->controller->lesson(
             $request,
-            'curso-con-modulo-borrador',
-            'modulo-borrador',
-            'leccion-visible'
+            'course-with-draft-module',
+            'draft-module',
+            'visible-lesson'
         );
     }
 
     private function countPdfPages(string $pdf): int
     {
-        return preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
+        $pages = preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
+        $this->assertNotFalse($pages);
+
+        return $pages;
+    }
+
+    public function testCourseActionJsonFormatReturnsTheCourse(): void
+    {
+        $request = new Request('GET', 'http://localhost/academy/demo-course.json');
+
+        $result = $this->controller->course($request, 'demo-course.json');
+
+        $this->assertIsArray($result);
+        $this->assertIsArray($result['data']);
+        $this->assertSame('demo-course', $result['data']['slug']);
+        $this->assertSame('Demo Course', $result['data']['title']);
+    }
+
+    public function testModuleActionJsonFormatReturnsTheModule(): void
+    {
+        $request = new Request('GET', 'http://localhost/academy/demo-course/module-one.json');
+
+        $result = $this->controller->module($request, 'demo-course', 'module-one.json');
+
+        $this->assertIsArray($result);
+        $this->assertIsArray($result['data']);
+        $this->assertSame('module-one', $result['data']['slug']);
+        $this->assertSame('Module One', $result['data']['title']);
     }
 }

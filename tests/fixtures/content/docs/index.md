@@ -1,6 +1,6 @@
 ---
-title: "Inicio"
-description: "Página de inicio de la documentación de prueba."
+title: "Home"
+description: "Home page of the test documentation."
 ---
-Contenido de la página de inicio de la documentación usada por los tests
-automatizados de `derafu/content`.
+The content of the home page of the documentation used by the automated tests
+of `derafu/content`, long enough to be indexable.

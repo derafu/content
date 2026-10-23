@@ -103,6 +103,8 @@ class AcademyTestQuestion implements AcademyTestQuestionInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -121,6 +123,8 @@ class AcademyTestQuestion implements AcademyTestQuestionInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {

@@ -1,0 +1,5 @@
+---
+authors: [{slug: x}]
+---
+
+Content.

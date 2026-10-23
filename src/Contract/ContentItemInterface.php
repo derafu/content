@@ -162,7 +162,7 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     /**
      * Get the route of the content.
      *
-     * @return object
+     * @return object{name: string, params: array<string, string>}
      */
     public function route(): object;
 
@@ -358,7 +358,7 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * The custom properties of the document sidebar when it's automatically
      * generated.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function sidebar_custom_props(): array;
 
@@ -481,7 +481,7 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * repeating them.
      *
      * @param RouterInterface $router Router.
-     * @return array
+     * @return array<string, array{href: string}>
      */
     public function links(RouterInterface $router): array;
 
@@ -506,14 +506,14 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * given, because building them needs it.
      *
      * @param RouterInterface|null $router Router.
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(?RouterInterface $router = null): array;
 
     /**
      * Get the content as a JSON string.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array;
 

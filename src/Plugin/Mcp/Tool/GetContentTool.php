@@ -54,7 +54,7 @@ class GetContentTool
      * Fetch a single content item.
      *
      * @param string $source Content source of the item.
-     * @param string $uri URI of the item within its source (e.g. "introduccion/que-es-libredte").
+     * @param string $uri URI of the item within its source (e.g. "guide/getting-started").
      * @return array<string, mixed>
      */
     public function __invoke(

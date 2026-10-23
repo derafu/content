@@ -40,7 +40,7 @@ abstract class AbstractContentController
      * Without this, an item whose real content lives in a "special"
      * frontmatter field (a lesson's "test", a doc's "openapi", a video)
      * exports as JSON with next to nothing in "data" — bad for a
-     * pipeline that indexes this JSON externally (e.g. into Qdrant): it
+     * pipeline that indexes this JSON externally (e.g. into a search engine): it
      * ends up with barely anything to search on for exactly the content
      * that has the most to say.
      *

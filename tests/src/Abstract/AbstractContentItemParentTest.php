@@ -45,14 +45,14 @@ final class AbstractContentItemParentTest extends TestCase
 
     public function testTheParentCanBeSetBeforeAnythingIsRead(): void
     {
-        $parent = $this->item('guia');
-        $child = $this->item('seccion-visible');
+        $parent = $this->item('guide');
+        $child = $this->item('visible-section');
 
         $parent->addChild($child);
 
         $this->assertSame($parent, $child->parent());
         $this->assertSame([$parent], $child->ancestors());
-        $this->assertSame('guia/seccion-visible', $child->uri());
+        $this->assertSame('guide/visible-section', $child->uri());
         $this->assertSame(2, $child->level());
     }
 
@@ -72,21 +72,21 @@ final class AbstractContentItemParentTest extends TestCase
     #[DataProvider('parentDerivedValuesProvider')]
     public function testSetParentFailsOnceAParentDerivedValueWasRead(string $method): void
     {
-        $child = $this->item('seccion-visible');
+        $child = $this->item('visible-section');
         $child->$method();
 
         $this->expectException(LogicException::class);
 
-        $child->setParent($this->item('guia'));
+        $child->setParent($this->item('guide'));
     }
 
     public function testTheParentIsNotChangedWhenSettingItFails(): void
     {
-        $child = $this->item('seccion-visible');
+        $child = $this->item('visible-section');
         $child->uri();
 
         try {
-            $child->setParent($this->item('guia'));
+            $child->setParent($this->item('guide'));
             $this->fail('Expected a LogicException.');
         } catch (LogicException) {
             $this->assertNull($child->parent());
@@ -95,12 +95,12 @@ final class AbstractContentItemParentTest extends TestCase
 
     public function testAddChildFailsWhenTheChildAlreadyReadItsUri(): void
     {
-        $child = $this->item('seccion-visible');
+        $child = $this->item('visible-section');
         $child->uri();
 
         $this->expectException(LogicException::class);
 
-        $this->item('guia')->addChild($child);
+        $this->item('guide')->addChild($child);
     }
 
     /**
@@ -111,8 +111,8 @@ final class AbstractContentItemParentTest extends TestCase
     public function testSetParentFailsWhenADescendantAlreadyReadItsUri(): void
     {
         $grandparent = $this->item('api');
-        $parent = $this->item('guia');
-        $child = $this->item('seccion-visible');
+        $parent = $this->item('guide');
+        $child = $this->item('visible-section');
 
         $parent->addChild($child);
         $child->uri();
@@ -124,14 +124,14 @@ final class AbstractContentItemParentTest extends TestCase
 
     public function testSettingTheSameParentAgainIsHarmlessAfterReadingValues(): void
     {
-        $parent = $this->item('guia');
-        $child = $this->item('seccion-visible');
+        $parent = $this->item('guide');
+        $child = $this->item('visible-section');
         $parent->addChild($child);
         $child->uri();
 
         $child->setParent($parent);
 
         $this->assertSame($parent, $child->parent());
-        $this->assertSame('guia/seccion-visible', $child->uri());
+        $this->assertSame('guide/visible-section', $child->uri());
     }
 }

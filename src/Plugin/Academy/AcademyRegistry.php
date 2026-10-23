@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Academy;
 
 use Derafu\Content\Abstract\AbstractContentRegistry;
+use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\Plugin\Academy\Contract\AcademyCourseInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyLessonInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyModuleInterface;
@@ -44,15 +45,7 @@ class AcademyRegistry extends AbstractContentRegistry implements AcademyRegistry
      */
     public function previous(string $uri, array $filters = []): AcademyModuleInterface|AcademyLessonInterface|null
     {
-        $content = parent::previous($uri, $filters);
-
-        if ($content === null) {
-            return null;
-        }
-
-        assert($content instanceof AcademyModuleInterface || $content instanceof AcademyLessonInterface);
-
-        return $content;
+        return $this->neighbour($uri, $filters, -1);
     }
 
     /**
@@ -60,15 +53,33 @@ class AcademyRegistry extends AbstractContentRegistry implements AcademyRegistry
      */
     public function next(string $uri, array $filters = []): AcademyModuleInterface|AcademyLessonInterface|null
     {
-        $content = parent::next($uri, $filters);
+        return $this->neighbour($uri, $filters, 1);
+    }
 
-        if ($content === null) {
-            return null;
-        }
+    /**
+     * Gets the module or the lesson that is around another one, inside of its
+     * own course: after the last one of a course there is no next, and before
+     * the first one there is no previous, instead of going to another course.
+     *
+     * @param string $uri URI of the content.
+     * @param array<string, mixed> $filters Filters of the list that is walked.
+     * @param int $step 1 for the next, -1 for the previous.
+     * @return AcademyModuleInterface|AcademyLessonInterface|null
+     */
+    private function neighbour(string $uri, array $filters, int $step): AcademyModuleInterface|AcademyLessonInterface|null
+    {
+        // The course is the first part of the URI.
+        $course = explode('/', $uri, 2)[0];
 
-        assert($content instanceof AcademyModuleInterface || $content instanceof AcademyLessonInterface);
+        $items = array_values(array_filter(
+            $this->flatten($filters),
+            fn ($item) => ($item instanceof AcademyModuleInterface || $item instanceof AcademyLessonInterface)
+                && explode('/', $item->uri(), 2)[0] === $course
+        ));
 
-        return $content;
+        $index = $this->search($uri, $items);
+
+        return $index === null ? null : ($items[$index + $step] ?? null);
     }
 
     /**
@@ -87,31 +98,40 @@ class AcademyRegistry extends AbstractContentRegistry implements AcademyRegistry
         $courses = [];
 
         foreach ($hierarchy as $courseSlug => $courseFiles) {
+            /** @var array<int|string, mixed> $courseFiles The file of the course at 0, the modules by name. */
             if (!isset($courseFiles[0])) {
                 continue;
             }
 
-            $course = new AcademyCourse($courseFiles[0]);
-            $courses[$courseSlug] = $course;
+            /** @var ContentSplFileInfo $courseFile */
+            $courseFile = $courseFiles[0];
+            $course = new AcademyCourse($courseFile);
+            $courses[(string) $courseSlug] = $course;
 
             unset($courseFiles[0]);
             $modules = [];
             foreach ($courseFiles as $moduleSlug => $moduleFiles) {
+                /** @var array<int|string, mixed> $moduleFiles The file of the module at 0, the lessons by name. */
                 if (!isset($moduleFiles[0])) {
                     continue;
                 }
 
-                $module = new AcademyModule($moduleFiles[0]);
+                /** @var ContentSplFileInfo $moduleFile */
+                $moduleFile = $moduleFiles[0];
+                $module = new AcademyModule($moduleFile);
                 $modules[$moduleSlug] = $module;
 
                 unset($moduleFiles[0]);
                 $lessons = [];
                 foreach ($moduleFiles as $lessonSlug => $lessonFiles) {
+                    /** @var array<int|string, mixed> $lessonFiles The file of the lesson at 0. */
                     if (!isset($lessonFiles[0])) {
                         continue;
                     }
 
-                    $lesson = new AcademyLesson($lessonFiles[0]);
+                    /** @var ContentSplFileInfo $lessonFile */
+                    $lessonFile = $lessonFiles[0];
+                    $lesson = new AcademyLesson($lessonFile);
                     $lessons[$lessonSlug] = $lesson;
                 }
 

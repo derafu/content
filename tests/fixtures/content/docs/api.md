@@ -1,8 +1,8 @@
 ---
 title: "API"
-description: "Sección con un spec de OpenAPI de fixture, para probar DocsDoc::openapiSpec()."
+description: "A section with a fixture OpenAPI spec, to test DocsDoc::openapiSpec()."
 openapi: "?attachment=openapi-schema.yaml"
 tags: ["api"]
 ---
-Contenido de la sección API. Declara `openapi` apuntando a un adjunto
-local para validar que `DocsDoc::openapiSpec()` lo resuelve y parsea.
+The content of the API section. It declares `openapi` pointing to a local
+attachment to check that `DocsDoc::openapiSpec()` resolves and parses it.

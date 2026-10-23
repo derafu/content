@@ -170,6 +170,8 @@ class BlogArchive implements BlogArchiveInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -185,6 +187,8 @@ class BlogArchive implements BlogArchiveInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {

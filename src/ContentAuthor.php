@@ -68,6 +68,8 @@ class ContentAuthor implements ContentAuthorInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -79,6 +81,8 @@ class ContentAuthor implements ContentAuthorInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {

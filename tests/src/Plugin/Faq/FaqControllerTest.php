@@ -17,6 +17,7 @@ use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentHtmlTag;
 use Derafu\Content\ContentHtmlTags;
 use Derafu\Content\ContentLoader;
@@ -38,8 +39,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Exercises FaqController end to end with a real Twig render, never
- * before rendered in this session (only FaqRegistry directly).
+ * Exercises FaqController end to end with a real Twig render.
  */
 #[CoversClass(FaqController::class)]
 #[CoversClass(AbstractContentController::class)]
@@ -57,6 +57,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
 #[UsesClass(ContentNotFoundException::class)]
+#[UsesClass(ContentFilters::class)]
 final class FaqControllerTest extends TestCase
 {
     private FaqController $controller;
@@ -70,7 +71,7 @@ final class FaqControllerTest extends TestCase
         $plugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
 
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/faq/pregunta-uno'));
+        $router->setContext(new RequestContext(pathInfo: '/faq/question-one'));
 
         $this->controller = new FaqController(
             ContentFixtures::contentService(['faq' => $plugin]),
@@ -81,32 +82,33 @@ final class FaqControllerTest extends TestCase
 
     public function testShowRendersARealQuestion(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno');
+        $request = new Request('GET', 'http://localhost/faq/question-one');
 
-        $html = $this->controller->show($request, 'pregunta-uno');
+        $html = $this->controller->show($request, 'question-one');
 
         $this->assertIsString($html);
-        $this->assertStringContainsString('¿Cómo se prueba este paquete?', $html);
+        $this->assertStringContainsString('How is this package tested?', $html);
     }
 
     /**
-     * "pregunta-uno" has a real child, so the "completo" variants must
+     * "question-one" has a real child, so the "full" variants must
      * show alongside the regular single-page download links.
      */
     public function testShowRendersDownloadLinksIncludingFullVariantsWhenThereAreChildren(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno');
+        $request = new Request('GET', 'http://localhost/faq/question-one');
 
-        $html = $this->controller->show($request, 'pregunta-uno');
+        $html = $this->controller->show($request, 'question-one');
+        $this->assertIsString($html);
 
-        $this->assertStringContainsString('href="/faq/pregunta-uno.pdf"', $html);
-        $this->assertStringContainsString('href="/faq/pregunta-uno.md"', $html);
-        $this->assertStringContainsString('href="/faq/pregunta-uno.pdf?full=1"', $html);
-        $this->assertStringContainsString('href="/faq/pregunta-uno.md?full=1"', $html);
+        $this->assertStringContainsString('href="/faq/question-one.pdf"', $html);
+        $this->assertStringContainsString('href="/faq/question-one.md"', $html);
+        $this->assertStringContainsString('href="/faq/question-one.pdf?full=1"', $html);
+        $this->assertStringContainsString('href="/faq/question-one.md?full=1"', $html);
     }
 
     /**
-     * "pregunta-uno" has a real child ("pregunta-uno/sub-pregunta") in the
+     * "question-one" has a real child ("question-one/sub-question") in the
      * fixture hierarchy. Unlike the HTML template (gated behind the
      * "show_children" metadata flag), the Markdown export always lists
      * children when present — there is no sidebar/related-questions widget
@@ -115,13 +117,13 @@ final class FaqControllerTest extends TestCase
      */
     public function testShowMarkdownFormatListsChildQuestionsWithAbsoluteUrls(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.md');
+        $request = new Request('GET', 'http://localhost/faq/question-one.md');
 
-        $markdown = $this->controller->show($request, 'pregunta-uno.md');
+        $markdown = $this->controller->show($request, 'question-one.md');
 
         $this->assertIsString($markdown);
         $this->assertStringContainsString(
-            '[¿Y si el paquete falla?](http://localhost/faq/pregunta-uno/sub-pregunta)',
+            '[And if the package fails?](http://localhost/faq/question-one/sub-question)',
             $markdown
         );
     }
@@ -132,14 +134,14 @@ final class FaqControllerTest extends TestCase
      */
     public function testShowMarkdownFormatWithFullQueryParamEmbedsChildQuestionBodyInline(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.md?full=1');
+        $request = new Request('GET', 'http://localhost/faq/question-one.md?full=1');
 
-        $markdown = $this->controller->show($request, 'pregunta-uno.md');
+        $markdown = $this->controller->show($request, 'question-one.md');
 
         $this->assertIsString($markdown);
-        $this->assertStringContainsString('## ¿Y si el paquete falla?', $markdown);
+        $this->assertStringContainsString('## And if the package fails?', $markdown);
         $this->assertStringContainsString(
-            'validar el listado',
+            'to check the list',
             $markdown
         );
         $this->assertStringNotContainsString('Related questions', $markdown);
@@ -151,12 +153,12 @@ final class FaqControllerTest extends TestCase
     public function testShowMarkdownFormatWithFullQueryParamOnAChildlessQuestionIgnoresTheFlag(): void
     {
         $withFull = $this->controller->show(
-            new Request('GET', 'http://localhost/faq/pregunta-uno/sub-pregunta.md?full=1'),
-            'pregunta-uno/sub-pregunta.md'
+            new Request('GET', 'http://localhost/faq/question-one/sub-question.md?full=1'),
+            'question-one/sub-question.md'
         );
         $withoutFull = $this->controller->show(
-            new Request('GET', 'http://localhost/faq/pregunta-uno/sub-pregunta.md'),
-            'pregunta-uno/sub-pregunta.md'
+            new Request('GET', 'http://localhost/faq/question-one/sub-question.md'),
+            'question-one/sub-question.md'
         );
 
         $this->assertSame($withoutFull, $withFull);
@@ -164,12 +166,13 @@ final class FaqControllerTest extends TestCase
 
     public function testShowJsonFormatReturnsTheFullArray(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.json');
+        $request = new Request('GET', 'http://localhost/faq/question-one.json');
 
-        $result = $this->controller->show($request, 'pregunta-uno.json');
+        $result = $this->controller->show($request, 'question-one.json');
 
         $this->assertIsArray($result);
-        $this->assertSame('pregunta-uno', $result['data']['uri']);
+        $this->assertIsArray($result['data']);
+        $this->assertSame('question-one', $result['data']['uri']);
     }
 
     /**
@@ -179,9 +182,9 @@ final class FaqControllerTest extends TestCase
      */
     public function testShowPdfFormatRendersWithoutError(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.pdf');
+        $request = new Request('GET', 'http://localhost/faq/question-one.pdf');
 
-        $pdf = $this->controller->show($request, 'pregunta-uno.pdf');
+        $pdf = $this->controller->show($request, 'question-one.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -189,15 +192,15 @@ final class FaqControllerTest extends TestCase
     }
 
     /**
-     * "?full=1" dumps "pregunta-uno" together with its real child
-     * ("pregunta-uno/sub-pregunta") into the SAME pdf: 1 cover page + 1
+     * "?full=1" dumps "question-one" together with its real child
+     * ("question-one/sub-question") into the SAME pdf: 1 cover page + 1
      * TOC page + 1 page per question.
      */
     public function testShowPdfFormatWithFullQueryParamIncludesChildQuestionsInOnePdf(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno.pdf?full=1');
+        $request = new Request('GET', 'http://localhost/faq/question-one.pdf?full=1');
 
-        $pdf = $this->controller->show($request, 'pregunta-uno.pdf');
+        $pdf = $this->controller->show($request, 'question-one.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -210,9 +213,9 @@ final class FaqControllerTest extends TestCase
      */
     public function testShowPdfFormatWithFullQueryParamOnAChildlessQuestionIgnoresTheFlag(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno/sub-pregunta.pdf?full=1');
+        $request = new Request('GET', 'http://localhost/faq/question-one/sub-question.pdf?full=1');
 
-        $pdf = $this->controller->show($request, 'pregunta-uno/sub-pregunta.pdf');
+        $pdf = $this->controller->show($request, 'question-one/sub-question.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -221,48 +224,53 @@ final class FaqControllerTest extends TestCase
 
     private function countPdfPages(string $pdf): int
     {
-        return preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
+        $pages = preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
+        $this->assertNotFalse($pages);
+
+        return $pages;
     }
 
     public function testUnknownQuestionBubblesAsContentNotFoundException(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/no-existe');
+        $request = new Request('GET', 'http://localhost/faq/does-not-exist');
 
         $this->expectException(ContentNotFoundException::class);
 
-        $this->controller->show($request, 'no-existe');
+        $this->controller->show($request, 'does-not-exist');
     }
 
     /**
-     * "pregunta-borrador" is a draft top-level question, with a non-draft
-     * child ("sub-respuesta-visible"). Neither must appear in the
+     * "draft-question" is a draft top-level question, with a non-draft
+     * child ("visible-sub-answer"). Neither must appear in the
      * sidebar: FaqController feeds it plugin->registry()->all(), which
      * returns every loaded question regardless of allowed().
      */
     public function testShowRendersSidebarWithoutADraftTopLevelQuestion(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno');
+        $request = new Request('GET', 'http://localhost/faq/question-one');
 
-        $html = $this->controller->show($request, 'pregunta-uno');
+        $html = $this->controller->show($request, 'question-one');
+        $this->assertIsString($html);
 
-        $this->assertStringNotContainsString('¿Pregunta en borrador?', $html);
-        $this->assertStringNotContainsString('Sub respuesta visible', $html);
+        $this->assertStringNotContainsString('Draft question?', $html);
+        $this->assertStringNotContainsString('Visible sub answer', $html);
     }
 
     /**
-     * "pregunta-visible" is NOT draft, but its only child
-     * ("sub-borrador") is. The parent must still show in the sidebar, but
+     * "visible-question" is NOT draft, but its only child
+     * ("draft-sub-question") is. The parent must still show in the sidebar, but
      * the draft child must not leak through the nested recursion of the
      * nav macro.
      */
     public function testShowRendersSidebarWithoutADraftChildNestedUnderAnAllowedQuestion(): void
     {
-        $request = new Request('GET', 'http://localhost/faq/pregunta-uno');
+        $request = new Request('GET', 'http://localhost/faq/question-one');
 
-        $html = $this->controller->show($request, 'pregunta-uno');
+        $html = $this->controller->show($request, 'question-one');
+        $this->assertIsString($html);
 
-        $this->assertStringContainsString('¿Pregunta visible?', $html);
-        $this->assertStringNotContainsString('Sub pregunta borrador', $html);
+        $this->assertStringContainsString('Visible question?', $html);
+        $this->assertStringNotContainsString('Draft sub question', $html);
     }
 
     public function testTagActionFiltersQuestions(): void
@@ -271,6 +279,6 @@ final class FaqControllerTest extends TestCase
 
         $html = $this->controller->tag($request, 'tests');
 
-        $this->assertStringContainsString('¿Cómo se prueba este paquete?', $html);
+        $this->assertStringContainsString('How is this package tested?', $html);
     }
 }

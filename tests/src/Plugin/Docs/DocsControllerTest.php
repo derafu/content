@@ -18,6 +18,7 @@ use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentHtmlTag;
 use Derafu\Content\ContentHtmlTags;
 use Derafu\Content\ContentLoader;
@@ -27,12 +28,6 @@ use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Docs\DocsController;
 use Derafu\Content\Plugin\Docs\DocsDoc;
-use Derafu\Content\Plugin\Docs\DocsOpenApiEndpoint;
-use Derafu\Content\Plugin\Docs\DocsOpenApiEndpointGroup;
-use Derafu\Content\Plugin\Docs\DocsOpenApiParameter;
-use Derafu\Content\Plugin\Docs\DocsOpenApiResponse;
-use Derafu\Content\Plugin\Docs\DocsOpenApiSpec;
-use Derafu\Content\Plugin\Docs\DocsOpenApiTag;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
 use Derafu\Http\Request;
@@ -48,21 +43,14 @@ use PHPUnit\Framework\TestCase;
 /**
  * Exercises DocsController end to end, including a real Twig render of the
  * sidebar (layouts/docs.html.twig + docs/_nav_item.html.twig) through a
- * real Router — the same code path exercised manually against LibreDTE
- * while implementing sidebarPath/sidebarCollapsible/sidebarDepth, now
- * pinned down as a permanent, no-mock regression test.
+ * real Router: sidebarPath/sidebarCollapsible/sidebarDepth are pinned down
+ * by a no-mock regression test.
  */
 #[CoversClass(DocsController::class)]
 #[CoversClass(AbstractContentController::class)]
 #[UsesClass(DocsPlugin::class)]
 #[UsesClass(DocsRegistry::class)]
 #[UsesClass(DocsDoc::class)]
-#[UsesClass(DocsOpenApiSpec::class)]
-#[UsesClass(DocsOpenApiEndpoint::class)]
-#[UsesClass(DocsOpenApiEndpointGroup::class)]
-#[UsesClass(DocsOpenApiParameter::class)]
-#[UsesClass(DocsOpenApiResponse::class)]
-#[UsesClass(DocsOpenApiTag::class)]
 #[UsesClass(ContentAttachment::class)]
 #[UsesClass(ContentService::class)]
 #[UsesClass(ContentAuthor::class)]
@@ -75,6 +63,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
 #[UsesClass(ContentNotFoundException::class)]
+#[UsesClass(ContentFilters::class)]
 final class DocsControllerTest extends TestCase
 {
     private DocsPlugin $plugin;
@@ -100,36 +89,38 @@ final class DocsControllerTest extends TestCase
     public function testJsonFormatReturnsTheFullContentArray(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos.json'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide/getting-started.json'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia/primeros-pasos.json');
+        $request = new Request('GET', 'http://localhost/docs/guide/getting-started.json');
 
-        $result = $this->controller($router)->show($request, 'guia/primeros-pasos.json');
+        $result = $this->controller($router)->show($request, 'guide/getting-started.json');
 
         $this->assertIsArray($result);
-        $this->assertSame('guia/primeros-pasos', $result['data']['uri']);
+        $this->assertIsArray($result['data']);
+        $this->assertSame('guide/getting-started', $result['data']['uri']);
+        $this->assertIsString($result['data']['data']);
         $this->assertStringContainsString(
-            'primeros pasos, hijo',
+            'getting started, child',
             $result['data']['data']
         );
     }
 
     public function testUnknownDocBubblesAsContentNotFoundException(): void
     {
-        $request = new Request('GET', 'http://localhost/docs/no-existe');
+        $request = new Request('GET', 'http://localhost/docs/does-not-exist');
 
         $this->expectException(ContentNotFoundException::class);
 
-        $this->controller()->show($request, 'no-existe');
+        $this->controller()->show($request, 'does-not-exist');
     }
 
     public function testHtmlRenderShowsTheSidebarWithBothTopLevelDocsByDefault(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide/getting-started'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia/primeros-pasos');
-        $html = $this->controller($router)->show($request, 'guia/primeros-pasos');
+        $request = new Request('GET', 'http://localhost/docs/guide/getting-started');
+        $html = $this->controller($router)->show($request, 'guide/getting-started');
 
         $this->assertIsString($html);
         // Sidebar is present (default sidebarPath: true) with both
@@ -138,59 +129,61 @@ final class DocsControllerTest extends TestCase
             '<nav class="col-md-3 col-lg-2 d-md-block bg-light">',
             $html
         );
-        $this->assertStringContainsString('Inicio', $html);
-        $this->assertStringContainsString('Guía', $html);
-        $this->assertStringContainsString('Primeros pasos', $html);
+        $this->assertStringContainsString('Home', $html);
+        $this->assertStringContainsString('Guide', $html);
+        $this->assertStringContainsString('Getting started', $html);
         // The active doc's link is highlighted.
         $this->assertMatchesRegularExpression(
-            '#text-primary fw-bold[^>]*>\s*Primeros pasos#',
+            '#text-primary fw-bold[^>]*>\s*Getting started#',
             $html
         );
     }
 
     /**
-     * "guia" has real children, so the HTML page must show the "PDF
-     * completo"/"Markdown completo" links alongside the regular
+     * "guide" has real children, so the HTML page must show the full PDF
+     * and full Markdown links alongside the regular
      * single-page ones — plain, always-visible links, not hidden behind
      * a dropdown.
      */
     public function testHtmlRenderShowsDownloadLinksIncludingFullVariantsWhenThereAreChildren(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia');
-        $html = $this->controller($router)->show($request, 'guia');
+        $request = new Request('GET', 'http://localhost/docs/guide');
+        $html = $this->controller($router)->show($request, 'guide');
+        $this->assertIsString($html);
 
-        $this->assertStringContainsString('href="/docs/guia.pdf"', $html);
-        $this->assertStringContainsString('href="/docs/guia.md"', $html);
-        $this->assertStringContainsString('href="/docs/guia.pdf?full=1"', $html);
-        $this->assertStringContainsString('href="/docs/guia.md?full=1"', $html);
+        $this->assertStringContainsString('href="/docs/guide.pdf"', $html);
+        $this->assertStringContainsString('href="/docs/guide.md"', $html);
+        $this->assertStringContainsString('href="/docs/guide.pdf?full=1"', $html);
+        $this->assertStringContainsString('href="/docs/guide.md?full=1"', $html);
         // Both the single-page and the "full" Markdown get a "Copy to
         // clipboard" action, not just a download link.
-        $this->assertStringContainsString('data-copy-md="/docs/guia.md"', $html);
-        $this->assertStringContainsString('data-copy-md="/docs/guia.md?full=1"', $html);
+        $this->assertStringContainsString('data-copy-md="/docs/guide.md"', $html);
+        $this->assertStringContainsString('data-copy-md="/docs/guide.md?full=1"', $html);
     }
 
     /**
-     * "guia/primeros-pasos" has no children: only the two single-page
-     * download links, no "completo" variants.
+     * "guide/getting-started" has no children: only the two single-page
+     * download links, no "full" variants.
      */
     public function testHtmlRenderShowsOnlySinglePageDownloadLinksForAChildlessDoc(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide/getting-started'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia/primeros-pasos');
-        $html = $this->controller($router)->show($request, 'guia/primeros-pasos');
+        $request = new Request('GET', 'http://localhost/docs/guide/getting-started');
+        $html = $this->controller($router)->show($request, 'guide/getting-started');
+        $this->assertIsString($html);
 
-        $this->assertStringContainsString('href="/docs/guia/primeros-pasos.pdf"', $html);
-        $this->assertStringContainsString('href="/docs/guia/primeros-pasos.md"', $html);
+        $this->assertStringContainsString('href="/docs/guide/getting-started.pdf"', $html);
+        $this->assertStringContainsString('href="/docs/guide/getting-started.md"', $html);
         $this->assertStringNotContainsString('full=1', $html);
     }
 
     /**
-     * "guia" has a real child ("guia/primeros-pasos") in the fixture
+     * "guide" has a real child ("guide/getting-started") in the fixture
      * hierarchy. Unlike the HTML template (gated behind the
      * "show_children" metadata flag), the Markdown export always lists
      * children when present: an AI agent fetching the .md body has no
@@ -199,14 +192,14 @@ final class DocsControllerTest extends TestCase
     public function testMarkdownFormatListsChildDocsWithAbsoluteUrls(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia.md'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide.md'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia.md');
-        $markdown = $this->controller($router)->show($request, 'guia.md');
+        $request = new Request('GET', 'http://localhost/docs/guide.md');
+        $markdown = $this->controller($router)->show($request, 'guide.md');
 
         $this->assertIsString($markdown);
         $this->assertStringContainsString(
-            '[Primeros pasos](http://localhost/docs/guia/primeros-pasos)',
+            '[Getting started](http://localhost/docs/guide/getting-started)',
             $markdown
         );
     }
@@ -219,15 +212,15 @@ final class DocsControllerTest extends TestCase
     public function testMarkdownFormatWithFullQueryParamEmbedsChildDocBodyInline(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia.md'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide.md'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia.md?full=1');
-        $markdown = $this->controller($router)->show($request, 'guia.md');
+        $request = new Request('GET', 'http://localhost/docs/guide.md?full=1');
+        $markdown = $this->controller($router)->show($request, 'guide.md');
 
         $this->assertIsString($markdown);
-        $this->assertStringContainsString('## Primeros pasos', $markdown);
+        $this->assertStringContainsString('## Getting started', $markdown);
         $this->assertStringContainsString(
-            'hijo de la sección guía, usado para validar',
+            'child of the guide section, used to check',
             $markdown
         );
         $this->assertStringNotContainsString('Pages in this section', $markdown);
@@ -240,22 +233,22 @@ final class DocsControllerTest extends TestCase
     public function testMarkdownFormatWithFullQueryParamOnAChildlessDocIgnoresTheFlag(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos.md'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide/getting-started.md'));
 
         $withFull = $this->controller($router)->show(
-            new Request('GET', 'http://localhost/docs/guia/primeros-pasos.md?full=1'),
-            'guia/primeros-pasos.md'
+            new Request('GET', 'http://localhost/docs/guide/getting-started.md?full=1'),
+            'guide/getting-started.md'
         );
         $withoutFull = $this->controller($router)->show(
-            new Request('GET', 'http://localhost/docs/guia/primeros-pasos.md'),
-            'guia/primeros-pasos.md'
+            new Request('GET', 'http://localhost/docs/guide/getting-started.md'),
+            'guide/getting-started.md'
         );
 
         $this->assertSame($withoutFull, $withFull);
     }
 
     /**
-     * "guia" itself has a root-relative frontmatter image and a body with
+     * "guide" itself has a root-relative frontmatter image and a body with
      * a root-relative Markdown image and a root-relative Markdown link.
      * The .md export must resolve all three to absolute URLs so the body
      * stays self-contained outside this website (see
@@ -265,22 +258,22 @@ final class DocsControllerTest extends TestCase
     public function testMarkdownFormatResolvesTheDocsOwnImageAndLinkUrls(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia.md'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide.md'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia.md');
-        $markdown = $this->controller($router)->show($request, 'guia.md');
+        $request = new Request('GET', 'http://localhost/docs/guide.md');
+        $markdown = $this->controller($router)->show($request, 'guide.md');
 
         $this->assertIsString($markdown);
         $this->assertStringContainsString(
-            'image: "http://localhost/img/content/docs/guia/cover.png"',
+            'image: "http://localhost/img/content/docs/guide/cover.png"',
             $markdown
         );
         $this->assertStringContainsString(
-            '![Diagrama de la guía](http://localhost/img/content/docs/guia/diagrama.png)',
+            '![Guide diagram](http://localhost/img/content/docs/guide/diagram.png)',
             $markdown
         );
         $this->assertStringContainsString(
-            '[este artículo hijo](http://localhost/docs/guia/primeros-pasos)',
+            '[this child article](http://localhost/docs/guide/getting-started)',
             $markdown
         );
     }
@@ -293,10 +286,10 @@ final class DocsControllerTest extends TestCase
     public function testPdfFormatRendersWithoutError(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia.pdf'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide.pdf'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia.pdf');
-        $pdf = $this->controller($router)->show($request, 'guia.pdf');
+        $request = new Request('GET', 'http://localhost/docs/guide.pdf');
+        $pdf = $this->controller($router)->show($request, 'guide.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -304,17 +297,17 @@ final class DocsControllerTest extends TestCase
     }
 
     /**
-     * "?full=1" dumps "guia" together with its real child
-     * ("guia/primeros-pasos") into the SAME pdf: 1 cover page + 1 TOC
-     * page + 1 page for "guia" + 1 page for its child.
+     * "?full=1" dumps "guide" together with its real child
+     * ("guide/getting-started") into the SAME pdf: 1 cover page + 1 TOC
+     * page + 1 page for "guide" + 1 page for its child.
      */
     public function testPdfFormatWithFullQueryParamIncludesChildDocsInOnePdf(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia.pdf'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide.pdf'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia.pdf?full=1');
-        $pdf = $this->controller($router)->show($request, 'guia.pdf');
+        $request = new Request('GET', 'http://localhost/docs/guide.pdf?full=1');
+        $pdf = $this->controller($router)->show($request, 'guide.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -329,10 +322,10 @@ final class DocsControllerTest extends TestCase
     public function testPdfFormatWithFullQueryParamOnAChildlessDocIgnoresTheFlag(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/guia/primeros-pasos.pdf'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/guide/getting-started.pdf'));
 
-        $request = new Request('GET', 'http://localhost/docs/guia/primeros-pasos.pdf?full=1');
-        $pdf = $this->controller($router)->show($request, 'guia/primeros-pasos.pdf');
+        $request = new Request('GET', 'http://localhost/docs/guide/getting-started.pdf?full=1');
+        $pdf = $this->controller($router)->show($request, 'guide/getting-started.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -341,7 +334,10 @@ final class DocsControllerTest extends TestCase
 
     private function countPdfPages(string $pdf): int
     {
-        return preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
+        $pages = preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
+        $this->assertNotFalse($pages);
+
+        return $pages;
     }
 
     /**
@@ -368,8 +364,8 @@ final class DocsControllerTest extends TestCase
     }
 
     /**
-     * "borrador-padre" is a draft top-level section, with a non-draft
-     * child ("hijo-visible"). Neither must appear in the sidebar: today
+     * "draft-parent" is a draft top-level section, with a non-draft
+     * child ("visible-child"). Neither must appear in the sidebar: today
      * DocsController feeds it plugin->registry()->all(), which returns
      * every loaded doc regardless of allowed() — this is the real bug
      * reported for this package (a draft leaks into the nav in
@@ -382,13 +378,14 @@ final class DocsControllerTest extends TestCase
 
         $request = new Request('GET', 'http://localhost/docs/index');
         $html = $this->controller($router)->show($request, 'index');
+        $this->assertIsString($html);
 
-        $this->assertStringNotContainsString('Sección borrador', $html);
-        $this->assertStringNotContainsString('Hijo visible', $html);
+        $this->assertStringNotContainsString('Draft section', $html);
+        $this->assertStringNotContainsString('Visible child', $html);
     }
 
     /**
-     * "seccion-visible" is NOT draft, but its only child ("nota-borrador")
+     * "visible-section" is NOT draft, but its only child ("draft-note")
      * is. The parent must still show in the sidebar, but the draft child
      * must not leak through the nested recursion of the nav macro, which
      * calls item.children directly (bypassing whatever the controller
@@ -401,31 +398,32 @@ final class DocsControllerTest extends TestCase
 
         $request = new Request('GET', 'http://localhost/docs/index');
         $html = $this->controller($router)->show($request, 'index');
+        $this->assertIsString($html);
 
-        $this->assertStringContainsString('Sección visible', $html);
-        $this->assertStringNotContainsString('Nota borrador', $html);
+        $this->assertStringContainsString('Visible section', $html);
+        $this->assertStringNotContainsString('Draft note', $html);
     }
 
     /**
-     * "pasado-deprecado" has an already-past deprecated() date: the real
+     * "past-deprecated" has an already-past deprecated() date: the real
      * Twig render must show the warning banner, using deprecatedAt() for
-     * the actual date (not deprecated(), which is a bool since this
-     * session's fix) — a real end-to-end check that the template rename
-     * across every plugin's show template didn't break the Twig syntax.
+     * the actual date (not deprecated(), which is a bool) — a real
+     * end-to-end check of the Twig syntax of every plugin's show template.
      */
     public function testHtmlRenderShowsTheDeprecatedBannerWithItsRealDate(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/pasado-deprecado'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/past-deprecated'));
 
-        $request = new Request('GET', 'http://localhost/docs/pasado-deprecado');
-        $html = $this->controller($router)->show($request, 'pasado-deprecado');
+        $request = new Request('GET', 'http://localhost/docs/past-deprecated');
+        $html = $this->controller($router)->show($request, 'past-deprecated');
+        $this->assertIsString($html);
 
         $this->assertStringContainsString('is deprecated since 01/01/2020', $html);
     }
 
     /**
-     * "futuro-deprecado" has a deprecated() date far in the future:
+     * "future-deprecated" has a deprecated() date far in the future:
      * deprecated() must be false today, so the banner must not render at
      * all yet — the real Twig counterpart of
      * testFutureDeprecationDateDoesNotDisableIndexableOrSearchableYet.
@@ -433,16 +431,17 @@ final class DocsControllerTest extends TestCase
     public function testHtmlRenderDoesNotShowTheDeprecatedBannerBeforeItsDateArrives(): void
     {
         $router = RouterFixture::create();
-        $router->setContext(new RequestContext(pathInfo: '/docs/futuro-deprecado'));
+        $router->setContext(new RequestContext(pathInfo: '/docs/future-deprecated'));
 
-        $request = new Request('GET', 'http://localhost/docs/futuro-deprecado');
-        $html = $this->controller($router)->show($request, 'futuro-deprecado');
+        $request = new Request('GET', 'http://localhost/docs/future-deprecated');
+        $html = $this->controller($router)->show($request, 'future-deprecated');
+        $this->assertIsString($html);
 
         $this->assertStringNotContainsString('is deprecated since', $html);
     }
 
     /**
-     * "no-listado" is a top-level doc marked unlisted (not draft). Same
+     * "not-listed" is a top-level doc marked unlisted (not draft). Same
      * bug class as the draft one: DocsController feeds the sidebar
      * plugin->registry()->all(), unfiltered.
      */
@@ -453,13 +452,14 @@ final class DocsControllerTest extends TestCase
 
         $request = new Request('GET', 'http://localhost/docs/index');
         $html = $this->controller($router)->show($request, 'index');
+        $this->assertIsString($html);
 
-        $this->assertStringNotContainsString('No Listado', $html);
+        $this->assertStringNotContainsString('Not Listed', $html);
     }
 
     /**
-     * "seccion-visible" is not draft, and one of its children
-     * ("nota-no-listada") is not draft either — only unlisted. The
+     * "visible-section" is not draft, and one of its children
+     * ("unlisted-note") is not draft either — only unlisted. The
      * parent must still show, but this child must not leak through the
      * nested recursion of the nav macro: visibleChildren() must exclude
      * it just like it excludes a draft child.
@@ -471,9 +471,10 @@ final class DocsControllerTest extends TestCase
 
         $request = new Request('GET', 'http://localhost/docs/index');
         $html = $this->controller($router)->show($request, 'index');
+        $this->assertIsString($html);
 
-        $this->assertStringContainsString('Sección visible', $html);
-        $this->assertStringNotContainsString('Nota no listada', $html);
+        $this->assertStringContainsString('Visible section', $html);
+        $this->assertStringNotContainsString('Unlisted note', $html);
     }
 
     public function testHtmlRenderHidesTheSidebarWhenSidebarPathIsDisabled(): void
@@ -495,6 +496,7 @@ final class DocsControllerTest extends TestCase
 
         $request = new Request('GET', 'http://localhost/docs/index');
         $html = $controller->show($request, 'index');
+        $this->assertIsString($html);
 
         // The outer plugin sidebar (nav + tags) must be gone. The doc's own
         // inner table-of-contents column ("col-md-3" inside the content
@@ -505,5 +507,27 @@ final class DocsControllerTest extends TestCase
             $html
         );
         $this->assertStringContainsString('<main class="col-12">', $html);
+    }
+
+    public function testTagActionListsTheDocsThatHaveTheTag(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/tags/api'));
+
+        $html = $this->controller($router)->tag(new Request('GET', 'http://localhost/docs/tags/api'), 'api');
+
+        $this->assertStringContainsString('<title>api</title>', $html);
+        $this->assertStringContainsString('A section with a fixture OpenAPI spec', $html);
+    }
+
+    public function testTagActionWithATagThatNoDocHasListsNoDocs(): void
+    {
+        $router = RouterFixture::create();
+        $router->setContext(new RequestContext(pathInfo: '/docs/tags/unused'));
+
+        $html = $this->controller($router)->tag(new Request('GET', 'http://localhost/docs/tags/unused'), 'unused');
+
+        $this->assertStringContainsString('<title>unused</title>', $html);
+        $this->assertStringNotContainsString('A section with a fixture OpenAPI spec', $html);
     }
 }

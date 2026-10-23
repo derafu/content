@@ -21,6 +21,7 @@ use Derafu\Content\ContentLoader;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
+use Derafu\Content\Plugin\Blog\BlogArchive;
 use Derafu\Content\Plugin\Blog\BlogPlugin;
 use Derafu\Content\Plugin\Blog\BlogPost;
 use Derafu\Content\Plugin\Blog\BlogRegistry;
@@ -35,6 +36,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(BlogPlugin::class)]
 #[CoversClass(BlogRegistry::class)]
 #[CoversClass(BlogPost::class)]
+#[UsesClass(BlogArchive::class)]
 #[UsesClass(ContentAuthor::class)]
 #[UsesClass(ContentBag::class)]
 #[UsesClass(ContentConfig::class)]
@@ -62,13 +64,13 @@ final class BlogRegistryTest extends TestCase
 
         sort($slugs);
         $this->assertSame(
-            ['2026-01-15-primer-post', '2026-02-20-segundo-post', '2099-01-01-post-futuro'],
+            ['2026-01-15-first-post', '2026-02-20-second-post', '2099-01-01-future-post'],
             $slugs
         );
     }
 
     /**
-     * "2099-01-01-post-futuro" has a publish date far in the future
+     * "2099-01-01-future-post" has a publish date far in the future
      * (resolved from its filename prefix, same mechanism covered by
      * testDateFallsBackToTheFileNamePrefixWhenNotInFrontmatter below). A
      * future publish date must mean "not published yet": allowed() must
@@ -76,14 +78,14 @@ final class BlogRegistryTest extends TestCase
      */
     public function testFutureDatedPostIsNotAllowedOutsideALocalEnvironment(): void
     {
-        $post = $this->plugin->registry()->all()['2099-01-01-post-futuro'];
+        $post = $this->plugin->registry()->all()['2099-01-01-future-post'];
 
         $this->assertGreaterThan(new DateTime(), $post->date());
         $this->assertFalse($post->draft());
         $this->assertFalse($post->allowed());
 
         $this->expectException(ContentNotFoundException::class);
-        $this->plugin->registry()->get('2099-01-01-post-futuro');
+        $this->plugin->registry()->get('2099-01-01-future-post');
     }
 
     /**
@@ -95,19 +97,19 @@ final class BlogRegistryTest extends TestCase
     {
         $uris = array_map(fn ($post) => $post->uri(), $this->plugin->registry()->filter());
 
-        $this->assertNotContains('2099-01-01-post-futuro', $uris);
+        $this->assertNotContains('2099-01-01-future-post', $uris);
     }
 
     public function testDateFallsBackToTheFileNamePrefixWhenNotInFrontmatter(): void
     {
-        $post = $this->plugin->registry()->get('2026-01-15-primer-post');
+        $post = $this->plugin->registry()->get('2026-01-15-first-post');
 
         $this->assertSame('2026-01-15', $post->date()->format('Y-m-d'));
     }
 
     public function testExplicitFrontmatterDateOverridesTheFileNamePrefix(): void
     {
-        $post = $this->plugin->registry()->get('2026-02-20-segundo-post');
+        $post = $this->plugin->registry()->get('2026-02-20-second-post');
 
         // Frontmatter says 2026-02-25; the filename prefix says 2026-02-20.
         $this->assertSame('2026-02-25', $post->date()->format('Y-m-d'));
@@ -115,8 +117,8 @@ final class BlogRegistryTest extends TestCase
 
     public function testHideTableOfContentsDefaultsToTrueForBlogButIsOverridable(): void
     {
-        $withoutOverride = $this->plugin->registry()->get('2026-01-15-primer-post');
-        $withOverride = $this->plugin->registry()->get('2026-02-20-segundo-post');
+        $withoutOverride = $this->plugin->registry()->get('2026-01-15-first-post');
+        $withOverride = $this->plugin->registry()->get('2026-02-20-second-post');
 
         $this->assertTrue($withoutOverride->hide_table_of_contents());
         $this->assertFalse($withOverride->hide_table_of_contents());
@@ -124,7 +126,7 @@ final class BlogRegistryTest extends TestCase
 
     public function testAuthorStringFrontmatterBecomesARealContentAuthor(): void
     {
-        $post = $this->plugin->registry()->get('2026-01-15-primer-post');
+        $post = $this->plugin->registry()->get('2026-01-15-first-post');
         $authors = $post->authors();
 
         $this->assertCount(1, $authors);
@@ -139,8 +141,8 @@ final class BlogRegistryTest extends TestCase
 
         // Sorted by date descending by default sidebar_position: the newer
         // post (2026-02-25) comes before the older one (2026-01-15).
-        $newer = $registry->get('2026-02-20-segundo-post');
-        $older = $registry->get('2026-01-15-primer-post');
+        $newer = $registry->get('2026-02-20-second-post');
+        $older = $registry->get('2026-01-15-first-post');
 
         $this->assertSame(
             $older->uri(),
@@ -152,6 +154,32 @@ final class BlogRegistryTest extends TestCase
     {
         $this->expectException(ContentNotFoundException::class);
 
-        $this->plugin->registry()->get('no-existe');
+        $this->plugin->registry()->get('does-not-exist');
+    }
+
+    public function testTheArchivesAreTheMonthsOfThePublishedPostsFromTheNewestToTheOldest(): void
+    {
+        $archives = array_values($this->plugin->registry()->archives());
+
+        $this->assertSame(['202602', '202601'], array_map(fn ($archive) => $archive->id(), $archives));
+        $this->assertSame([1, 1], array_map(fn ($archive) => $archive->count(), $archives));
+    }
+
+    public function testThePostBeforeAndAfterAreTheNeighboursInTheList(): void
+    {
+        $registry = $this->plugin->registry();
+        $uris = array_map(fn ($post) => $post->uri(), $registry->flatten(['limit' => 100]));
+        $second = $uris[1];
+
+        $this->assertSame($uris[0], $registry->previous($second)?->uri());
+        $this->assertSame($uris[2] ?? null, $registry->next($second)?->uri());
+        $this->assertNull($registry->previous($uris[0]));
+        $this->assertNull($registry->previous('does-not-exist'));
+        $this->assertNull($registry->next('does-not-exist'));
+    }
+
+    public function testAPostIsOfTheCategoryPost(): void
+    {
+        $this->assertSame('post', $this->plugin->registry()->get('2026-01-15-first-post')->category());
     }
 }

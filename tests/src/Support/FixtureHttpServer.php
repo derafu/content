@@ -21,6 +21,9 @@ use RuntimeException;
  */
 final class FixtureHttpServer
 {
+    /**
+     * @var resource|null
+     */
     private $process = null;
 
     private function __construct(private readonly int $port)
@@ -83,15 +86,16 @@ final class FixtureHttpServer
             escapeshellarg($router)
         );
 
-        $this->process = proc_open(
+        $process = proc_open(
             $command,
             [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']],
             $pipes
         );
 
-        if (!is_resource($this->process)) {
+        if (!is_resource($process)) {
             throw new RuntimeException('Could not start the fixture HTTP server.');
         }
+        $this->process = $process;
 
         $deadline = microtime(true) + 5;
         while (microtime(true) < $deadline) {

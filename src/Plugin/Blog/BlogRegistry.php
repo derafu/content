@@ -82,7 +82,11 @@ class BlogRegistry extends AbstractContentRegistry implements BlogRegistryInterf
             $this->archives = [];
 
             $this->walk(function (BlogPostInterface $post) {
-                $dateKey = $post->date()->format('Ym');
+                if (!$post->allowed() || $post->unlisted()) {
+                    return;
+                }
+
+                $dateKey = (int) $post->date()->format('Ym');
                 if (!isset($this->archives[$dateKey])) {
                     $this->archives[$dateKey] = new BlogArchive($post->date());
                 }

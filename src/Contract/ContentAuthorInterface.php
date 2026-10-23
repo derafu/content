@@ -46,14 +46,14 @@ interface ContentAuthorInterface extends JsonSerializable, Stringable
     /**
      * Get the author as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array;
 
     /**
      * Get the author as a JSON serializable array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array;
 

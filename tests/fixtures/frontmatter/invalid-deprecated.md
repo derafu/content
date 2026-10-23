@@ -1,0 +1,5 @@
+---
+deprecated: [a]
+---
+
+Content.

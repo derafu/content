@@ -27,7 +27,7 @@ class PagesPlugin extends AbstractContentPlugin implements ContentPluginInterfac
     /**
      * Schema of the options of the plugin.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     private const OPTIONS_SCHEMA = [
         // Name of the plugin.
@@ -93,9 +93,9 @@ class PagesPlugin extends AbstractContentPlugin implements ContentPluginInterfac
     ): ContentBagInterface {
         $this->registry = new PagesRegistry(
             $contentLoader,
-            $this->options['path'],
-            $this->options['include']->all(),
-            $this->options['exclude']->all(),
+            $this->options->requireString('path'),
+            $this->options->requireList('include', 'string'),
+            $this->options->requireList('exclude', 'string'),
             $this->context->cache()
         );
 
@@ -114,6 +114,8 @@ class PagesPlugin extends AbstractContentPlugin implements ContentPluginInterfac
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     protected static function getSchema(): array
     {

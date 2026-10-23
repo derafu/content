@@ -17,6 +17,7 @@ use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentHtmlTag;
 use Derafu\Content\ContentHtmlTags;
 use Derafu\Content\ContentLoader;
@@ -60,6 +61,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
 #[UsesClass(ContentNotFoundException::class)]
+#[UsesClass(ContentFilters::class)]
 final class BlogControllerTest extends TestCase
 {
     private BlogController $controller;
@@ -88,12 +90,12 @@ final class BlogControllerTest extends TestCase
 
         $html = $this->controller->index($request);
 
-        $this->assertStringContainsString('Primer post', $html);
-        $this->assertStringContainsString('Segundo post', $html);
+        $this->assertStringContainsString('First post', $html);
+        $this->assertStringContainsString('Second post', $html);
     }
 
     /**
-     * "2099-01-01-post-futuro" has a publish date far in the future — it
+     * "2099-01-01-future-post" has a publish date far in the future — it
      * must not appear in the blog index (or its "recent posts" sidebar)
      * before that date arrives, the same way a draft post must not.
      */
@@ -103,7 +105,7 @@ final class BlogControllerTest extends TestCase
 
         $html = $this->controller->index($request);
 
-        $this->assertStringNotContainsString('Post futuro', $html);
+        $this->assertStringNotContainsString('Future post', $html);
     }
 
     public function testTheSidebarLinksToTheRssFeed(): void
@@ -129,13 +131,14 @@ final class BlogControllerTest extends TestCase
         $pages = [
             'index' => $this->controller->index(new Request('GET', 'http://localhost/blog')),
             'show' => $this->controller->show(
-                new Request('GET', 'http://localhost/blog/2026-01-15-primer-post'),
-                '2026-01-15-primer-post'
+                new Request('GET', 'http://localhost/blog/2026-01-15-first-post'),
+                '2026-01-15-first-post'
             ),
             'tag' => $this->controller->tag(new Request('GET', 'http://localhost/blog/tags/demo'), 'demo'),
         ];
 
         foreach ($pages as $page => $html) {
+            $this->assertIsString($html);
             $this->assertMatchesRegularExpression(
                 '#<link rel="alternate" type="application/rss\+xml" title="[^"]+" href="[^"]*/blog/rss\.xml">#',
                 $html,
@@ -146,26 +149,27 @@ final class BlogControllerTest extends TestCase
 
     public function testShowRendersASinglePost(): void
     {
-        $request = new Request('GET', 'http://localhost/blog/2026-01-15-primer-post');
+        $request = new Request('GET', 'http://localhost/blog/2026-01-15-first-post');
 
-        $html = $this->controller->show($request, '2026-01-15-primer-post');
+        $html = $this->controller->show($request, '2026-01-15-first-post');
 
         $this->assertIsString($html);
-        $this->assertStringContainsString('Primer post', $html);
+        $this->assertStringContainsString('First post', $html);
     }
 
     /**
-     * Posts have no "completo" concept (no children to bundle): only the
+     * Posts have no "full" concept (no children to bundle): only the
      * two single-page download links.
      */
     public function testShowRendersOnlySinglePageDownloadLinks(): void
     {
-        $request = new Request('GET', 'http://localhost/blog/2026-01-15-primer-post');
+        $request = new Request('GET', 'http://localhost/blog/2026-01-15-first-post');
 
-        $html = $this->controller->show($request, '2026-01-15-primer-post');
+        $html = $this->controller->show($request, '2026-01-15-first-post');
+        $this->assertIsString($html);
 
-        $this->assertStringContainsString('href="/blog/2026-01-15-primer-post.pdf"', $html);
-        $this->assertStringContainsString('href="/blog/2026-01-15-primer-post.md"', $html);
+        $this->assertStringContainsString('href="/blog/2026-01-15-first-post.pdf"', $html);
+        $this->assertStringContainsString('href="/blog/2026-01-15-first-post.md"', $html);
         $this->assertStringNotContainsString('full=1', $html);
     }
 
@@ -175,9 +179,9 @@ final class BlogControllerTest extends TestCase
      */
     public function testShowPdfFormatRendersWithoutError(): void
     {
-        $request = new Request('GET', 'http://localhost/blog/2026-01-15-primer-post.pdf');
+        $request = new Request('GET', 'http://localhost/blog/2026-01-15-first-post.pdf');
 
-        $pdf = $this->controller->show($request, '2026-01-15-primer-post.pdf');
+        $pdf = $this->controller->show($request, '2026-01-15-first-post.pdf');
 
         $this->assertIsString($pdf);
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -185,11 +189,11 @@ final class BlogControllerTest extends TestCase
 
     public function testUnknownPostBubblesAsContentNotFoundException(): void
     {
-        $request = new Request('GET', 'http://localhost/blog/no-existe');
+        $request = new Request('GET', 'http://localhost/blog/does-not-exist');
 
         $this->expectException(ContentNotFoundException::class);
 
-        $this->controller->show($request, 'no-existe');
+        $this->controller->show($request, 'does-not-exist');
     }
 
     public function testTagActionFiltersPosts(): void
@@ -198,22 +202,22 @@ final class BlogControllerTest extends TestCase
 
         $html = $this->controller->tag($request, 'demo');
 
-        $this->assertStringContainsString('Primer post', $html);
-        $this->assertStringContainsString('Segundo post', $html);
+        $this->assertStringContainsString('First post', $html);
+        $this->assertStringContainsString('Second post', $html);
     }
 
     public function testArchiveActionFiltersPostsByYearAndMonth(): void
     {
-        // "2026-02-25" is the explicit date of "segundo-post": the archive
-        // for that month must show it and must not show "primer-post"
+        // "2026-02-25" is the explicit date of "second-post": the archive
+        // for that month must show it and must not show "first-post"
         // (2026-01-15). "202602-02-2026" is the real slug BlogArchive
         // generates and every template links to (id + slugified name).
         $request = new Request('GET', 'http://localhost/blog/archive/202602-02-2026');
 
         $html = $this->controller->archive($request, '202602-02-2026');
 
-        $this->assertStringContainsString('Segundo post', $html);
-        $this->assertStringNotContainsString('Primer post', $html);
+        $this->assertStringContainsString('Second post', $html);
+        $this->assertStringNotContainsString('First post', $html);
     }
 
     /**
@@ -244,13 +248,25 @@ final class BlogControllerTest extends TestCase
             $response->getHeaderLine('Content-Type')
         );
         $this->assertStringContainsString('<rss version="2.0"', $xml);
-        $this->assertStringContainsString('Primer post', $xml);
-        $this->assertStringContainsString('Segundo post', $xml);
+        $this->assertStringContainsString('First post', $xml);
+        $this->assertStringContainsString('Second post', $xml);
 
         // The feed body is well-formed XML on its own merits.
         $previousUseErrors = libxml_use_internal_errors(true);
         $document = simplexml_load_string($xml);
         libxml_use_internal_errors($previousUseErrors);
         $this->assertNotFalse($document, 'The RSS feed is not well-formed XML.');
+    }
+
+    public function testShowActionJsonFormatReturnsThePost(): void
+    {
+        $request = new Request('GET', 'http://localhost/blog/2026-01-15-first-post.json');
+
+        $result = $this->controller->show($request, '2026-01-15-first-post.json');
+
+        $this->assertIsArray($result);
+        $this->assertIsArray($result['data']);
+        $this->assertSame('2026-01-15-first-post', $result['data']['slug']);
+        $this->assertSame('First post', $result['data']['title']);
     }
 }

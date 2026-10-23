@@ -40,17 +40,19 @@
     "require-dev": {
         "ext-xdebug": "*",
         "friendsofphp/php-cs-fixer": "^3.95",
-        "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan": "^2.3",
         "phpunit/phpunit": "^13.4",
-        "guzzlehttp/guzzle": "^7.15",
+        "guzzlehttp/guzzle": "^7.16",
         "mcp/sdk": "^0.7",
-        "derafu/markdown": "^2.0",
+        "derafu/markdown": "^2.1",
         "mpdf/mpdf": "^8.3",
-        "nikic/php-parser": "^5.9"
+        "nikic/php-parser": "^5.9",
+        "utopia-php/openapi": "^0.2"
     },
     "suggest": {
         "guzzlehttp/guzzle": "Required by the \"search\" plugin (or any psr/http-client implementation) to query the search engine and LLM backend, and by the \"academy\" plugin to fetch a lesson's test when it points to a remote URL instead of a local attachment.",
         "mcp/sdk": "Required to enable the \"mcp\" plugin (Model Context Protocol server).",
+        "utopia-php/openapi": "Required by the \"docs\" plugin to render the OpenAPI specification that a doc references in its \"openapi\" frontmatter as Markdown and PDF.",
         "derafu/twig": "Required to translate this package's Twig templates: register Derafu\\Twig\\Extension\\TranslationExtension in your renderer's Twig extensions to enable the |trans filter and {% trans %} tag they use.",
         "nikic/php-parser": "Required by the tests of the messages of the package (Derafu\\Translation\\Lint reads the code)."
     },

@@ -16,6 +16,7 @@ use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\Plugin\Academy\Contract\AcademyCourseInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyLessonInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyModuleInterface;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 
 /**
  * Class that represents an academy module.
@@ -50,10 +51,19 @@ class AcademyModule extends AbstractContentItem implements AcademyModuleInterfac
      */
     public function route(): object
     {
+        $course = $this->parent();
+
+        if ($course === null) {
+            throw new RuntimeException([
+                'The module "{content}" must be in a course to have a route.',
+                'content' => $this->uri(),
+            ]);
+        }
+
         return (object) [
             'name' => $this->type() . '_' . $this->category(),
             'params' => [
-                'course' => $this->parent()->slug(),
+                'course' => $course->slug(),
                 'module' => $this->slug(),
             ],
         ];

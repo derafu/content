@@ -45,7 +45,9 @@ final class ContentContextTest extends TestCase
         $item->set(['ok' => true]);
         $context->cache()->save($item);
 
-        $this->assertTrue($context->cache()->getItem($key)->get()['ok']);
+        $cached = $context->cache()->getItem($key)->get();
+        $this->assertIsArray($cached);
+        $this->assertTrue($cached['ok']);
 
         $context->cache()->deleteItem($key);
 
@@ -78,5 +80,12 @@ final class ContentContextTest extends TestCase
         ]), new ArrayAdapter());
 
         $this->assertNull($context->cache());
+    }
+
+    public function testItKeepsTheConfigurationOfTheWebsite(): void
+    {
+        $config = new ContentConfig(['title' => 'Fixture', 'url' => 'http://localhost']);
+
+        $this->assertSame($config, (new ContentContext($config))->config());
     }
 }

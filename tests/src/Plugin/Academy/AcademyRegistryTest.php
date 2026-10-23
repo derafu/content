@@ -37,9 +37,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Exercises the Academy plugin's real three-level hierarchy (course →
- * module → lesson) against real fixture content on disk, no mocks: this
- * is exactly the shape of test that would have caught the Pages
- * registry/plugin bugs found this session, applied to Academy.
+ * module → lesson) against real fixture content on disk, no mocks.
  */
 #[CoversClass(AcademyPlugin::class)]
 #[CoversClass(AcademyRegistry::class)]
@@ -72,15 +70,15 @@ final class AcademyRegistryTest extends TestCase
 
     public function testCourseHierarchyIsBuiltFromTheFilesystem(): void
     {
-        $course = $this->plugin->registry()->get('curso-demo');
+        $course = $this->plugin->registry()->get('demo-course');
 
         $this->assertInstanceOf(AcademyCourse::class, $course);
-        $this->assertSame('Curso Demo', $course->title());
+        $this->assertSame('Demo Course', $course->title());
         $this->assertSame('academy', $course->type());
         $this->assertSame('course', $course->category());
         $this->assertCount(1, $course->modules());
 
-        $module = $course->modules()['modulo-uno'];
+        $module = $course->modules()['module-one'];
         $this->assertInstanceOf(AcademyModule::class, $module);
         $this->assertSame($course, $module->course());
         $this->assertCount(2, $module->lessons());
@@ -100,27 +98,29 @@ final class AcademyRegistryTest extends TestCase
      */
     public function testGetResolvesAModuleOrLessonUriNotJustACourse(): void
     {
-        $module = $this->plugin->registry()->get('curso-demo/modulo-uno');
+        $module = $this->plugin->registry()->get('demo-course/module-one');
         $this->assertInstanceOf(AcademyModule::class, $module);
-        $this->assertSame('modulo-uno', $module->slug());
+        $this->assertSame('module-one', $module->slug());
 
-        $lesson = $this->plugin->registry()->get('curso-demo/modulo-uno/leccion-uno');
+        $lesson = $this->plugin->registry()->get('demo-course/module-one/lesson-one');
         $this->assertInstanceOf(AcademyLesson::class, $lesson);
-        $this->assertSame('leccion-uno', $lesson->slug());
+        $this->assertSame('lesson-one', $lesson->slug());
     }
 
     public function testLessonWithExplicitTimeIsNotEstimated(): void
     {
-        $course = $this->plugin->registry()->get('curso-demo');
-        $lesson = $course->modules()['modulo-uno']->lessons()['leccion-uno'];
+        $course = $this->plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $lesson = $course->modules()['module-one']->lessons()['lesson-one'];
 
         $this->assertSame(7, $lesson->time());
     }
 
     public function testLessonWithoutExplicitTimeIsEstimatedFromWordCount(): void
     {
-        $course = $this->plugin->registry()->get('curso-demo');
-        $lesson = $course->modules()['modulo-uno']->lessons()['leccion-dos'];
+        $course = $this->plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $lesson = $course->modules()['module-one']->lessons()['lesson-two'];
 
         // No explicit "time" in the frontmatter: must be a positive estimate,
         // not zero and not the sibling lesson's explicit value.
@@ -129,8 +129,9 @@ final class AcademyRegistryTest extends TestCase
 
     public function testModuleAndCourseTimeAreAggregatedFromLessons(): void
     {
-        $course = $this->plugin->registry()->get('curso-demo');
-        $module = $course->modules()['modulo-uno'];
+        $course = $this->plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $module = $course->modules()['module-one'];
 
         $lessonsTime = array_sum(array_map(
             fn ($lesson) => $lesson->time(),
@@ -143,8 +144,9 @@ final class AcademyRegistryTest extends TestCase
 
     public function testYoutubeVideoUrlIsRewrittenToEmbedUrl(): void
     {
-        $course = $this->plugin->registry()->get('curso-demo');
-        $lesson = $course->modules()['modulo-uno']->lessons()['leccion-dos'];
+        $course = $this->plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $lesson = $course->modules()['module-one']->lessons()['lesson-two'];
 
         $this->assertSame(
             'https://www.youtube.com/embed/dQw4w9WgXcQ',
@@ -155,8 +157,9 @@ final class AcademyRegistryTest extends TestCase
 
     public function testLessonTestFieldResolvesToARealAttachment(): void
     {
-        $course = $this->plugin->registry()->get('curso-demo');
-        $lesson = $course->modules()['modulo-uno']->lessons()['leccion-uno'];
+        $course = $this->plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $lesson = $course->modules()['module-one']->lessons()['lesson-one'];
 
         $attachment = $lesson->testAttachment();
 
@@ -168,26 +171,26 @@ final class AcademyRegistryTest extends TestCase
 
     /**
      * lesson->test() must parse the attachment's real JSON (both a
-     * "multiple_choice" and a "true_false" question, per the real
-     * production shape found in LibreDTE's own content) into a real
+     * "multiple_choice" and a "true_false" question) into a real
      * AcademyTestInterface tree, not just resolve the raw attachment.
      */
     public function testLessonTestParsesTheAttachmentIntoARealTestObject(): void
     {
-        $course = $this->plugin->registry()->get('curso-demo');
-        $lesson = $course->modules()['modulo-uno']->lessons()['leccion-uno'];
+        $course = $this->plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $lesson = $course->modules()['module-one']->lessons()['lesson-one'];
 
         $test = $lesson->test();
 
         $this->assertInstanceOf(AcademyTestInterface::class, $test);
-        $this->assertSame('Cuestionario de prueba', $test->title());
+        $this->assertSame('Test quiz', $test->title());
         $this->assertCount(2, $test->questions());
 
         $multipleChoice = $test->questions()[0];
         $this->assertSame('multiple_choice', $multipleChoice->type());
         $this->assertCount(2, $multipleChoice->options());
         $this->assertCount(1, $multipleChoice->correctOptions());
-        $this->assertSame('Sí.', $multipleChoice->correctOptions()[0]->text());
+        $this->assertSame('Yes.', $multipleChoice->correctOptions()[0]->text());
 
         $trueFalse = $test->questions()[1];
         $this->assertSame('true_false', $trueFalse->type());
@@ -198,9 +201,10 @@ final class AcademyRegistryTest extends TestCase
 
     public function testLessonWithoutTestUsesTheDefaultIcon(): void
     {
-        $course = $this->plugin->registry()->get('curso-demo');
-        $lessonWithVideo = $course->modules()['modulo-uno']->lessons()['leccion-dos'];
-        $lessonWithTest = $course->modules()['modulo-uno']->lessons()['leccion-uno'];
+        $course = $this->plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $lessonWithVideo = $course->modules()['module-one']->lessons()['lesson-two'];
+        $lessonWithTest = $course->modules()['module-one']->lessons()['lesson-one'];
 
         $this->assertSame('fa-solid fa-play fa-fw', $lessonWithVideo->icon());
         $this->assertSame('fa-solid fa-question-circle fa-fw', $lessonWithTest->icon());
@@ -211,39 +215,41 @@ final class AcademyRegistryTest extends TestCase
         $onlyQuiz = $this->plugin->registry()->filter(['tag' => 'quiz']);
 
         $this->assertCount(1, $onlyQuiz);
-        $this->assertSame('leccion-uno', $onlyQuiz[0]->slug());
+        $this->assertSame('lesson-one', $onlyQuiz[0]->slug());
     }
 
     public function testUnknownUriThrowsContentNotFoundException(): void
     {
         $this->expectException(ContentNotFoundException::class);
 
-        $this->plugin->registry()->get('no-existe');
+        $this->plugin->registry()->get('does-not-exist');
     }
 
     /**
-     * "curso-con-modulo-borrador" is not draft, but its "modulo-borrador"
-     * module is, and that module's "leccion-visible" lesson is not.
+     * "course-with-draft-module" is not draft, but its "draft-module"
+     * module is, and that module's "visible-lesson" lesson is not.
      * allowed() must cascade: the lesson is not allowed either, and
      * modules()/lessons() (the methods every template and aggregate
      * relies on) must exclude the draft module, while keeping its
-     * non-draft sibling "modulo-visible".
+     * non-draft sibling "visible-module".
      */
     public function testModulesExcludesADraftModuleButKeepsItsVisibleSibling(): void
     {
-        $course = $this->plugin->registry()->get('curso-con-modulo-borrador');
+        $course = $this->plugin->registry()->get('course-with-draft-module');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
 
         $modules = $course->modules();
 
-        $this->assertArrayHasKey('modulo-visible', $modules);
-        $this->assertArrayNotHasKey('modulo-borrador', $modules);
+        $this->assertArrayHasKey('visible-module', $modules);
+        $this->assertArrayNotHasKey('draft-module', $modules);
     }
 
     public function testDraftModuleMakesItsNonDraftLessonNotAllowedToo(): void
     {
-        $course = $this->plugin->registry()->get('curso-con-modulo-borrador');
-        $draftModule = $course->children()['modulo-borrador'];
-        $lesson = $draftModule->children()['leccion-visible'];
+        $course = $this->plugin->registry()->get('course-with-draft-module');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $draftModule = $course->children()['draft-module'];
+        $lesson = $draftModule->children()['visible-lesson'];
 
         $this->assertTrue($draftModule->draft());
         $this->assertFalse($lesson->draft());
@@ -251,7 +257,7 @@ final class AcademyRegistryTest extends TestCase
 
         $this->expectException(ContentNotFoundException::class);
         $this->plugin->registry()->get(
-            'curso-con-modulo-borrador/modulo-borrador/leccion-visible'
+            'course-with-draft-module/draft-module/visible-lesson'
         );
     }
 
@@ -263,10 +269,11 @@ final class AcademyRegistryTest extends TestCase
      */
     public function testCourseAggregatesExcludeEverythingUnderADraftModule(): void
     {
-        $course = $this->plugin->registry()->get('curso-con-modulo-borrador');
+        $course = $this->plugin->registry()->get('course-with-draft-module');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
 
         $this->assertArrayNotHasKey(
-            'curso-con-modulo-borrador/modulo-borrador/leccion-visible',
+            'course-with-draft-module/draft-module/visible-lesson',
             $course->lessons()
         );
         $this->assertSame(3, $course->time());

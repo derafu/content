@@ -16,6 +16,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Derafu\Config\Contract\OptionsInterface;
 use Derafu\Content\Abstract\AbstractContentController;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\Contract\ContentServiceInterface;
@@ -24,6 +25,7 @@ use Derafu\Http\Request;
 use Derafu\Http\Response;
 use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 
 /**
  * Blog controller.
@@ -66,7 +68,7 @@ class BlogController extends AbstractContentController
         $plugin = $this->contentService->plugin('blog');
         assert($plugin instanceof BlogPlugin);
 
-        $filters = array_filter($request->all(), fn ($value) => $value !== '');
+        $filters = ContentFilters::fromRequest($request->all());
         $posts = $plugin->registry()->filter($filters);
         $recentPosts = $plugin->registry()->filter([
             'limit' => $plugin->options()->get('blogSidebarCount'),
@@ -89,7 +91,7 @@ class BlogController extends AbstractContentController
      *
      * @param Request $request Request.
      * @param string $post Post.
-     * @return string|array
+     * @return string|array<string, mixed>
      */
     public function show(Request $request, string $post): string|array
     {
@@ -140,7 +142,7 @@ class BlogController extends AbstractContentController
         $plugin = $this->contentService->plugin('blog');
         assert($plugin instanceof BlogPlugin);
 
-        $filters = array_filter($request->all(), fn ($value) => $value !== '');
+        $filters = ContentFilters::fromRequest($request->all());
         $tags = $plugin->registry()->tags();
         $contentTag = $tags[$tag] ?? new ContentTag($tag);
         $filters['tag'] = $contentTag->slug();
@@ -175,7 +177,7 @@ class BlogController extends AbstractContentController
         $plugin = $this->contentService->plugin('blog');
         assert($plugin instanceof BlogPlugin);
 
-        $filters = array_filter($request->all(), fn ($value) => $value !== '');
+        $filters = ContentFilters::fromRequest($request->all());
         $contentArchive = new BlogArchive($archive);
         $filters['year'] = $contentArchive->year();
         $filters['month'] = $contentArchive->month();
@@ -210,7 +212,7 @@ class BlogController extends AbstractContentController
         $plugin = $this->contentService->plugin('blog');
         assert($plugin instanceof BlogPlugin);
 
-        $options = $plugin->options()->get('feedOptions');
+        $options = $plugin->options()->requireContainer('feedOptions');
 
         // The only filter a reader can ask for is the tag. Anything else in
         // the query string is ignored, so the feed can not be asked for
@@ -235,19 +237,20 @@ class BlogController extends AbstractContentController
             $posts = array_reverse($posts);
         }
 
-        $response = new Response();
-        $response->withHeader('Content-Type', 'application/rss+xml; charset=UTF-8');
-        $response->withHeader('Cache-Control', 'public, max-age=' . self::FEED_MAX_AGE);
+        $response = (new Response())
+            ->withHeader('Content-Type', 'application/rss+xml; charset=UTF-8')
+            ->withHeader('Cache-Control', 'public, max-age=' . self::FEED_MAX_AGE)
+        ;
 
         // A reader that already has the current version of the feed does not
         // need it again. This is decided before rendering, which is the
         // expensive part.
         $etag = $this->etag($plugin, $options, $filters, $posts);
-        $response->withHeader('ETag', $etag);
+        $response = $response->withHeader('ETag', $etag);
 
         $lastModified = $this->lastModified($posts);
         if ($lastModified !== null) {
-            $response->withHeader('Last-Modified', gmdate('D, d M Y H:i:s', $lastModified) . ' GMT');
+            $response = $response->withHeader('Last-Modified', gmdate('D, d M Y H:i:s', $lastModified) . ' GMT');
         }
 
         if ($this->isNotModified($request, $etag, $lastModified)) {
@@ -264,13 +267,17 @@ class BlogController extends AbstractContentController
 
         $xml = preg_replace_callback(
             '#<(img|a)\b[^>]*(src|href)=["\'](/[^"\']*)["\']#i',
-            fn ($matches) => preg_replace(
-                '#(src|href)=["\']/#',
-                $matches[2] . '="' . $url . '/',
-                $matches[0]
-            ),
+            function (array $matches) use ($url): string {
+                $absolute = preg_replace(
+                    '#(src|href)=["\']/#',
+                    $matches[2] . '="' . $url . '/',
+                    $matches[0]
+                );
+
+                return $absolute ?? throw $this->unprocessable();
+            },
             $xml
-        );
+        ) ?? throw $this->unprocessable();
 
         $response->getBody()->write($xml);
 
@@ -426,13 +433,27 @@ class BlogController extends AbstractContentController
      */
     private function feedLimit(Request $request, OptionsInterface $options): int
     {
-        $limit = max(1, (int) $options->get('limit'));
+        $limit = max(1, $options->requireInt('limit'));
 
         $requested = $request->query('limit');
         if (is_string($requested) && ctype_digit($requested) && (int) $requested >= 1) {
             $limit = (int) $requested;
         }
 
-        return min($limit, max(1, (int) $options->get('maxLimit')));
+        return min($limit, max(1, $options->requireInt('maxLimit')));
+    }
+
+    /**
+     * Error of a feed that PCRE can not process.
+     *
+     * @return RuntimeException
+     */
+    private function unprocessable(): RuntimeException
+    {
+        return new RuntimeException([
+            'The content "{content}" could not be processed: {error}',
+            'content' => 'blog/rss.xml.twig',
+            'error' => preg_last_error_msg(),
+        ]);
     }
 }

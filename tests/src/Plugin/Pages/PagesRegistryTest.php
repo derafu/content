@@ -22,26 +22,16 @@ use Derafu\Content\Plugin\Pages\PagesPage;
 use Derafu\Content\Plugin\Pages\PagesPlugin;
 use Derafu\Content\Plugin\Pages\PagesRegistry;
 use Derafu\TestsContent\Support\ContentFixtures;
+use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Exercises the Pages plugin against real fixture pages on disk, no mocks.
- *
- * This is exactly the class of test that would have caught, on the very
- * first run, the two real bugs found this session while wiring the Pages
- * plugin for the first time:
- *
- *   1. PagesRegistry did not override get()/previous()/next() with the
- *      covariant PagesPageInterface return type, which is a PHP fatal
- *      error the moment the registry is actually used.
- *   2. PagesPlugin::loadContent() passed the raw Options object for
- *      "include"/"exclude" instead of calling ->all() on it, which is a
- *      TypeError the moment content is actually loaded.
- *
- * Neither of those bugs could ever surface just by reading the code; they
- * only appear once loadContent()+get() actually run.
+ * Exercises the Pages plugin against real fixture pages on disk, no mocks:
+ * the registry returns PagesPageInterface from get()/previous()/next(), and
+ * loadContent() reads "include"/"exclude" as arrays. Neither can be checked
+ * by reading the code; they only appear once loadContent()+get() run.
  */
 #[CoversClass(PagesPlugin::class)]
 #[CoversClass(PagesRegistry::class)]
@@ -70,7 +60,7 @@ final class PagesRegistryTest extends TestCase
         $slugs = array_keys($this->plugin->registry()->all());
 
         sort($slugs);
-        $this->assertSame(['about', 'bienvenida', 'borrador'], $slugs);
+        $this->assertSame(['about', 'draft', 'welcome'], $slugs);
     }
 
     public function testGetReturnsAPagesPageWithoutAFatalCovarianceError(): void
@@ -88,12 +78,12 @@ final class PagesRegistryTest extends TestCase
         $about = $registry->get('about');
 
         // Calling next()/previous() must not trigger the covariance fatal
-        // error either. "borrador" is a draft, excluded from the allowed
+        // error either. "draft" is a draft, excluded from the allowed
         // list, so among the allowed pages "about" is last (previous:
-        // "bienvenida", no next).
+        // "welcome", no next).
         $this->assertNull($registry->next($about->uri()));
         $this->assertInstanceOf(PagesPage::class, $registry->previous($about->uri()));
-        $this->assertSame('bienvenida', $registry->previous($about->uri())->uri());
+        $this->assertSame('welcome', $registry->previous($about->uri())->uri());
     }
 
     public function testDraftPageIsNotAllowedOutsideALocalEnvironment(): void
@@ -102,19 +92,37 @@ final class PagesRegistryTest extends TestCase
         // itself already refuses to return a draft outside a local
         // environment (see the next assertion), which is the behavior
         // being tested here.
-        $draft = $this->plugin->registry()->all()['borrador'];
+        $draft = $this->plugin->registry()->all()['draft'];
 
         $this->assertTrue($draft->draft());
         $this->assertFalse($draft->allowed());
 
         $this->expectException(ContentNotFoundException::class);
-        $this->plugin->registry()->get('borrador');
+        $this->plugin->registry()->get('draft');
     }
 
     public function testUnknownUriThrowsContentNotFoundException(): void
     {
         $this->expectException(ContentNotFoundException::class);
 
-        $this->plugin->registry()->get('no-existe');
+        $this->plugin->registry()->get('does-not-exist');
+    }
+
+    public function testTheFirstPageHasNoPreviousAndItsNextIsTheSecond(): void
+    {
+        $registry = $this->plugin->registry();
+
+        $this->assertNull($registry->previous('welcome'));
+        $this->assertSame('about', $registry->next('welcome')?->uri());
+    }
+
+    public function testThePagesOfAWebsiteAreLinkedFromTheRoot(): void
+    {
+        $page = $this->plugin->registry()->get('about');
+
+        $this->assertSame(
+            ['self' => ['href' => '/about'], 'collection' => ['href' => '']],
+            $page->links(RouterFixture::create())
+        );
     }
 }

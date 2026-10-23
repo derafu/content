@@ -36,11 +36,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Exercises SearchContentTool directly (no MCP JSON-RPC envelope) against
- * a real fixture HTTP server standing in for the upstream engine (Qdrant),
- * so the same post-filter added to SearchController in this session
- * (searchable()/allowed()/unlisted(), extracted to SearchResultsFilter)
- * runs here too instead of leaking stale/hidden index entries through
- * this second, independent consumer.
+ * a real fixture HTTP server standing in for the upstream search engine,
+ * so the same post-filter as SearchController (searchable()/allowed()/
+ * unlisted(), in SearchResultsFilter) runs here too instead of leaking
+ * stale/hidden index entries through this second, independent consumer.
  */
 #[CoversClass(SearchContentTool::class)]
 #[UsesClass(SearchPlugin::class)]
@@ -91,7 +90,7 @@ final class SearchContentToolTest extends TestCase
 
     /**
      * Same fixture scenario used by SearchControllerTest: 5 raw results,
-     * only "guia" (fully visible: not draft, not unlisted, searchable)
+     * only "guide" (fully visible: not draft, not unlisted, searchable)
      * must survive.
      */
     public function testFiltersOutNonSearchableAndNoLongerAllowedResults(): void
@@ -100,6 +99,6 @@ final class SearchContentToolTest extends TestCase
 
         $uris = array_column($results, 'uri');
 
-        $this->assertSame(['guia'], $uris);
+        $this->assertSame(['guide'], $uris);
     }
 }

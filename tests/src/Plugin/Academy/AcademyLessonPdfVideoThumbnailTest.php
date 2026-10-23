@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsContent\Plugin\Academy;
 
 use Derafu\Content\ContentLoader;
+use Derafu\Content\Plugin\Academy\AcademyCourse;
 use Derafu\Content\Plugin\Academy\AcademyPlugin;
 use Derafu\Renderer\Factory\RendererFactory;
 use Derafu\Routing\ValueObject\RequestContext;
@@ -46,13 +47,14 @@ final class AcademyLessonPdfVideoThumbnailTest extends TestCase
         );
         $plugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
 
-        $course = $plugin->registry()->get('curso-demo');
-        $module = $course->modules()['modulo-uno'];
-        $lesson = $module->lessons()['leccion-dos'];
+        $course = $plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $module = $course->modules()['module-one'];
+        $lesson = $module->lessons()['lesson-two'];
 
         $router = RouterFixture::create();
         $router->setContext(new RequestContext(
-            pathInfo: '/academy/curso-demo/modulo-uno/leccion-dos.pdf'
+            pathInfo: '/academy/demo-course/module-one/lesson-two.pdf'
         ));
 
         $twigService = RendererFactory::createTwigService([
@@ -95,13 +97,14 @@ final class AcademyLessonPdfVideoThumbnailTest extends TestCase
         );
         $plugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
 
-        $course = $plugin->registry()->get('curso-demo');
-        $module = $course->modules()['modulo-uno'];
-        $lesson = $module->lessons()['leccion-uno'];
+        $course = $plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $module = $course->modules()['module-one'];
+        $lesson = $module->lessons()['lesson-one'];
 
         $router = RouterFixture::create();
         $router->setContext(new RequestContext(
-            pathInfo: '/academy/curso-demo/modulo-uno/leccion-uno.pdf'
+            pathInfo: '/academy/demo-course/module-one/lesson-one.pdf'
         ));
 
         $twigService = RendererFactory::createTwigService([

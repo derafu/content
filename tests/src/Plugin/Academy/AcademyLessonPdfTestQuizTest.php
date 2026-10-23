@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsContent\Plugin\Academy;
 
 use Derafu\Content\ContentLoader;
+use Derafu\Content\Plugin\Academy\AcademyCourse;
 use Derafu\Content\Plugin\Academy\AcademyPlugin;
 use Derafu\Renderer\Factory\RendererFactory;
 use Derafu\Routing\ValueObject\RequestContext;
@@ -42,13 +43,14 @@ final class AcademyLessonPdfTestQuizTest extends TestCase
         );
         $plugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
 
-        $course = $plugin->registry()->get('curso-demo');
-        $module = $course->modules()['modulo-uno'];
+        $course = $plugin->registry()->get('demo-course');
+        $this->assertInstanceOf(AcademyCourse::class, $course);
+        $module = $course->modules()['module-one'];
         $lesson = $module->lessons()[$lessonSlug];
 
         $router = RouterFixture::create();
         $router->setContext(new RequestContext(
-            pathInfo: "/academy/curso-demo/modulo-uno/{$lessonSlug}.pdf"
+            pathInfo: "/academy/demo-course/module-one/{$lessonSlug}.pdf"
         ));
 
         $twigService = RendererFactory::createTwigService([
@@ -75,11 +77,11 @@ final class AcademyLessonPdfTestQuizTest extends TestCase
 
     public function testLessonWithAQuizRendersQuestionsWithCheckboxOptions(): void
     {
-        $html = $this->renderLessonPdf('leccion-uno');
+        $html = $this->renderLessonPdf('lesson-one');
 
-        $this->assertStringContainsString('Cuestionario de prueba', $html);
-        $this->assertStringContainsString('¿Esto es un fixture?', $html);
-        $this->assertStringContainsString('¿Este cuestionario se usa en producción?', $html);
+        $this->assertStringContainsString('Test quiz', $html);
+        $this->assertStringContainsString('Is this a fixture?', $html);
+        $this->assertStringContainsString('Is this quiz used in production?', $html);
         // Both options of the true_false question, not just the correct one.
         $this->assertStringContainsString('True', $html);
         $this->assertStringContainsString('False', $html);
@@ -87,22 +89,22 @@ final class AcademyLessonPdfTestQuizTest extends TestCase
 
     public function testLessonWithAQuizRendersAnAnswerKeyWithExplanations(): void
     {
-        $html = $this->renderLessonPdf('leccion-uno');
+        $html = $this->renderLessonPdf('lesson-one');
 
         $this->assertStringContainsString('Answers', $html);
         $this->assertStringContainsString(
-            'Sí, este archivo es un fixture usado por los tests.',
+            'Yes, this file is a fixture used by the tests.',
             $html
         );
         $this->assertStringContainsString(
-            'No, es solo para los tests automatizados de derafu/content.',
+            'No, it is only for the automated tests of derafu/content.',
             $html
         );
     }
 
     public function testLessonWithoutAQuizRendersNoTestMarkup(): void
     {
-        $html = $this->renderLessonPdf('leccion-dos');
+        $html = $this->renderLessonPdf('lesson-two');
 
         $this->assertStringNotContainsString('<div class="pdf-test">', $html);
         $this->assertStringNotContainsString('<div class="pdf-test-answers"', $html);

@@ -84,9 +84,11 @@ final class PagesControllerTest extends TestCase
         $result = $this->controller->show($request, 'about.json');
 
         $this->assertIsArray($result);
+        $this->assertIsArray($result['data']);
         $this->assertSame('about', $result['data']['uri']);
-        $this->assertSame('Sobre nosotros', $result['data']['title']);
-        $this->assertStringContainsString('Página de prueba', $result['data']['data']);
+        $this->assertSame('About us', $result['data']['title']);
+        $this->assertIsString($result['data']['data']);
+        $this->assertStringContainsString('Test page', $result['data']['data']);
     }
 
     public function testHtmlFormatRendersTheRealTwigTemplate(): void
@@ -96,15 +98,15 @@ final class PagesControllerTest extends TestCase
         $html = $this->controller->show($request, 'about');
 
         $this->assertIsString($html);
-        $this->assertStringContainsString('<title>Sobre nosotros</title>', $html);
-        $this->assertStringContainsString('<h1>Sobre nosotros</h1>', $html);
+        $this->assertStringContainsString('<title>About us</title>', $html);
+        $this->assertStringContainsString('<h1>About us</h1>', $html);
         // The Markdown body must have gone through the real "markdown"
         // filter (rendered to actual HTML), not been echoed as raw text.
         $this->assertStringContainsString(
-            '<p>Página de prueba usada por los tests automatizados',
+            '<p>Test page used by the automated tests',
             $html
         );
-        // Pages have no "completo" concept: only the two single-page
+        // Pages have no "full" concept: only the two single-page
         // download links.
         $this->assertStringContainsString('href="/pages/about.pdf"', $html);
         $this->assertStringContainsString('href="/pages/about.md"', $html);
@@ -118,27 +120,25 @@ final class PagesControllerTest extends TestCase
         $markdown = $this->controller->show($request, 'about.md');
 
         $this->assertIsString($markdown);
-        $this->assertStringContainsString('# Sobre nosotros', $markdown);
+        $this->assertStringContainsString('# About us', $markdown);
         $this->assertStringNotContainsString('<h1>', $markdown);
     }
 
     /**
      * "pages" is the only source whose include patterns allow ".html.twig"
      * files alongside Markdown, and show.html.twig branches on
-     * page.isMarkdown() to pick "| markdown" vs "| twig" — a branch never
-     * exercised by any test or the real LibreDTE site so far, since every
-     * page used there is Markdown.
+     * page.isMarkdown() to pick "| markdown" vs "| twig".
      */
     public function testHtmlTwigSourcePageIsRenderedThroughTheRealTwigFilter(): void
     {
-        $request = new Request('GET', 'http://localhost/pages/bienvenida');
+        $request = new Request('GET', 'http://localhost/pages/welcome');
 
-        $html = $this->controller->show($request, 'bienvenida');
+        $html = $this->controller->show($request, 'welcome');
 
         $this->assertIsString($html);
         // Proves the body went through Twig's "twig" filter (its own "page"
         // variable interpolated), not the Markdown filter nor raw text.
-        $this->assertStringContainsString('Hola desde Twig: Página Twig', $html);
+        $this->assertStringContainsString('Hello from Twig: Twig page', $html);
         $this->assertStringNotContainsString('{{ page.title }}', $html);
     }
 
@@ -158,10 +158,10 @@ final class PagesControllerTest extends TestCase
 
     public function testUnknownPageBubblesAsContentNotFoundException(): void
     {
-        $request = new Request('GET', 'http://localhost/pages/no-existe');
+        $request = new Request('GET', 'http://localhost/pages/does-not-exist');
 
         $this->expectException(ContentNotFoundException::class);
 
-        $this->controller->show($request, 'no-existe');
+        $this->controller->show($request, 'does-not-exist');
     }
 }

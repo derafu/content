@@ -1,11 +1,72 @@
 // academy.js - Simple component to consume test from JSON and display a form.
 
 /**
+ * Texts of the component, in English. Each one can be replaced with the JSON
+ * of the data-messages attribute of the container, for example
+ * data-messages='{"reviewAnswers": "Revisar respuestas"}', or with the
+ * messages argument of initTestForm(). A text with data has placeholders:
+ * {correct}, {total} and {percent} in "result".
+ */
+const defaultMessages = {
+    loadError: 'Error loading data. Please try again later.',
+    true: 'True',
+    false: 'False',
+    reviewAnswers: 'Review answers',
+    correct: 'Correct',
+    incorrect: 'Incorrect',
+    result: 'Result: {correct} / {total} ({percent}%)',
+};
+
+/**
+ * Gets the texts of the component: the defaults, then the JSON of the
+ * data-messages attribute of the container and then the messages that were
+ * given.
+ * @param {HTMLElement} container - Container of the component.
+ * @param {Object} messages - Texts that replace the others.
+ * @returns {Object}
+ */
+function getMessages(container, messages = {}) {
+    let fromContainer = {};
+    if (container.dataset.messages !== undefined) {
+        try {
+            fromContainer = JSON.parse(container.dataset.messages);
+        } catch (error) {
+            console.error('Attribute data-messages must be a JSON object.', error);
+        }
+    }
+
+    return { ...defaultMessages, ...fromContainer, ...messages };
+}
+
+/**
+ * Replaces the placeholders ({name}) of a text with their values.
+ * @param {string} text - Text with placeholders.
+ * @param {Object} values - Value of each placeholder.
+ * @returns {string}
+ */
+function format(text, values) {
+    return text.replace(/\{(\w+)\}/g, (match, name) => (name in values ? values[name] : match));
+}
+
+/**
+ * Escapes a text to be put in HTML.
+ * @param {string} text - Text to escape.
+ * @returns {string}
+ */
+function escapeHtml(text) {
+    const element = document.createElement('div');
+    element.textContent = text;
+
+    return element.innerHTML;
+}
+
+/**
  * Initializes test form by consuming the specified API.
  * @param {HTMLElement} container - Container where form will be displayed.
  * The container must have a data-api attribute with the API URL.
+ * @param {Object} messages - Texts of the component (see defaultMessages).
  */
-function initTestForm(container) {
+function initTestForm(container, messages = {}) {
     // If no container is provided, use the default container.
     if (container === undefined) {
         container = document.getElementById('academy-test-container');
@@ -25,6 +86,9 @@ function initTestForm(container) {
         return;
     }
 
+    // Texts of the component.
+    const texts = getMessages(container, messages);
+
     // Fetch data from API.
     fetch(apiUrl)
         .then(response => {
@@ -35,13 +99,13 @@ function initTestForm(container) {
         })
         .then(data => {
             // Render the form.
-            renderTestForm(container, data.data || data);
+            renderTestForm(container, data.data || data, texts);
         })
         .catch(error => {
             console.error('Error loading data:', error);
             container.innerHTML = `
                 <div class="col-12">
-                    <div class="alert alert-danger">Error loading data. Please try again later.</div>
+                    <div class="alert alert-danger">${escapeHtml(texts.loadError)}</div>
                 </div>
             `;
     });
@@ -51,8 +115,10 @@ function initTestForm(container) {
  * Renders test form in the specified container.
  * @param {HTMLElement} container - Container where form will be displayed.
  * @param {Object} data - Object with the test.
+ * @param {Object} messages - Texts of the component (see defaultMessages).
  */
-async function renderTestForm(container, data) {
+async function renderTestForm(container, data, messages = {}) {
+    const texts = { ...defaultMessages, ...messages };
     const form = document.createElement('form');
 
     const title = document.createElement('h2');
@@ -78,8 +144,8 @@ async function renderTestForm(container, data) {
 
         const options = q.type === 'true_false'
             ? [
-                    { id: 'true', text: 'True / Verdadero', is_correct: q.answer === true },
-                    { id: 'false', text: 'False / Falso', is_correct: q.answer === false }
+                    { id: 'true', text: texts.true, is_correct: q.answer === true },
+                    { id: 'false', text: texts.false, is_correct: q.answer === false }
                 ]
             : q.options;
 
@@ -119,7 +185,7 @@ async function renderTestForm(container, data) {
     const submitBtn = document.createElement('button');
     submitBtn.type = 'button';
     submitBtn.classList.add('btn', 'btn-primary');
-    submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Review answers';
+    submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + escapeHtml(texts.reviewAnswers);
 
     // Result score.
     const scoreEl = document.createElement('div');
@@ -143,11 +209,11 @@ async function renderTestForm(container, data) {
             feedback.classList.remove('text-success', 'text-danger');
 
             if (isCorrect) {
-                feedback.innerHTML = '<i class="fas fa-check-circle me-1 text-success"></i>Correct';
+                feedback.innerHTML = '<i class="fas fa-check-circle me-1 text-success"></i>' + escapeHtml(texts.correct);
                 feedback.classList.add('text-success');
                 correct++;
             } else {
-                feedback.innerHTML = '<i class="fas fa-times-circle me-1 text-danger"></i>Incorrect';
+                feedback.innerHTML = '<i class="fas fa-times-circle me-1 text-danger"></i>' + escapeHtml(texts.incorrect);
                 feedback.classList.add('text-danger');
                 if (q.explanation) {
                     const small = document.createElement('div');
@@ -158,7 +224,11 @@ async function renderTestForm(container, data) {
             }
         });
 
-        scoreEl.textContent = `Result: ${correct} / ${total} (${Math.round((correct / total) * 100)}%)`;
+        scoreEl.textContent = format(texts.result, {
+            correct,
+            total,
+            percent: Math.round((correct / total) * 100),
+        });
     });
 
     form.appendChild(submitBtn);

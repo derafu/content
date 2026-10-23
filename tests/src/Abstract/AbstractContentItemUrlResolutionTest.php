@@ -29,7 +29,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Exercises AbstractContentItem::data()/image()'s asset_base_url /
- * link_base_url resolution directly against the real "guia" fixture (which
+ * link_base_url resolution directly against the real "guide" fixture (which
  * has a root-relative frontmatter image, a root-relative Markdown image in
  * its body, and a root-relative Markdown link to its child doc).
  *
@@ -53,7 +53,7 @@ final class AbstractContentItemUrlResolutionTest extends TestCase
 {
     private const BASE_URL = 'http://localhost';
 
-    private DocsDoc $guia;
+    private DocsDoc $guide;
 
     protected function setUp(): void
     {
@@ -63,38 +63,38 @@ final class AbstractContentItemUrlResolutionTest extends TestCase
         );
         $plugin->loadContent(new ContentLoader(ContentFixtures::contentPath()));
 
-        $doc = $plugin->registry()->get('guia');
+        $doc = $plugin->registry()->get('guide');
         assert($doc instanceof DocsDoc);
-        $this->guia = $doc;
+        $this->guide = $doc;
     }
 
     public function testDataWithoutOptionsLeavesRootRelativePathsUntouched(): void
     {
-        $markdown = $this->guia->data();
+        $markdown = $this->guide->data();
 
         $this->assertStringContainsString(
-            '![Diagrama de la guía](/img/content/docs/guia/diagrama.png)',
+            '![Guide diagram](/img/content/docs/guide/diagram.png)',
             $markdown
         );
         $this->assertStringContainsString(
-            '[este artículo hijo](/docs/guia/primeros-pasos)',
+            '[this child article](/docs/guide/getting-started)',
             $markdown
         );
     }
 
     public function testDataWithBothOptionsResolvesImageAndLinkToAbsoluteUrls(): void
     {
-        $markdown = $this->guia->data([
+        $markdown = $this->guide->data([
             'asset_base_url' => self::BASE_URL,
             'link_base_url' => self::BASE_URL,
         ]);
 
         $this->assertStringContainsString(
-            '![Diagrama de la guía](http://localhost/img/content/docs/guia/diagrama.png)',
+            '![Guide diagram](http://localhost/img/content/docs/guide/diagram.png)',
             $markdown
         );
         $this->assertStringContainsString(
-            '[este artículo hijo](http://localhost/docs/guia/primeros-pasos)',
+            '[this child article](http://localhost/docs/guide/getting-started)',
             $markdown
         );
     }
@@ -106,14 +106,14 @@ final class AbstractContentItemUrlResolutionTest extends TestCase
      */
     public function testDataWithOnlyLinkBaseUrlResolvesLinkButLeavesImageUntouched(): void
     {
-        $markdown = $this->guia->data(['link_base_url' => self::BASE_URL]);
+        $markdown = $this->guide->data(['link_base_url' => self::BASE_URL]);
 
         $this->assertStringContainsString(
-            '![Diagrama de la guía](/img/content/docs/guia/diagrama.png)',
+            '![Guide diagram](/img/content/docs/guide/diagram.png)',
             $markdown
         );
         $this->assertStringContainsString(
-            '[este artículo hijo](http://localhost/docs/guia/primeros-pasos)',
+            '[this child article](http://localhost/docs/guide/getting-started)',
             $markdown
         );
     }
@@ -124,14 +124,14 @@ final class AbstractContentItemUrlResolutionTest extends TestCase
      */
     public function testDataWithOnlyAssetBaseUrlResolvesImageButLeavesLinkUntouched(): void
     {
-        $markdown = $this->guia->data(['asset_base_url' => self::BASE_URL]);
+        $markdown = $this->guide->data(['asset_base_url' => self::BASE_URL]);
 
         $this->assertStringContainsString(
-            '![Diagrama de la guía](http://localhost/img/content/docs/guia/diagrama.png)',
+            '![Guide diagram](http://localhost/img/content/docs/guide/diagram.png)',
             $markdown
         );
         $this->assertStringContainsString(
-            '[este artículo hijo](/docs/guia/primeros-pasos)',
+            '[this child article](/docs/guide/getting-started)',
             $markdown
         );
     }
@@ -139,16 +139,16 @@ final class AbstractContentItemUrlResolutionTest extends TestCase
     public function testImageWithoutOptionsReturnsTheRootRelativePath(): void
     {
         $this->assertSame(
-            '/img/content/docs/guia/cover.png',
-            $this->guia->image()
+            '/img/content/docs/guide/cover.png',
+            $this->guide->image()
         );
     }
 
     public function testImageWithAssetBaseUrlResolvesToAnAbsoluteUrl(): void
     {
         $this->assertSame(
-            'http://localhost/img/content/docs/guia/cover.png',
-            $this->guia->image(['asset_base_url' => self::BASE_URL])
+            'http://localhost/img/content/docs/guide/cover.png',
+            $this->guide->image(['asset_base_url' => self::BASE_URL])
         );
     }
 }

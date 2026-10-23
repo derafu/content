@@ -13,7 +13,9 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Academy;
 
 use Derafu\Content\Plugin\Academy\Contract\AcademyTestInterface;
+use Derafu\Support\ArrayReader;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use JsonException;
 
 /**
@@ -84,41 +86,50 @@ class AcademyTest implements AcademyTestInterface
             ], previous: $e);
         }
 
+        if (!is_array($data) || ($data !== [] && array_is_list($data))) {
+            throw new InvalidArgumentException([
+                'The academy test must be a JSON object, {type} given.',
+                'type' => is_array($data) ? 'list' : get_debug_type($data),
+            ]);
+        }
+
+        $reader = ArrayReader::from($data);
+
         $questions = array_map(
-            fn (array $question) => self::questionFromArray($question),
-            $data['questions'] ?? []
+            fn (ArrayReader $question) => self::questionFromReader($question),
+            $reader->readers('questions') ?? []
         );
 
         return new self(
-            id: $data['id'] ?? null,
-            title: $data['title'] ?? '',
-            description: $data['description'] ?? null,
+            id: $reader->string('id'),
+            title: $reader->string('title', ''),
+            description: $reader->string('description'),
             questions: $questions
         );
     }
 
     /**
-     * Builds a single AcademyTestQuestion from its raw array shape.
+     * Builds a single AcademyTestQuestion from its reader.
      *
-     * @param array $question Raw question data.
+     * @param ArrayReader $question Reader of the raw question data.
      * @return AcademyTestQuestion
      */
-    private static function questionFromArray(array $question): AcademyTestQuestion
+    private static function questionFromReader(ArrayReader $question): AcademyTestQuestion
     {
-        $type = $question['type'] ?? 'multiple_choice';
+        $type = $question->string('type', 'multiple_choice');
 
         return new AcademyTestQuestion(
-            id: $question['id'] ?? '',
+            id: $question->string('id', ''),
             type: $type,
-            text: $question['text'] ?? '',
-            options: self::optionsFromArray($type, $question),
-            allowMultiple: (bool) ($question['allow_multiple'] ?? false),
-            explanation: $question['explanation'] ?? null
+            text: $question->string('text', ''),
+            options: self::optionsFromReader($type, $question),
+            allowMultiple: $question->bool('allow_multiple', false),
+            explanation: $question->string('explanation')
         );
     }
 
     /**
-     * Builds the options of a question from its raw array shape.
+     * Builds the options of a question from its reader.
      *
      * "true_false" questions have no "options" list in the source JSON,
      * just a boolean "answer" — normalized here into two options
@@ -126,13 +137,13 @@ class AcademyTest implements AcademyTestInterface
      * regardless of its type.
      *
      * @param string $type Type of the question.
-     * @param array $question Raw question data.
+     * @param ArrayReader $question Reader of the raw question data.
      * @return array<AcademyTestOption>
      */
-    private static function optionsFromArray(string $type, array $question): array
+    private static function optionsFromReader(string $type, ArrayReader $question): array
     {
         if ($type === 'true_false') {
-            $answer = $question['answer'] ?? null;
+            $answer = $question->bool('answer');
 
             return [
                 new AcademyTestOption('true', 'True', $answer === true),
@@ -141,17 +152,19 @@ class AcademyTest implements AcademyTestInterface
         }
 
         return array_map(
-            fn (array $option) => new AcademyTestOption(
-                $option['id'] ?? '',
-                $option['text'] ?? '',
-                (bool) ($option['is_correct'] ?? false)
+            fn (ArrayReader $option) => new AcademyTestOption(
+                $option->string('id', ''),
+                $option->string('text', ''),
+                $option->bool('is_correct', false)
             ),
-            $question['options'] ?? []
+            $question->readers('options') ?? []
         );
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -168,6 +181,8 @@ class AcademyTest implements AcademyTestInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {

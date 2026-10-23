@@ -13,8 +13,11 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Search;
 
 use Derafu\Content\Plugin\Search\Exception\SearchUpstreamException;
+use Derafu\Support\ArrayReader;
+use Derafu\Support\ArrayType;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Psr7\Request;
+use InvalidArgumentException;
 use Psr\Http\Client\ClientInterface as HttpClientInterface;
 use Throwable;
 
@@ -72,7 +75,7 @@ class SearchEngine
      * Query the search engine and return results.
      *
      * @param string $query The search query to execute.
-     * @return array<mixed> The search results from the engine.
+     * @return array<int, array<string, mixed>> The search results from the engine.
      * @throws SearchUpstreamException If the HTTP request fails or the
      * response is invalid.
      */
@@ -117,7 +120,18 @@ class SearchEngine
             ]);
         }
 
-        return $decodedResponse['results'];
+        try {
+            return ArrayReader::from($decodedResponse)->require(
+                'results',
+                ArrayType::listOf(ArrayType::map())
+            );
+        } catch (InvalidArgumentException $e) {
+            throw new SearchUpstreamException([
+                'The search engine at "{url}" returned an invalid "results" field: {error}',
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ], $e);
+        }
     }
 
     /**
@@ -159,14 +173,14 @@ class SearchEngine
     {
         $encodedQuery = urlencode($query);
 
-        // If collection or base URL is not set, return the URL with only the
-        // query. This assumes that the URL template contains only one
-        // placeholder for the query.
-        if (empty($this->collection) || empty($this->baseUrl)) {
+        // If the collection is not set, return the URL with only the query.
+        // This assumes that the URL template contains only one placeholder for
+        // the query.
+        if (empty($this->collection)) {
             return sprintf($this->url, $encodedQuery);
         }
 
-        // If base URL is not set, return the URL with collection and query.
+        // If the base URL is not set, return the URL with collection and query.
         // The expected order of parameters is: collection, query.
         if (empty($this->baseUrl)) {
             return sprintf($this->url, $this->collection, $encodedQuery);

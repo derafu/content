@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Docs;
 
 use Derafu\Content\Abstract\AbstractContentController;
+use Derafu\Content\ContentFilters;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
@@ -43,7 +44,7 @@ class DocsController extends AbstractContentController
      *
      * @param Request $request Request.
      * @param string $doc Doc.
-     * @return string|array
+     * @return string|array<string, mixed>
      */
     public function show(Request $request, string $doc): string|array
     {
@@ -89,7 +90,7 @@ class DocsController extends AbstractContentController
         $plugin = $this->contentService->plugin('docs');
         assert($plugin instanceof DocsPlugin);
 
-        $filters = array_filter($request->all(), fn ($value) => $value !== '');
+        $filters = ContentFilters::fromRequest($request->all());
         $tags = $plugin->registry()->tags();
         $contentTag = $tags[$tag] ?? new ContentTag($tag);
         $filters['tag'] = $contentTag->slug();

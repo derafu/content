@@ -2,18 +2,18 @@ openapi: 3.0.3
 info:
   title: Fixture API
   description: |
-    API de fixture usada por los tests de derafu/content.
+    A fixture API used by the tests of derafu/content.
 
-    **Importante**: esto es solo un fixture.
+    **Important**: this is only a fixture.
   version: 1.0.0
 servers:
   - url: https://fixture.example.test
 tags:
   - name: Widgets
     description: |
-      Recursos para gestionar widgets del fixture.
+      Resources to manage the widgets of the fixture.
 
-      - Requiere autenticación de prueba.
+      - Requires test authentication.
 paths:
   /widgets:
     get:
@@ -42,7 +42,7 @@ paths:
         content:
           application/json:
             example:
-              name: "Widget de prueba"
+              name: "Test widget"
               quantity: 3
       responses:
         '201':

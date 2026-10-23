@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Storage;
 
+use Derafu\Content\ContentFilters;
 use Derafu\Content\Contract\ContentPluginInterface;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Exception\ContentNotFoundException;
@@ -45,7 +46,7 @@ class StorageController
         assert($plugin instanceof StoragePlugin);
 
         $filters = [
-            ...array_filter($request->all(), fn ($value) => $value !== ''),
+            ...ContentFilters::fromRequest($request->all()),
             'type' => $type,
             'uri' => $uri,
             'attachment' => $attachment,
@@ -61,17 +62,14 @@ class StorageController
         }
 
         // Filter by attachment.
-        if (!empty($filters['attachment'])) {
+        if (!empty($attachment)) {
             $content = $knowledge[0];
-            $attachment = $content->attachment($filters['attachment']);
-            if (!$attachment) {
+            $file = $content->attachment($attachment);
+            if (!$file) {
                 throw new ContentNotFoundException('Attachment for the content not found.');
             }
 
-            $response = new Response();
-            $response->asText($attachment->raw(), $attachment->type());
-
-            return $response;
+            return (new Response())->asText($file->raw(), $file->type());
         }
 
         throw new ContentNotFoundException('Attachment not found.');

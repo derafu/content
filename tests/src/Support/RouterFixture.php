@@ -49,9 +49,11 @@ final class RouterFixture
         if ($includeContentRoutes) {
             $contentRoutesFile = dirname(__DIR__, 3)
                 . '/resources/config/content-routes.yaml';
+            $contentRoutes = Yaml::parseFile($contentRoutesFile);
+            assert(is_array($contentRoutes));
             $routes = [
                 ...$routes,
-                ...Yaml::parseFile($contentRoutesFile),
+                ...$contentRoutes,
             ];
         }
 

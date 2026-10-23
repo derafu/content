@@ -27,7 +27,7 @@ class AcademyPlugin extends AbstractContentPlugin implements ContentPluginInterf
     /**
      * Schema of the options of the plugin.
      *
-     * @var array
+     * @var array<string, mixed>
      */
     private const OPTIONS_SCHEMA = [
         // Name of the plugin.
@@ -131,9 +131,9 @@ class AcademyPlugin extends AbstractContentPlugin implements ContentPluginInterf
         // Create the registry.
         $this->registry = new AcademyRegistry(
             $contentLoader,
-            $this->options['path'],
-            $this->options['include']->all(),
-            $this->options['exclude']->all(),
+            $this->options->requireString('path'),
+            $this->options->requireList('include', 'string'),
+            $this->options->requireList('exclude', 'string'),
             $this->context->cache()
         );
 
@@ -154,6 +154,8 @@ class AcademyPlugin extends AbstractContentPlugin implements ContentPluginInterf
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     protected static function getSchema(): array
     {

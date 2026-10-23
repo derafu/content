@@ -166,7 +166,7 @@ final class ContentLinkAudit
         foreach ($document->querySelectorAll(($selector !== null ? $selector . ' ' : '') . 'a[href]') as $anchor) {
             $links[] = [
                 'href' => (string) $anchor->getAttribute('href'),
-                'text' => trim($anchor->textContent),
+                'text' => trim((string) $anchor->textContent),
             ];
         }
 

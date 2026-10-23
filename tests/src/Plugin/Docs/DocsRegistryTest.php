@@ -22,11 +22,6 @@ use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Docs\DocsDoc;
-use Derafu\Content\Plugin\Docs\DocsOpenApiEndpoint;
-use Derafu\Content\Plugin\Docs\DocsOpenApiParameter;
-use Derafu\Content\Plugin\Docs\DocsOpenApiResponse;
-use Derafu\Content\Plugin\Docs\DocsOpenApiSpec;
-use Derafu\Content\Plugin\Docs\DocsOpenApiTag;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
 use Derafu\TestsContent\Support\ContentFixtures;
@@ -50,11 +45,6 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentSplFileInfo::class)]
 #[UsesClass(ContentTag::class)]
 #[UsesClass(ContentNotFoundException::class)]
-#[UsesClass(DocsOpenApiSpec::class)]
-#[UsesClass(DocsOpenApiEndpoint::class)]
-#[UsesClass(DocsOpenApiParameter::class)]
-#[UsesClass(DocsOpenApiResponse::class)]
-#[UsesClass(DocsOpenApiTag::class)]
 final class DocsRegistryTest extends TestCase
 {
     private DocsPlugin $plugin;
@@ -73,55 +63,55 @@ final class DocsRegistryTest extends TestCase
         $all = $this->plugin->registry()->all();
 
         $this->assertArrayHasKey('index', $all);
-        $this->assertArrayHasKey('guia', $all);
+        $this->assertArrayHasKey('guide', $all);
     }
 
     public function testChildDocIsReachableThroughItsParentUri(): void
     {
-        $doc = $this->plugin->registry()->get('guia/primeros-pasos');
+        $doc = $this->plugin->registry()->get('guide/getting-started');
 
-        $this->assertSame('Primeros pasos', $doc->title());
-        $this->assertSame('guia', $doc->parent()?->slug());
+        $this->assertSame('Getting started', $doc->title());
+        $this->assertSame('guide', $doc->parent()?->slug());
         $this->assertSame(2, $doc->level());
     }
 
     /**
      * The single most common cause of "my content doesn't show up": a
      * subdirectory needs a file with the *same name* as the directory to
-     * represent that level itself. "docs/huerfano/hijo-perdido.md" exists
-     * on disk but "docs/huerfano.md" does not, so the whole subdirectory
+     * represent that level itself. "docs/orphan/lost-child.md" exists
+     * on disk but "docs/orphan.md" does not, so the whole subdirectory
      * — including its child — must be silently skipped by the loader.
      */
     public function testDirectoryWithoutAMatchingIndexFileIsSilentlySkipped(): void
     {
         $all = $this->plugin->registry()->all();
 
-        $this->assertArrayNotHasKey('huerfano', $all);
+        $this->assertArrayNotHasKey('orphan', $all);
 
         $this->expectException(ContentNotFoundException::class);
-        $this->plugin->registry()->get('huerfano/hijo-perdido');
+        $this->plugin->registry()->get('orphan/lost-child');
     }
 
     public function testGetWithFileExtensionSuffixStillResolves(): void
     {
-        $doc = $this->plugin->registry()->get('guia/primeros-pasos.md');
+        $doc = $this->plugin->registry()->get('guide/getting-started.md');
 
-        $this->assertSame('primeros-pasos', $doc->slug());
+        $this->assertSame('getting-started', $doc->slug());
     }
 
     public function testFilterBySearchMatchesTitleDescriptionAndBody(): void
     {
-        $matches = $this->plugin->registry()->filter(['search' => 'primeros pasos']);
+        $matches = $this->plugin->registry()->filter(['search' => 'getting started']);
 
         $this->assertCount(1, $matches);
-        $this->assertSame('primeros-pasos', $matches[0]->slug());
+        $this->assertSame('getting-started', $matches[0]->slug());
     }
 
     public function testUnknownUriThrowsContentNotFoundException(): void
     {
         $this->expectException(ContentNotFoundException::class);
 
-        $this->plugin->registry()->get('no-existe');
+        $this->plugin->registry()->get('does-not-exist');
     }
 
     public function testOpenapiFieldResolvesAndParsesTheLocalAttachment(): void
@@ -130,22 +120,22 @@ final class DocsRegistryTest extends TestCase
 
         $spec = $doc->openapiSpec();
 
-        $this->assertInstanceOf(DocsOpenApiSpec::class, $spec);
-        $this->assertSame('Fixture API', $spec->title());
-        $this->assertCount(3, $spec->endpoints());
-        $this->assertSame('GET', $spec->endpoints()[0]->method());
-        $this->assertSame('/widgets', $spec->endpoints()[0]->path());
+        $this->assertNotNull($spec);
+        $this->assertSame('Fixture API', $spec->info->title);
+        $this->assertCount(3, $spec->operations());
+        $this->assertSame('get', $spec->operations()[0]->method->value);
+        $this->assertSame('/widgets', $spec->operations()[0]->path);
     }
 
     public function testDocWithoutOpenapiFieldHasNoSpec(): void
     {
-        $doc = $this->plugin->registry()->get('guia');
+        $doc = $this->plugin->registry()->get('guide');
 
         $this->assertNull($doc->openapiSpec());
     }
 
     /**
-     * "borrador-padre" is draft, its child "hijo-visible" is not. allowed()
+     * "draft-parent" is draft, its child "visible-child" is not. allowed()
      * must still cascade: a non-draft item under a draft ancestor is not
      * allowed either, and get() must refuse it the same way it refuses the
      * draft section itself — otherwise the child stays reachable by a
@@ -153,25 +143,25 @@ final class DocsRegistryTest extends TestCase
      */
     public function testDraftSectionMakesItsNonDraftChildNotAllowedToo(): void
     {
-        $child = $this->plugin->registry()->all()['borrador-padre']->children()['hijo-visible'];
+        $child = $this->plugin->registry()->all()['draft-parent']->children()['visible-child'];
 
         $this->assertFalse($child->draft());
         $this->assertFalse($child->allowed());
 
         $this->expectException(ContentNotFoundException::class);
-        $this->plugin->registry()->get('borrador-padre/hijo-visible');
+        $this->plugin->registry()->get('draft-parent/visible-child');
     }
 
     /**
-     * "seccion-visible" is not draft, but two of its children are hidden
-     * for different reasons: "nota-borrador" is draft, "nota-no-listada"
+     * "visible-section" is not draft, but two of its children are hidden
+     * for different reasons: "draft-note" is draft, "unlisted-note"
      * is unlisted. visibleChildren() is what a sidebar/nested menu must
      * use instead of children(): the parent itself stays visible, but
      * neither hidden reason must leak a child through it.
      */
     public function testVisibleChildrenExcludesADraftChildOfAnAllowedItem(): void
     {
-        $section = $this->plugin->registry()->all()['seccion-visible'];
+        $section = $this->plugin->registry()->all()['visible-section'];
 
         $this->assertCount(2, $section->children());
         $this->assertCount(0, $section->visibleChildren());
@@ -186,17 +176,17 @@ final class DocsRegistryTest extends TestCase
      */
     public function testVisibleChildrenExcludesAnUnlistedChildOfAnAllowedItem(): void
     {
-        $section = $this->plugin->registry()->all()['seccion-visible'];
-        $unlistedChild = $section->children()['nota-no-listada'];
+        $section = $this->plugin->registry()->all()['visible-section'];
+        $unlistedChild = $section->children()['unlisted-note'];
 
         $this->assertTrue($unlistedChild->allowed());
         $this->assertTrue($unlistedChild->unlisted());
-        $this->assertArrayNotHasKey('nota-no-listada', $section->visibleChildren());
+        $this->assertArrayNotHasKey('unlisted-note', $section->visibleChildren());
     }
 
     /**
      * filterTree() is the tree-preserving counterpart of filter(): it must
-     * drop "borrador-padre" (draft) from the top level while keeping the
+     * drop "draft-parent" (draft) from the top level while keeping the
      * real hierarchy of the docs that remain, unlike filter()/flatten()
      * which return a flat list.
      */
@@ -205,13 +195,13 @@ final class DocsRegistryTest extends TestCase
         $tree = $this->plugin->registry()->filterTree();
 
         $this->assertArrayHasKey('index', $tree);
-        $this->assertArrayHasKey('guia', $tree);
-        $this->assertArrayNotHasKey('borrador-padre', $tree);
-        $this->assertArrayHasKey('primeros-pasos', $tree['guia']->children());
+        $this->assertArrayHasKey('guide', $tree);
+        $this->assertArrayNotHasKey('draft-parent', $tree);
+        $this->assertArrayHasKey('getting-started', $tree['guide']->children());
     }
 
     /**
-     * "no-listado" is not draft, only unlisted: it must remain reachable
+     * "not-listed" is not draft, only unlisted: it must remain reachable
      * by a direct get() (the documented "still reachable by direct URL"),
      * while filter()/filterTree() (a listing) must exclude it — unless the
      * caller explicitly filters by id or uri, which is the documented
@@ -221,22 +211,22 @@ final class DocsRegistryTest extends TestCase
      */
     public function testUnlistedDocIsReachableDirectlyButExcludedFromListings(): void
     {
-        $doc = $this->plugin->registry()->get('no-listado');
+        $doc = $this->plugin->registry()->get('not-listed');
         $this->assertTrue($doc->unlisted());
 
         $uris = array_map(fn ($item) => $item->uri(), $this->plugin->registry()->filter());
-        $this->assertNotContains('no-listado', $uris);
+        $this->assertNotContains('not-listed', $uris);
 
         $tree = $this->plugin->registry()->filterTree();
-        $this->assertArrayNotHasKey('no-listado', $tree);
+        $this->assertArrayNotHasKey('not-listed', $tree);
 
-        $byUri = $this->plugin->registry()->filter(['uri' => 'no-listado']);
+        $byUri = $this->plugin->registry()->filter(['uri' => 'not-listed']);
         $this->assertCount(1, $byUri);
-        $this->assertSame('no-listado', $byUri[0]->uri());
+        $this->assertSame('not-listed', $byUri[0]->uri());
 
         $byId = $this->plugin->registry()->filter(['id' => $doc->id()]);
         $this->assertCount(1, $byId);
-        $this->assertSame('no-listado', $byId[0]->uri());
+        $this->assertSame('not-listed', $byId[0]->uri());
     }
 
     /**
@@ -246,11 +236,11 @@ final class DocsRegistryTest extends TestCase
      */
     public function testIndexableAndSearchableAreIndependentFlags(): void
     {
-        $notIndexable = $this->plugin->registry()->get('no-indexable');
+        $notIndexable = $this->plugin->registry()->get('not-indexable');
         $this->assertFalse($notIndexable->indexable());
         $this->assertTrue($notIndexable->searchable());
 
-        $notSearchable = $this->plugin->registry()->get('no-buscable');
+        $notSearchable = $this->plugin->registry()->get('not-searchable');
         $this->assertTrue($notSearchable->indexable());
         $this->assertFalse($notSearchable->searchable());
     }
@@ -267,12 +257,12 @@ final class DocsRegistryTest extends TestCase
         $matches = $this->plugin->registry()->filter(['searchable' => false]);
         $uris = array_map(fn ($item) => $item->uri(), $matches);
 
-        $this->assertContains('no-buscable', $uris);
-        $this->assertNotContains('no-indexable', $uris);
+        $this->assertContains('not-searchable', $uris);
+        $this->assertNotContains('not-indexable', $uris);
     }
 
     /**
-     * "futuro-deprecado" has `deprecated: "2099-01-01"` — a date far in
+     * "future-deprecated" has `deprecated: "2099-01-01"` — a date far in
      * the future. Per the documented field ("a string/timestamp sets a
      * specific deprecation date"), this must NOT be treated as already
      * deprecated: deprecated() (the boolean gate) must stay false, and
@@ -283,7 +273,7 @@ final class DocsRegistryTest extends TestCase
      */
     public function testFutureDeprecationDateDoesNotDisableIndexableOrSearchableYet(): void
     {
-        $doc = $this->plugin->registry()->get('futuro-deprecado');
+        $doc = $this->plugin->registry()->get('future-deprecated');
 
         $this->assertNotNull($doc->deprecatedAt());
         $this->assertGreaterThan(new DateTime(), $doc->deprecatedAt());
@@ -293,13 +283,13 @@ final class DocsRegistryTest extends TestCase
     }
 
     /**
-     * Control/regression case: "pasado-deprecado" has `deprecated:
+     * Control/regression case: "past-deprecated" has `deprecated:
      * "2020-01-01"` — already in the past — so it must already act as
      * deprecated today: deprecated() true, indexable()/searchable() false.
      */
     public function testPastDeprecationDateDisablesIndexableAndSearchable(): void
     {
-        $doc = $this->plugin->registry()->get('pasado-deprecado');
+        $doc = $this->plugin->registry()->get('past-deprecated');
 
         $this->assertNotNull($doc->deprecatedAt());
         $this->assertLessThan(new DateTime(), $doc->deprecatedAt());
@@ -309,7 +299,7 @@ final class DocsRegistryTest extends TestCase
     }
 
     /**
-     * "deprecado-por-mtime" has `deprecated: true` (boolean) — per the
+     * "deprecated-by-mtime" has `deprecated: true` (boolean) — per the
      * documented field ("true uses the file's modification time"), this
      * must resolve to the file's real mtime (always in the past relative
      * to "now", for a fixture file already on disk) and therefore act as
@@ -317,7 +307,7 @@ final class DocsRegistryTest extends TestCase
      */
     public function testDeprecatedTrueResolvesToTheFileModificationTime(): void
     {
-        $doc = $this->plugin->registry()->get('deprecado-por-mtime');
+        $doc = $this->plugin->registry()->get('deprecated-by-mtime');
 
         $this->assertNotNull($doc->deprecatedAt());
         $this->assertLessThanOrEqual(new DateTime(), $doc->deprecatedAt());
@@ -327,9 +317,9 @@ final class DocsRegistryTest extends TestCase
     }
 
     /**
-     * "borrador-padre" is also useful here, but a dedicated fixture makes
-     * the intent explicit: "seccion-futura" has a publish date far in the
-     * future; its child "hijo-de-seccion-futura" does NOT — it has its
+     * "draft-parent" is also useful here, but a dedicated fixture makes
+     * the intent explicit: "future-section" has a publish date far in the
+     * future; its child "child-of-future-section" does NOT — it has its
      * own, already-past date. The child must still be unpublished: date()
      * cascades the same way draft() does (an ancestor's own date gates
      * the whole branch), without the child ever adopting the ancestor's
@@ -337,12 +327,24 @@ final class DocsRegistryTest extends TestCase
      */
     public function testFutureDatedSectionMakesItsOwnPastDatedChildNotAllowedToo(): void
     {
-        $child = $this->plugin->registry()->all()['seccion-futura']->children()['hijo-de-seccion-futura'];
+        $child = $this->plugin->registry()->all()['future-section']->children()['child-of-future-section'];
 
         $this->assertLessThan(new DateTime(), $child->date());
         $this->assertFalse($child->allowed());
 
         $this->expectException(ContentNotFoundException::class);
-        $this->plugin->registry()->get('seccion-futura/hijo-de-seccion-futura');
+        $this->plugin->registry()->get('future-section/child-of-future-section');
+    }
+
+    public function testThePreviousAndTheNextOfADocAreItsNeighboursInTheList(): void
+    {
+        $registry = $this->plugin->registry();
+        $uris = array_values(array_map(fn ($doc) => $doc->uri(), $registry->flatten()));
+        $this->assertGreaterThan(2, count($uris));
+
+        $this->assertNull($registry->previous($uris[0]));
+        $this->assertSame($uris[0], $registry->previous($uris[1])?->uri());
+        $this->assertSame($uris[2], $registry->next($uris[1])?->uri());
+        $this->assertNull($registry->next($uris[count($uris) - 1]));
     }
 }

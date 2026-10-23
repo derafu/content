@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content;
 
+use ArrayAccess;
 use Derafu\Container\Bag;
 use Derafu\Container\Contract\BagInterface;
 use Derafu\Content\Contract\ContentBagInterface;
@@ -31,9 +32,9 @@ class ContentBag implements ContentBagInterface
     /**
      * Constructor.
      *
-     * @param mixed $data Data.
+     * @param BagInterface|array<array-key, mixed>|ArrayAccess<*, *> $data Data.
      */
-    public function __construct(mixed $data)
+    public function __construct(BagInterface|array|ArrayAccess $data)
     {
         if ($data instanceof BagInterface) {
             $this->bag = $data;

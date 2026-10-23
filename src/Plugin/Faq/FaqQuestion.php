@@ -22,6 +22,8 @@ class FaqQuestion extends AbstractContentItem implements FaqQuestionInterface
 {
     /**
      * {@inheritDoc}
+     *
+     * @var array<string, mixed>
      */
     protected array $metadataSchema = [
         '__allowUndefinedKeys' => true,

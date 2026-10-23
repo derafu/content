@@ -49,8 +49,9 @@ class SitemapController
             'items' => $items,
         ]);
 
-        $response = new Response();
-        $response->withHeader('Content-Type', 'application/xml; charset=UTF-8');
+        $response = (new Response())
+            ->withHeader('Content-Type', 'application/xml; charset=UTF-8')
+        ;
         $response->getBody()->write($xml);
 
         return $response;

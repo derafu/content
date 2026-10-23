@@ -22,11 +22,10 @@ use PHPUnit\Framework\TestCase;
 /**
  * Exercises OpenAiCompatibleLlmClient against a real PHP built-in HTTP
  * server (a real TCP round-trip, no mocked PSR-18 client). Every error
- * scenario here reproduces, over a real socket, one of the real response
- * shapes seen this session: Open WebUI's {"detail": "Model not found"}
- * (the real chat.derafu.ai failure before its Ollama container was
- * restarted) and the OpenAI-style {"error": {...}} / {"error": "..."}
- * shapes used by OpenRouter and friends.
+ * scenario here reproduces, over a real socket, one of the response shapes
+ * of the backends: Open WebUI's {"detail": "Model not found"} and the
+ * OpenAI-style {"error": {...}} / {"error": "..."} shapes used by
+ * OpenRouter and friends.
  */
 #[CoversClass(OpenAiCompatibleLlmClient::class)]
 #[UsesClass(SearchUpstreamException::class)]
@@ -67,9 +66,9 @@ final class OpenAiCompatibleLlmClientTest extends TestCase
     {
         $client = $this->client('chat_ok');
 
-        $answer = $client->query('¿Cómo anulo un DTE?');
+        $answer = $client->query('How do I cancel an invoice?');
 
-        $this->assertSame('Hola, esta es una respuesta de prueba.', $answer);
+        $this->assertSame('Hello, this is a test answer.', $answer);
     }
 
     public function testOpenWebUiDetailErrorShapeIsExtractedVerbatim(): void
@@ -138,7 +137,9 @@ final class OpenAiCompatibleLlmClientTest extends TestCase
 
         $client->query('hola');
 
-        $this->assertSame('/api/chat/completions', trim(file_get_contents($log)));
+        $logged = file_get_contents($log);
+        $this->assertIsString($logged);
+        $this->assertSame('/api/chat/completions', trim($logged));
 
         unlink($log);
     }
@@ -154,5 +155,47 @@ final class OpenAiCompatibleLlmClientTest extends TestCase
         $this->expectExceptionMessageMatches('/could not be reached/');
 
         $client->query('hola');
+    }
+
+    public function testAContentThatIsNotATextThrowsSearchUpstreamException(): void
+    {
+        $client = $this->client('chat_content_not_text');
+
+        $this->expectException(SearchUpstreamException::class);
+        $this->expectExceptionMessageMatches('/a "choices\[0\]\.message\.content" that is not a text, array given/');
+
+        $client->query('hola');
+    }
+
+    public function testChoicesThatAreNotAListThrowSearchUpstreamException(): void
+    {
+        $client = $this->client('chat_choices_not_list');
+
+        $this->expectException(SearchUpstreamException::class);
+        $this->expectExceptionMessageMatches('/returned an invalid response: The key "choices" must be of type list<object>, string given/');
+
+        $client->query('hola');
+    }
+
+    public function testAnErrorDetailThatIsAListIsShownAsJson(): void
+    {
+        $client = $this->client('chat_error_list');
+
+        $this->expectException(SearchUpstreamException::class);
+        $this->expectExceptionMessageMatches('/returned HTTP 422: \[\{"msg":"field required"\}\]/');
+
+        $client->query('hola');
+    }
+
+    public function testAnErrorWithoutAKnownShapeHasNoDetail(): void
+    {
+        foreach (['chat_error_unknown' => 500, 'chat_error_text' => 502] as $scenario => $status) {
+            try {
+                $this->client($scenario)->query('hola');
+                $this->fail('Expected a SearchUpstreamException.');
+            } catch (SearchUpstreamException $e) {
+                $this->assertStringEndsWith('returned HTTP ' . $status . '.', $e->getMessage());
+            }
+        }
     }
 }

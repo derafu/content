@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Api;
 
+use Derafu\Content\ContentFilters;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
 use Derafu\Routing\Contract\RouterInterface;
@@ -35,7 +36,7 @@ class ApiController
      * API index action.
      *
      * @param Request $request Request.
-     * @return array
+     * @return array{meta: array{count: int, url: string, generated: string}, data: list<array<string, mixed>>}
      */
     public function index(Request $request): array
     {
@@ -43,7 +44,7 @@ class ApiController
         $this->contentService->plugin('api');
 
         $knowledge = $this->contentService->allContent(
-            array_merge($request->all(), ['indexable' => true])
+            array_merge(ContentFilters::fromRequest($request->all()), ['indexable' => true])
         );
 
         $data = [];

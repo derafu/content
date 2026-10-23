@@ -59,7 +59,7 @@ final class FaqRegistryTest extends TestCase
 
         sort($slugs);
         $this->assertSame(
-            ['index', 'pregunta-borrador', 'pregunta-uno', 'pregunta-visible'],
+            ['draft-question', 'index', 'question-one', 'visible-question'],
             $slugs
         );
     }
@@ -84,13 +84,18 @@ final class FaqRegistryTest extends TestCase
         $matches = $this->plugin->registry()->filter(['tag' => 'demo']);
 
         $this->assertCount(1, $matches);
-        $this->assertSame('pregunta-uno', $matches[0]->slug());
+        $this->assertSame('question-one', $matches[0]->slug());
     }
 
     public function testUnknownUriThrowsContentNotFoundException(): void
     {
         $this->expectException(ContentNotFoundException::class);
 
-        $this->plugin->registry()->get('no-existe');
+        $this->plugin->registry()->get('does-not-exist');
+    }
+
+    public function testAQuestionIsOfTheCategoryQuestion(): void
+    {
+        $this->assertSame('question', $this->plugin->registry()->get('question-one')->category());
     }
 }

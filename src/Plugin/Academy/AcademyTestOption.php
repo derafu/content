@@ -64,6 +64,8 @@ class AcademyTestOption implements AcademyTestOptionInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -76,6 +78,8 @@ class AcademyTestOption implements AcademyTestOptionInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {
