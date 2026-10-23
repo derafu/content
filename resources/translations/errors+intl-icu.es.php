@@ -93,8 +93,8 @@ return [
         'La referencia "openapi" "{reference}" del documento "{content}" no corresponde a un documento: debe ser un adjunto del documento o una URL absoluta.',
     'The OpenAPI document of "{content}" is not valid: {error}' =>
         'El documento OpenAPI de "{content}" no es válido: {error}',
-    'The request body example of "{operation}" in the doc "{content}" could not be encoded as JSON: {error}' =>
-        'El ejemplo del cuerpo de la petición de "{operation}" en el documento "{content}" no se pudo codificar como JSON: {error}',
+    'An example of the OpenAPI document of "{content}" could not be encoded as JSON: {error}' =>
+        'Un ejemplo del documento OpenAPI de "{content}" no se pudo codificar como JSON: {error}',
     'No Markdown template known for content category "{category}".' =>
         'No se conoce una plantilla Markdown para la categoría de contenido "{category}".',
     'Query is required.' =>

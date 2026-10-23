@@ -257,4 +257,96 @@ final class DocsShowOpenApiTest extends TestCase
         $this->assertStringContainsString('- `default` — Whatever happens.', $markdown);
         $this->assertStringContainsString('Servers: https://api.example.test, https://sandbox.example.test', $markdown);
     }
+
+    private function rich(string $template): string
+    {
+        return $this->render(
+            $template,
+            '/docs/rich.' . ($template === 'docs/show.pdf.twig' ? 'pdf' : 'md'),
+            new DocsDoc(dirname(__DIR__, 3) . '/fixtures/openapi/rich.md')
+        );
+    }
+
+    public function testMarkdownHasTheDataOfTheApiAndHowToAuthenticate(): void
+    {
+        $markdown = $this->rich('docs/show.md.twig');
+
+        $this->assertStringContainsString("Version: 3.2.1\n", $markdown);
+        $this->assertStringContainsString('Contact: Support, support@example.test, https://example.test/support', $markdown);
+        $this->assertStringContainsString('License: MIT, https://example.test/license', $markdown);
+        $this->assertStringContainsString('Terms of service: https://example.test/terms', $markdown);
+        $this->assertStringContainsString('More information: [The handbook](https://example.test/handbook)', $markdown);
+        $this->assertStringContainsString("- https://api.example.test — Production\n- https://sandbox.example.test\n", $markdown);
+        $this->assertStringContainsString("### Authentication\n\n- `ApiKeyAuth`: apiKey (in header: `Authorization`) — Prefix `Token`.", $markdown);
+        $this->assertStringContainsString('- `Bearer`: http (bearer, JWT)', $markdown);
+    }
+
+    public function testMarkdownShowsWhatEachOperationSays(): void
+    {
+        $markdown = $this->rich('docs/show.md.twig');
+
+        $this->assertStringContainsString('#### DELETE /orders/{id} (deprecated)', $markdown);
+        $this->assertStringContainsString("Operation ID: listOrders\n", $markdown);
+        $this->assertStringNotContainsString('Operation ID: Create an order', $markdown);
+        $this->assertStringContainsString('Authentication: ApiKeyAuth, OAuth', $markdown);
+        $this->assertStringContainsString('More information: [About deleting](https://example.test/delete)', $markdown);
+
+        // The operation that has `security: []` does not need authentication.
+        $delete = substr($markdown, (int) strpos($markdown, '#### DELETE'));
+        $this->assertStringNotContainsString('Authentication:', substr($delete, 0, (int) strpos($delete, '### Schemas')));
+    }
+
+    public function testMarkdownShowsTheDetailsOfTheParameters(): void
+    {
+        $markdown = $this->rich('docs/show.md.twig');
+
+        $this->assertStringContainsString("- `status` (query, string) — Status of the orders.\n  - Allowed values: open, closed\n  - Default: open\n", $markdown);
+        $this->assertStringContainsString("- `since` (query, string (date))\n  - Example: `2026-01-31`\n", $markdown);
+        $this->assertStringContainsString("  - A few: `10`\n  - big: `500`\n", $markdown);
+        $this->assertStringContainsString("- `page` (query, integer)\n  - Example: `1`\n", $markdown);
+        $this->assertStringContainsString('- `legacy` (query, boolean, deprecated)', $markdown);
+        $this->assertStringContainsString('- `id` (path, integer, required)', $markdown);
+    }
+
+    public function testMarkdownShowsTheRequestBodyAndTheResponsesWithTheirPropertiesAndExamples(): void
+    {
+        $markdown = $this->rich('docs/show.md.twig');
+
+        $this->assertStringContainsString("Request body: required\n\nThe order to create.\n\nContent types: application/json, multipart/form-data\n", $markdown);
+        $this->assertStringContainsString("- `customer` (string, required) — Name of the customer. · Example: Ana\n- `items` (array<object>)\n  - `sku` (string, required) — Example: A-1\n", $markdown);
+        $this->assertStringContainsString("Example (application/json):\n\n```\n{\n    \"customer\": \"Ana\",", $markdown);
+        $this->assertStringContainsString('Example (multipart/form-data):', $markdown);
+        $this->assertStringContainsString("  - Header `X-Total-Count` (integer) — How many orders there are.\n", $markdown);
+        $this->assertStringContainsString("Response 200:\n\n- `id` (integer, required) — Example: 1\n", $markdown);
+        $this->assertStringContainsString('**Two orders** (application/json):', $markdown);
+    }
+
+    public function testMarkdownListsTheSchemasOfTheComponents(): void
+    {
+        $markdown = $this->rich('docs/show.md.twig');
+
+        $this->assertStringContainsString("### Schemas\n\n#### Order\n\nAn order of the shop.\n\n- `id` (integer, required) — Example: 1\n", $markdown);
+        $this->assertStringContainsString("#### Customer\n\n- `name` (string) — Full name.", $markdown);
+    }
+
+    public function testPdfHasTheSameThatMarkdownHas(): void
+    {
+        $html = $this->rich('docs/show.pdf.twig');
+
+        $this->assertStringContainsString('Version: 3.2.1', $html);
+        $this->assertStringContainsString('Contact: Support, support@example.test, https://example.test/support', $html);
+        $this->assertStringContainsString('<span class="pdf-openapi-deprecated">Deprecated</span>', $html);
+        $this->assertStringContainsString('Authentication: ApiKeyAuth, OAuth', $html);
+        $this->assertStringContainsString('<code>ApiKeyAuth</code>: apiKey (in header: <code>Authorization</code>)', $html);
+        $this->assertStringContainsString('Allowed values: open, closed', $html);
+        $this->assertStringContainsString('Default: open', $html);
+        $this->assertStringContainsString('A few: <code>10</code>', $html);
+        $this->assertStringContainsString('Content types: application/json, multipart/form-data', $html);
+        $this->assertStringContainsString('<li style="margin-left: 14px;">', $html);
+        $this->assertStringContainsString('array&lt;object&gt;', $html);
+        $this->assertStringContainsString('<strong>Two orders</strong> (application/json)', $html);
+        $this->assertStringContainsString('X-Total-Count</code> (integer) — How many orders there are.', $html);
+        $this->assertStringContainsString('<h3 class="pdf-openapi-group-title">Schemas</h3>', $html);
+        $this->assertStringContainsString('An order of the shop.', $html);
+    }
 }

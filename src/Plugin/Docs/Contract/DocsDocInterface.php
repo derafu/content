@@ -13,8 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Plugin\Docs\Contract;
 
 use Derafu\Content\Contract\ContentItemInterface;
-use Utopia\OpenAPI\Model\Operation;
-use Utopia\OpenAPI\Model\Schema;
+use Derafu\Content\Plugin\Docs\DocsOpenApiView;
 use Utopia\OpenAPI\Specification;
 
 /**
@@ -46,28 +45,11 @@ interface DocsDocInterface extends ContentItemInterface
     public function openapiSpec(): ?Specification;
 
     /**
-     * Get the operations of the doc's OpenAPI spec grouped by their first tag,
-     * in the order of the tags of the spec and, after them, the operations
-     * without tag (name null).
+     * Get what the Markdown and the PDF show of the doc's OpenAPI spec: the
+     * operations by tag, the types, the properties and the examples. It is
+     * null if the doc has no spec.
      *
-     * @return list<array{name: string|null, description: string, operations: list<Operation>}>
+     * @return DocsOpenApiView|null
      */
-    public function openapiGroups(): array;
-
-    /**
-     * Get the name of the type of a schema, to show it next to a parameter.
-     *
-     * @param Schema|null $schema Schema of the parameter.
-     * @return string
-     */
-    public function openapiTypeLabel(?Schema $schema): string;
-
-    /**
-     * Get a printable example of the request body of an operation: the first
-     * example found across its media types, or null if it has none.
-     *
-     * @param Operation $operation Operation of the doc's OpenAPI spec.
-     * @return string|null
-     */
-    public function openapiRequestExample(Operation $operation): ?string;
+    public function openapiView(): ?DocsOpenApiView;
 }

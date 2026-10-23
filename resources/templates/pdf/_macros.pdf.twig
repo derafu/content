@@ -97,29 +97,102 @@
 {% endmacro %}
 
 {#
-    Renders a doc's OpenAPI spec (DocsDoc::openapiSpec()) as something a
-    static PDF can show: every endpoint with its parameters, a request
-    body example and its declared responses — the same information the
-    HTML view's interactive Swagger UI widget has, minus the "try it
+    Renders the properties of a schema (DocsOpenApiView::properties()) as a
+    list, each one moved to the right by its depth.
+#}
+{% macro openapi_properties(rows) %}
+    <ul class="pdf-openapi-properties">
+        {% for row in rows %}
+            <li style="margin-left: {{ row.depth * 14 }}px;">
+                <code>{{ row.name }}</code>
+                ({{ row.type }}{% if row.required %}, {{ 'required'|trans }}{% endif %}){% if row.description %} — {{ row.description | trim | replace({"\n": ' '}) }}{% endif %}
+                {% if row.enum | length > 0 %}<span class="pdf-openapi-note">{{ 'Allowed values: {values}'|trans({'values': row.enum | join(', ')}) }}</span>{% endif %}
+                {% if row.default is not null %}<span class="pdf-openapi-note">{{ 'Default: {value}'|trans({'value': row.default}) }}</span>{% endif %}
+                {% if row.example is not null %}<span class="pdf-openapi-note">{{ 'Example: {value}'|trans({'value': row.example}) }}</span>{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
+{#
+    Renders the examples of a body (DocsOpenApiView::examples()), each one in a
+    block with the media types that have it.
+#}
+{% macro openapi_examples(examples) %}
+    {% for example in examples %}
+        <div class="pdf-openapi-example">
+            <strong>{% if example.summary %}{{ example.summary }}{% else %}{{ 'Example'|trans }}{% endif %}</strong> ({{ example.types | join(', ') }})
+            <pre>{{ example.text }}</pre>
+        </div>
+    {% endfor %}
+{% endmacro %}
+
+{#
+    Renders a doc's OpenAPI spec (DocsDoc::openapiView()) as something a
+    static PDF can show: the data of the API, how to authenticate, and every
+    operation with its parameters, request body and responses, with the
+    properties and the examples that the document has — the same information
+    the HTML view's interactive Swagger UI widget has, minus the "try it
     out" testing capability a static export cannot offer anyway.
 
-    Safe to call on ANY item, not just docs: "item.openapiSpec is
+    Safe to call on ANY item, not just docs: "item.openapiView is
     defined" no-ops for content types that have no such method at all
     (academy, blog, faq, pages), so section() below can call this
     unconditionally for every node of a "full" export tree.
 #}
 {% macro openapi(item) %}
-    {% if item.openapiSpec is defined and item.openapiSpec %}
+    {% import _self as m %}
+    {% if item.openapiView is defined and item.openapiView %}
+        {% set view = item.openapiView %}
         {% set spec = item.openapiSpec %}
         <div class="pdf-openapi">
             <h2>{{ spec.info.title }}</h2>
             {% if spec.info.description %}
                 <div class="pdf-openapi-description">{{ spec.info.description | markdown }}</div>
             {% endif %}
-            {% if spec.servers | length > 0 %}
-                <p class="pdf-openapi-servers">{{ 'Servers: {servers}'|trans({'servers': spec.servers | map(server => server.url) | join(', ')}) }}</p>
+            {% if spec.info.version %}
+                <p class="pdf-openapi-info">{{ 'Version: {version}'|trans({'version': spec.info.version}) }}</p>
             {% endif %}
-            {% set groups = item.openapiGroups %}
+            {% if spec.info.contact %}
+                <p class="pdf-openapi-info">{{ 'Contact: {contact}'|trans({'contact': [spec.info.contact.name, spec.info.contact.email, spec.info.contact.url] | filter(v => v) | join(', ')}) }}</p>
+            {% endif %}
+            {% if spec.info.license %}
+                <p class="pdf-openapi-info">{{ 'License: {license}'|trans({'license': [spec.info.license.name, spec.info.license.url] | filter(v => v) | join(', ')}) }}</p>
+            {% endif %}
+            {% if spec.info.termsOfService %}
+                <p class="pdf-openapi-info">{{ 'Terms of service: {url}'|trans({'url': spec.info.termsOfService}) }}</p>
+            {% endif %}
+            {% if spec.externalDocumentation %}
+                <p class="pdf-openapi-info">{{ 'More information:'|trans }} <a href="{{ spec.externalDocumentation.url }}">{{ spec.externalDocumentation.description ?: spec.externalDocumentation.url }}</a></p>
+            {% endif %}
+            {% if spec.servers | length > 0 %}
+                {% if spec.servers | filter(server => server.description) | length > 0 %}
+                    <p class="pdf-openapi-servers">{{ 'Servers:'|trans }}</p>
+                    <ul class="pdf-openapi-servers">
+                        {% for server in spec.servers %}
+                            <li>{{ server.url }}{% if server.description %} — {{ server.description | trim | replace({"\n": ' '}) }}{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="pdf-openapi-servers">{{ 'Servers: {servers}'|trans({'servers': spec.servers | map(server => server.url) | join(', ')}) }}</p>
+                {% endif %}
+            {% endif %}
+            {% if spec.securitySchemes | length > 0 %}
+                <div class="pdf-openapi-security">
+                    <strong>{{ 'Authentication'|trans }}</strong>
+                    <ul>
+                        {% for name, scheme in spec.securitySchemes %}
+                            <li>
+                                <code>{{ name }}</code>: {{ scheme.type.value }}{% if scheme.location %} ({{ 'in {location}'|trans({'location': scheme.location.value}) }}{% if scheme.name %}: <code>{{ scheme.name }}</code>{% endif %}){% elseif scheme.scheme %} ({{ scheme.scheme }}{% if scheme.bearerFormat %}, {{ scheme.bearerFormat }}{% endif %}){% elseif scheme.openIdConnectUrl %} ({{ scheme.openIdConnectUrl }}){% endif %}
+                                {% if scheme.description %}
+                                    <div class="pdf-openapi-parameter-description">{{ scheme.description | markdown }}</div>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {% set groups = view.groups %}
             {% if groups | length > 0 %}
                 <tocpagebreak name="{{ item.downloadFilename }}-openapi-toc" links="on" toc-preHTML="&lt;h3&gt;{{ 'Index'|trans }}&lt;/h3&gt;" />
             {% endif %}
@@ -144,6 +217,7 @@
                             <div class="pdf-openapi-endpoint-header">
                                 <span class="pdf-openapi-method">{{ operation.method.value | upper }}</span>
                                 <span class="pdf-openapi-path">{{ operation.path }}</span>
+                                {% if operation.deprecated %}<span class="pdf-openapi-deprecated">{{ 'Deprecated'|trans }}</span>{% endif %}
                             </div>
                             {% if operation.summary %}
                                 <div class="pdf-openapi-summary">{{ operation.summary }}</div>
@@ -151,28 +225,54 @@
                             {% if operation.description %}
                                 <div class="pdf-openapi-endpoint-description">{{ operation.description | markdown }}</div>
                             {% endif %}
+                            {% if operation.id and operation.id != operation.summary %}
+                                <p class="pdf-openapi-info">{{ 'Operation ID: {id}'|trans({'id': operation.id}) }}</p>
+                            {% endif %}
+                            {% set schemes = operation.acceptedSecuritySchemeNames %}
+                            {% if schemes | length > 0 %}
+                                <p class="pdf-openapi-info">{{ 'Authentication: {schemes}'|trans({'schemes': schemes | join(', ')}) }}</p>
+                            {% endif %}
+                            {% if operation.externalDocumentation %}
+                                <p class="pdf-openapi-info">{{ 'More information:'|trans }} <a href="{{ operation.externalDocumentation.url }}">{{ operation.externalDocumentation.description ?: operation.externalDocumentation.url }}</a></p>
+                            {% endif %}
                             {% if operation.parameters | length > 0 %}
                                 <div class="pdf-openapi-parameters">
                                     <strong>{{ 'Parameters'|trans }}</strong>
                                     <ul>
                                         {% for parameter in operation.parameters %}
-                                            {% set type = item.openapiTypeLabel(parameter.schema) %}
+                                            {% set type = view.typeLabel(parameter.schema) %}
+                                            {% set notes = view.parameterNotes(operation, parameter) %}
                                             <li>
                                                 <code>{{ parameter.name }}</code>
-                                                ({{ parameter.location.value }}{% if type %}, {{ type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %})
+                                                ({{ parameter.location.value }}{% if type %}, {{ type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %}{% if parameter.deprecated %}, {{ 'Deprecated'|trans|lower }}{% endif %})
                                                 {% if parameter.description %}
                                                     <div class="pdf-openapi-parameter-description">{{ parameter.description | markdown }}</div>
                                                 {% endif %}
+                                                {% if notes.enum | length > 0 %}<div class="pdf-openapi-note">{{ 'Allowed values: {values}'|trans({'values': notes.enum | join(', ')}) }}</div>{% endif %}
+                                                {% if notes.default is not null %}<div class="pdf-openapi-note">{{ 'Default: {value}'|trans({'value': notes.default}) }}</div>{% endif %}
+                                                {% for example in notes.examples %}
+                                                    <div class="pdf-openapi-note">{% if example.summary %}{{ example.summary }}{% else %}{{ 'Example'|trans }}{% endif %}: <code>{{ example.text }}</code></div>
+                                                {% endfor %}
                                             </li>
                                         {% endfor %}
                                     </ul>
                                 </div>
                             {% endif %}
-                            {% set example = item.openapiRequestExample(operation) %}
-                            {% if example %}
+                            {% if operation.requestBody %}
+                                {% set rows = view.properties(view.schemaOf(operation.requestBody.content)) %}
+                                {% set examples = view.examples(operation.requestBody.content) %}
                                 <div class="pdf-openapi-request-body">
-                                    <strong>{{ 'Request body example'|trans }}</strong>
-                                    <pre>{{ example }}</pre>
+                                    <strong>{{ 'Request body'|trans }}</strong>{% if operation.requestBody.required %} ({{ 'required'|trans }}){% endif %}
+                                    {% if operation.requestBody.description %}
+                                        <div class="pdf-openapi-parameter-description">{{ operation.requestBody.description | markdown }}</div>
+                                    {% endif %}
+                                    {% if operation.requestBody.content | length > 0 %}
+                                        <div class="pdf-openapi-note">{{ 'Content types: {types}'|trans({'types': operation.requestBody.content | keys | join(', ')}) }}</div>
+                                    {% endif %}
+                                    {% if rows | length > 0 %}
+                                        {{ m.openapi_properties(rows) }}
+                                    {% endif %}
+                                    {{ m.openapi_examples(examples) }}
                                 </div>
                             {% endif %}
                             {% if operation.responses | length > 0 %}
@@ -180,11 +280,23 @@
                                     <strong>{{ 'Responses'|trans }}</strong>
                                     <ul>
                                         {% for status, response in operation.responses %}
+                                            {% set rows = view.properties(view.schemaOf(response.content)) %}
+                                            {% set examples = view.examples(response.content) %}
                                             <li>
                                                 <code>{{ status }}</code>
                                                 {% if response.description %}
                                                     <div class="pdf-openapi-response-description">{{ response.description | markdown }}</div>
                                                 {% endif %}
+                                                {% for name, header in response.headers %}
+                                                    <div class="pdf-openapi-note">{{ 'Header'|trans }} <code>{{ name }}</code>{% if header.schema %} ({{ view.typeLabel(header.schema) }}){% endif %}{% if header.description %} — {{ header.description | trim | replace({"\n": ' '}) }}{% endif %}</div>
+                                                {% endfor %}
+                                                {% if response.content | length > 0 %}
+                                                    <div class="pdf-openapi-note">{{ 'Content types: {types}'|trans({'types': response.content | keys | join(', ')}) }}</div>
+                                                {% endif %}
+                                                {% if rows | length > 0 %}
+                                                    {{ m.openapi_properties(rows) }}
+                                                {% endif %}
+                                                {{ m.openapi_examples(examples) }}
                                             </li>
                                         {% endfor %}
                                     </ul>
@@ -194,6 +306,26 @@
                     {% endfor %}
                 </div>
             {% endfor %}
+            {% if spec.schemas | length > 0 %}
+                <div class="pdf-openapi-group">
+                    <tocentry content="{{ 'Schemas'|trans }}" level="0" name="{{ item.downloadFilename }}-openapi-toc" />
+                    <h3 class="pdf-openapi-group-title">{{ 'Schemas'|trans }}</h3>
+                    {% for name, schema in spec.schemas %}
+                        {% set rows = view.properties(schema) %}
+                        <div class="pdf-openapi-endpoint">
+                            <div class="pdf-openapi-endpoint-header"><span class="pdf-openapi-path">{{ name }}</span></div>
+                            {% if schema.description %}
+                                <div class="pdf-openapi-endpoint-description">{{ schema.description | markdown }}</div>
+                            {% endif %}
+                            {% if rows | length > 0 %}
+                                {{ m.openapi_properties(rows) }}
+                            {% else %}
+                                <p class="pdf-openapi-info">{{ view.typeLabel(schema) }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
     {% endif %}
 {% endmacro %}

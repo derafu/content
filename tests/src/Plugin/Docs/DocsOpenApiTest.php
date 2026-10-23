@@ -16,6 +16,7 @@ use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\ContentAttachment;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\Plugin\Docs\DocsDoc;
+use Derafu\Content\Plugin\Docs\DocsOpenApiView;
 use Derafu\Translation\Contract\TranslatableInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,6 +35,7 @@ use Utopia\OpenAPI\Model\Operation;
 #[UsesClass(AbstractContentItem::class)]
 #[UsesClass(ContentAttachment::class)]
 #[UsesClass(ContentSplFileInfo::class)]
+#[UsesClass(DocsOpenApiView::class)]
 final class DocsOpenApiTest extends TestCase
 {
     private function doc(string $name): DocsDoc
@@ -59,7 +61,7 @@ final class DocsOpenApiTest extends TestCase
         $doc = new DocsDoc(dirname(__DIR__, 3) . '/fixtures/content/docs/guide.md');
 
         $this->assertNull($doc->openapiSpec());
-        $this->assertSame([], $doc->openapiGroups());
+        $this->assertNull($doc->openapiView());
     }
 
     public function testTheSpecIsReadFromYamlAndTheInfoIsThere(): void
@@ -83,11 +85,12 @@ final class DocsOpenApiTest extends TestCase
         $this->assertCount(1, $spec->operations());
     }
 
-    public function testTheSpecIsReadOnlyOnce(): void
+    public function testTheSpecAndTheViewAreReadOnlyOnce(): void
     {
         $doc = $this->doc('full');
 
         $this->assertSame($doc->openapiSpec(), $doc->openapiSpec());
+        $this->assertSame($doc->openapiView(), $doc->openapiView());
     }
 
     public function testThePathParametersAreInheritedByTheOperationsAndTheOperationOverridesThem(): void
@@ -110,68 +113,6 @@ final class DocsOpenApiTest extends TestCase
             'The widget does not exist.',
             $operations['GET /widgets/{id}']->responses['404']->description
         );
-    }
-
-    public function testTheOperationsAreGroupedByTheirFirstTag(): void
-    {
-        $groups = $this->doc('full')->openapiGroups();
-
-        $this->assertSame(
-            ['Widgets', 'Gadgets', null],
-            array_map(fn (array $group) => $group['name'], $groups)
-        );
-        $this->assertSame(
-            ['Everything about the widgets.', '', ''],
-            array_map(fn (array $group) => $group['description'], $groups)
-        );
-        $this->assertSame(
-            [['GET /widgets/{id}', 'DELETE /widgets/{id}', 'POST /widgets'], ['GET /gadgets', 'PUT /text'], ['GET /health']],
-            array_map(
-                fn (array $group) => array_map(
-                    fn (Operation $operation) => strtoupper($operation->method->value) . ' ' . $operation->path,
-                    $group['operations']
-                ),
-                $groups
-            )
-        );
-    }
-
-    public function testTheTypeOfAParameterHasAName(): void
-    {
-        $doc = $this->doc('full');
-        $parameters = [];
-        foreach ($this->operations($doc)['POST /widgets']->parameters as $parameter) {
-            $parameters[$parameter->name] = $doc->openapiTypeLabel($parameter->schema);
-        }
-
-        $this->assertSame([
-            'limit' => 'integer',
-            'tags' => 'array',
-            'filter' => 'object',
-            'ratio' => 'number',
-            'dry' => 'boolean',
-            'kind' => 'Kind',
-            'free' => '',
-        ], $parameters);
-
-        $this->assertSame('string', $doc->openapiTypeLabel($this->operations($doc)['GET /widgets/{id}']->parameters[0]->schema));
-    }
-
-    public function testTheRequestBodyExampleIsTheFirstOneThatTheOperationHas(): void
-    {
-        $doc = $this->doc('full');
-        $operations = $this->operations($doc);
-
-        $this->assertSame(
-            "{\n    \"name\": \"Widget\",\n    \"quantity\": 3\n}",
-            $doc->openapiRequestExample($operations['POST /widgets'])
-        );
-        $this->assertSame(
-            "{\n    \"gadget\": true\n}",
-            $doc->openapiRequestExample($operations['GET /gadgets'])
-        );
-        $this->assertSame('plain text', $doc->openapiRequestExample($operations['PUT /text']));
-        $this->assertNull($doc->openapiRequestExample($operations['GET /health']));
     }
 
     /**
@@ -229,28 +170,19 @@ final class DocsOpenApiTest extends TestCase
         $this->assertStringStartsWith($message, $exception->getMessage());
     }
 
-    public function testAnExampleThatCanNotBeEncodedIsATranslatableErrorThatSaysWhich(): void
-    {
-        $doc = $this->doc('bad-example');
-        $operation = $this->operations($doc)['POST /a'];
-
-        $exception = null;
-        try {
-            $doc->openapiRequestExample($operation);
-        } catch (Throwable $e) {
-            $exception = $e;
-        }
-
-        $this->assertInstanceOf(RuntimeException::class, $exception);
-        $this->assertInstanceOf(TranslatableInterface::class, $exception);
-        $this->assertStringStartsWith(
-            'The request body example of "POST /a" in the doc "bad-example" could not be encoded as JSON: ',
-            $exception->getMessage()
-        );
-    }
-
     public function testTheReferenceCanBeThePathOfAnAttachment(): void
     {
         $this->assertSame('JSON API', $this->doc('attachment-path')->openapiSpec()?->info->title);
+    }
+
+    public function testADateInTheDocumentIsShownAsItWasWritten(): void
+    {
+        $doc = $this->doc('edge');
+        $operation = $this->operations($doc)['POST /one-of'];
+
+        $this->assertSame(
+            [['summary' => '', 'text' => '2026-01-31T10:30:00+00:00']],
+            $doc->openapiView()?->parameterNotes($operation, $operation->parameters[2])['examples']
+        );
     }
 }

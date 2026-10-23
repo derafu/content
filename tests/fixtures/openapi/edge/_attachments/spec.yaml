@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Edge API
+  version: 1.0.0
+paths:
+  /one-of:
+    post:
+      summary: A choice
+      parameters:
+        - name: filter
+          in: query
+          content:
+            application/json:
+              schema:
+                type: object
+        - name: any
+          in: query
+          schema: {}
+        - name: at
+          in: query
+          schema:
+            type: string
+            format: date-time
+            example: 2026-01-31T10:30:00Z
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                choice:
+                  oneOf:
+                    - type: object
+                      properties:
+                        card:
+                          type: string
+                          example: 4242
+                    - type: object
+                      properties:
+                        cash:
+                          type: boolean
+                          example: true
+                none:
+                  anyOf:
+                    - type: string
+                    - type: integer
+      responses:
+        '200':
+          description: Done.
+  /text:
+    post:
+      summary: A text with a default
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+              default: hello
+      responses:
+        '200':
+          description: Done.
+  /external:
+    post:
+      summary: A schema in another document
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: 'https://example.test/schemas.json#/Order'
+      responses:
+        '200':
+          description: Done.
+  /too-deep:
+    post:
+      summary: An example that is too deep to be looked for
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/L1'
+      responses:
+        '200':
+          description: Done.
+components:
+  schemas:
+    L1: {type: object, properties: {a: {$ref: '#/components/schemas/L2'}}}
+    L2: {type: object, properties: {a: {$ref: '#/components/schemas/L3'}}}
+    L3: {type: object, properties: {a: {$ref: '#/components/schemas/L4'}}}
+    L4: {type: object, properties: {a: {$ref: '#/components/schemas/L5'}}}
+    L5: {type: object, properties: {a: {$ref: '#/components/schemas/L6'}}}
+    L6: {type: object, properties: {a: {$ref: '#/components/schemas/L7'}}}
+    L7: {type: object, properties: {a: {$ref: '#/components/schemas/L8'}}}
+    L8: {type: object, properties: {a: {$ref: '#/components/schemas/L9'}}}
+    L9: {type: object, properties: {a: {$ref: '#/components/schemas/L10'}}}
+    L10: {type: object, properties: {a: {$ref: '#/components/schemas/L11'}}}
+    L11: {type: object, properties: {a: {type: string, example: bottom}}}

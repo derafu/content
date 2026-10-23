@@ -71,16 +71,50 @@
 {% endmacro %}
 
 {#
-    Renders a doc's OpenAPI spec (DocsDoc::openapiSpec()) as plain
-    Markdown: every endpoint with its parameters, a request body example
-    and its declared responses. Mirrors pdf/_macros.pdf.twig's openapi()
+    Renders the properties of a schema (DocsOpenApiView::properties()) as a
+    nested list.
+#}
+{% macro openapi_properties(rows) %}
+{% for row in rows -%}
+{%- set notes = [] -%}
+{%- if row.description %}{% set notes = notes | merge([row.description | trim | replace({"\n": ' '})]) %}{% endif -%}
+{%- if row.enum | length > 0 %}{% set notes = notes | merge(['Allowed values: {values}'|trans({'values': row.enum | join(', ')})]) %}{% endif -%}
+{%- if row.default is not null %}{% set notes = notes | merge(['Default: {value}'|trans({'value': row.default})]) %}{% endif -%}
+{%- if row.example is not null %}{% set notes = notes | merge(['Example: {value}'|trans({'value': row.example})]) %}{% endif -%}
+{{ ('%' ~ (row.depth * 2) ~ 's')|format('') }}- `{{ row.name }}` ({{ row.type | raw }}{% if row.required %}, {{ 'required'|trans }}{% endif %}){% if notes | length > 0 %} — {{ notes | join(' · ') | raw }}{% endif %}
+
+{% endfor -%}
+{% endmacro %}
+
+{#
+    Renders the examples of a body (DocsOpenApiView::examples()), each one in a
+    block with the media types that have it.
+#}
+{% macro openapi_examples(examples) %}
+{% for example in examples -%}
+{% if example.summary %}**{{ example.summary | raw }}**{% else %}{{ 'Example'|trans }}{% endif %} ({{ example.types | join(', ') }}):
+
+```
+{{ example.text | raw }}
+```
+
+{% endfor -%}
+{% endmacro %}
+
+{#
+    Renders a doc's OpenAPI spec (DocsDoc::openapiView()) as plain Markdown:
+    the data of the API, how to authenticate, and every operation with its
+    parameters, its request body and its responses, with the properties and the
+    examples that the document has. Mirrors pdf/_macros.pdf.twig's openapi()
     macro.
 
-    Safe to call on ANY item, not just docs: "item.openapiSpec is
+    Safe to call on ANY item, not just docs: "item.openapiView is
     defined" no-ops for content types that have no such method at all.
 #}
 {% macro openapi(item) %}
-{%- if item.openapiSpec is defined and item.openapiSpec %}
+{%- import _self as m -%}
+{%- if item.openapiView is defined and item.openapiView %}
+{%- set view = item.openapiView %}
 {%- set spec = item.openapiSpec %}
 
 ## {{ spec.info.title }}
@@ -89,11 +123,50 @@
 {{ spec.info.description | raw }}
 
 {% endif -%}
+{% if spec.info.version -%}
+{{ 'Version: {version}'|trans({'version': spec.info.version}) }}
+
+{% endif -%}
+{% if spec.info.contact -%}
+{{ 'Contact: {contact}'|trans({'contact': [spec.info.contact.name, spec.info.contact.email, spec.info.contact.url] | filter(v => v) | join(', ')}) }}
+
+{% endif -%}
+{% if spec.info.license -%}
+{{ 'License: {license}'|trans({'license': [spec.info.license.name, spec.info.license.url] | filter(v => v) | join(', ')}) }}
+
+{% endif -%}
+{% if spec.info.termsOfService -%}
+{{ 'Terms of service: {url}'|trans({'url': spec.info.termsOfService}) }}
+
+{% endif -%}
+{% if spec.externalDocumentation -%}
+{{ 'More information: {link}'|trans({'link': '[' ~ (spec.externalDocumentation.description ?: spec.externalDocumentation.url) ~ '](' ~ spec.externalDocumentation.url ~ ')'}) | raw }}
+
+{% endif -%}
 {% if spec.servers | length > 0 -%}
+{% if spec.servers | filter(server => server.description) | length > 0 -%}
+{{ 'Servers:'|trans }}
+
+{% for server in spec.servers -%}
+- {{ server.url }}{% if server.description %} — {{ server.description | trim | replace({"\n": ' '}) | raw }}{% endif %}
+
+{% endfor %}
+
+{% else -%}
 {{ 'Servers: {servers}'|trans({'servers': spec.servers | map(server => server.url) | join(', ')}) }}
 
 {% endif -%}
-{%- set groups = item.openapiGroups %}
+{% endif -%}
+{% if spec.securitySchemes | length > 0 -%}
+### {{ 'Authentication'|trans }}
+
+{% for name, scheme in spec.securitySchemes -%}
+- `{{ name }}`: {{ scheme.type.value }}{% if scheme.location %} ({{ 'in {location}'|trans({'location': scheme.location.value}) }}{% if scheme.name %}: `{{ scheme.name }}`{% endif %}){% elseif scheme.scheme %} ({{ scheme.scheme }}{% if scheme.bearerFormat %}, {{ scheme.bearerFormat }}{% endif %}){% elseif scheme.openIdConnectUrl %} ({{ scheme.openIdConnectUrl }}){% endif %}{% if scheme.description %} — {{ scheme.description | trim | replace({"\n": ' '}) | raw }}{% endif %}
+
+{% endfor %}
+
+{% endif -%}
+{%- set groups = view.groups %}
 {% if groups | length > 0 -%}
 {{ 'Index:'|trans }}
 
@@ -101,9 +174,9 @@
 - {{ group.name ?: 'Other'|trans }}
 {% for operation in group.operations -%}
 {{ '  - ' }}{{ operation.summary ?: (operation.method.value | upper ~ ' ' ~ operation.path) }}
+{% endfor -%}
+{% endfor %}
 
-{% endfor %}
-{% endfor %}
 {% endif -%}
 {% for group in groups -%}
 ### {{ group.name ?: 'Other'|trans }}
@@ -113,7 +186,8 @@
 
 {% endif -%}
 {% for operation in group.operations -%}
-#### {{ operation.method.value | upper }} {{ operation.path }}
+#### {{ operation.method.value | upper }} {{ operation.path }}{% if operation.deprecated %} ({{ 'Deprecated'|trans|lower }}){% endif %}
+
 
 {% if operation.summary -%}
 {{ operation.summary }}
@@ -123,34 +197,109 @@
 {{ operation.description | raw }}
 
 {% endif -%}
+{% if operation.id and operation.id != operation.summary -%}
+{{ 'Operation ID: {id}'|trans({'id': operation.id}) }}
+
+{% endif -%}
+{%- set schemes = operation.acceptedSecuritySchemeNames %}
+{% if schemes | length > 0 -%}
+{{ 'Authentication: {schemes}'|trans({'schemes': schemes | join(', ')}) }}
+
+{% endif -%}
+{% if operation.externalDocumentation -%}
+{{ 'More information: {link}'|trans({'link': '[' ~ (operation.externalDocumentation.description ?: operation.externalDocumentation.url) ~ '](' ~ operation.externalDocumentation.url ~ ')'}) | raw }}
+
+{% endif -%}
 {% if operation.parameters | length > 0 -%}
 {{ 'Parameters:'|trans }}
 
 {% for parameter in operation.parameters -%}
-{%- set type = item.openapiTypeLabel(parameter.schema) -%}
-- `{{ parameter.name }}` ({{ parameter.location.value }}{% if type %}, {{ type }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %}){% if parameter.description %} — {{ parameter.description | raw }}{% endif %}
+{%- set type = view.typeLabel(parameter.schema) -%}
+{%- set notes = view.parameterNotes(operation, parameter) -%}
+- `{{ parameter.name }}` ({{ parameter.location.value }}{% if type %}, {{ type | raw }}{% endif %}{% if parameter.required %}, {{ 'required'|trans }}{% endif %}{% if parameter.deprecated %}, {{ 'Deprecated'|trans|lower }}{% endif %}){% if parameter.description %} — {{ parameter.description | trim | replace({"\n": ' '}) | raw }}{% endif %}
 
-{% endfor %}
+{% if notes.enum | length > 0 -%}
+{{ '  - ' }}{{ 'Allowed values: {values}'|trans({'values': notes.enum | join(', ')}) | raw }}
 {% endif -%}
-{%- set example = item.openapiRequestExample(operation) -%}
-{% if example -%}
-{{ 'Request body example:'|trans }}
+{% if notes.default is not null -%}
+{{ '  - ' }}{{ 'Default: {value}'|trans({'value': notes.default}) | raw }}
+{% endif -%}
+{% for example in notes.examples -%}
+{{ '  - ' }}{% if example.summary %}{{ example.summary | raw }}{% else %}{{ 'Example'|trans }}{% endif %}: `{{ example.text | raw }}`
+{% endfor -%}
+{% endfor %}
 
-```
-{{ example | raw }}
-```
+{% endif -%}
+{% if operation.requestBody -%}
+{{ 'Request body:'|trans }}{% if operation.requestBody.required %} {{ 'required'|trans }}{% endif %}
 
+
+{% if operation.requestBody.description -%}
+{{ operation.requestBody.description | raw }}
+
+{% endif -%}
+{% if operation.requestBody.content | length > 0 -%}
+{{ 'Content types: {types}'|trans({'types': operation.requestBody.content | keys | join(', ')}) }}
+
+{% endif -%}
+{%- set rows = view.properties(view.schemaOf(operation.requestBody.content)) %}
+{% if rows | length > 0 -%}
+{{ 'Properties:'|trans }}
+
+{{ m.openapi_properties(rows) }}
+{% endif -%}
+{{ m.openapi_examples(view.examples(operation.requestBody.content)) }}
 {% endif -%}
 {% if operation.responses | length > 0 -%}
 {{ 'Responses:'|trans }}
 
 {% for status, response in operation.responses -%}
-- `{{ status }}`{% if response.description %} — {{ response.description | raw }}{% endif %}
+- `{{ status }}`{% if response.description %} — {{ response.description | trim | replace({"\n": ' '}) | raw }}{% endif %}
 
+{% for name, header in response.headers -%}
+{{ '  - ' }}{{ 'Header'|trans }} `{{ name }}`{% if header.schema %} ({{ view.typeLabel(header.schema) | raw }}){% endif %}{% if header.description %} — {{ header.description | trim | replace({"\n": ' '}) | raw }}{% endif %}
+
+{% endfor -%}
+{% if response.content | length > 0 -%}
+{{ '  - ' }}{{ 'Content types: {types}'|trans({'types': response.content | keys | join(', ')}) }}
+
+{% endif -%}
 {% endfor %}
+
+{% for status, response in operation.responses -%}
+{%- set rows = view.properties(view.schemaOf(response.content)) -%}
+{%- set examples = view.examples(response.content) -%}
+{% if rows | length > 0 or examples | length > 0 -%}
+{{ 'Response {status}:'|trans({'status': status}) }}
+
+{% if rows | length > 0 -%}
+{{ m.openapi_properties(rows) }}
+{% endif -%}
+{{ m.openapi_examples(examples) }}
+{% endif -%}
+{% endfor -%}
 {% endif -%}
 {% endfor -%}
 {% endfor -%}
+{% if spec.schemas | length > 0 -%}
+### {{ 'Schemas'|trans }}
+
+{% for name, schema in spec.schemas -%}
+#### {{ name }}
+
+{% if schema.description -%}
+{{ schema.description | raw }}
+
+{% endif -%}
+{%- set rows = view.properties(schema) %}
+{% if rows | length > 0 -%}
+{{ m.openapi_properties(rows) }}
+{% else -%}
+{{ view.typeLabel(schema) | raw }}
+
+{% endif -%}
+{% endfor -%}
+{% endif -%}
 {%- endif %}
 {% endmacro %}
 

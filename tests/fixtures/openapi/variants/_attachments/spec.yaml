@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: Variants API
+  version: 1.0.0
+paths:
+  /same:
+    post:
+      summary: The same example in two media types
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Ana
+          application/xml:
+            example:
+              name: Ana
+          text/plain:
+            example: plain text
+      responses:
+        '204':
+          description: Done.
+  /nested:
+    post:
+      summary: The example is in a property of the schema
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  example:
+                    bag:
+                      kind: sales
+                options:
+                  type: object
+                  properties:
+                    verbose:
+                      type: boolean
+                      default: false
+                    mode:
+                      type: string
+                      enum: [fast, slow]
+                    note:
+                      type: string
+      responses:
+        '204':
+          description: Done.
+  /composed:
+    post:
+      summary: A composition
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/Base'
+                - type: object
+                  properties:
+                    extra:
+                      type: string
+                      example: more
+      responses:
+        '204':
+          description: Done.
+  /cycle:
+    post:
+      summary: A schema that has itself inside
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Node'
+      responses:
+        '204':
+          description: Done.
+  /nothing:
+    post:
+      summary: Nothing to show
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '204':
+          description: Done.
+  /deep:
+    post:
+      summary: Objects inside objects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                one:
+                  type: object
+                  properties:
+                    two:
+                      type: object
+                      properties:
+                        three:
+                          type: object
+                          properties:
+                            four:
+                              type: string
+      responses:
+        '204':
+          description: Done.
+  /parameters:
+    get:
+      summary: Parameters with their examples
+      parameters:
+        - $ref: '#/components/parameters/Region'
+        - name: plain
+          in: query
+          example: one
+          schema:
+            type: string
+        - name: nullable
+          in: query
+          schema:
+            type: string
+            nullable: true
+      responses:
+        '200':
+          description: Done.
+components:
+  parameters:
+    Region:
+      name: region
+      in: query
+      schema:
+        type: string
+      examples:
+        north:
+          summary: The north
+          value: N
+  schemas:
+    Base:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 5
+    Node:
+      type: object
+      properties:
+        name:
+          type: string
+          example: root
+        next:
+          $ref: '#/components/schemas/Node'

@@ -28,6 +28,7 @@ use Derafu\Content\ContentTag;
 use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Docs\DocsController;
 use Derafu\Content\Plugin\Docs\DocsDoc;
+use Derafu\Content\Plugin\Docs\DocsOpenApiView;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
 use Derafu\Http\Request;
@@ -64,6 +65,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(ContentTag::class)]
 #[UsesClass(ContentNotFoundException::class)]
 #[UsesClass(ContentFilters::class)]
+#[UsesClass(DocsOpenApiView::class)]
 final class DocsControllerTest extends TestCase
 {
     private DocsPlugin $plugin;

@@ -1,0 +1,197 @@
+openapi: 3.1.0
+info:
+  title: Rich API
+  description: An API with everything.
+  version: 3.2.1
+  termsOfService: https://example.test/terms
+  contact:
+    name: Support
+    email: support@example.test
+    url: https://example.test/support
+  license:
+    name: MIT
+    url: https://example.test/license
+externalDocs:
+  description: The handbook
+  url: https://example.test/handbook
+servers:
+  - url: https://api.example.test
+    description: Production
+  - url: https://sandbox.example.test
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: Orders
+    description: Orders of the shop.
+paths:
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [Orders]
+      summary: List orders
+      parameters:
+        - name: status
+          in: query
+          description: Status of the orders.
+          schema:
+            type: string
+            enum: [open, closed]
+            default: open
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date
+            example: 2026-01-31
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          examples:
+            small:
+              summary: A few
+              value: 10
+            big:
+              value: 500
+        - $ref: '#/components/parameters/Page'
+        - name: legacy
+          in: query
+          deprecated: true
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: The orders.
+          headers:
+            X-Total-Count:
+              description: How many orders there are.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+              examples:
+                full:
+                  summary: Two orders
+                  value:
+                    - id: 1
+                      status: open
+                    - id: 2
+                      status: closed
+    post:
+      operationId: Create an order
+      summary: Create an order
+      tags: [Orders]
+      security:
+        - ApiKeyAuth: []
+        - OAuth:
+            - orders:write
+      requestBody:
+        required: true
+        description: The order to create.
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customer]
+              properties:
+                customer:
+                  type: string
+                  description: Name of the customer.
+                  example: Ana
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [sku]
+                    properties:
+                      sku:
+                        type: string
+                        example: A-1
+                      quantity:
+                        type: integer
+                        default: 1
+                note:
+                  type: string
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                customer:
+                  type: string
+                  example: Ana
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '422':
+          description: Not valid.
+  /orders/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 7
+    delete:
+      deprecated: true
+      summary: Delete an order
+      security: []
+      externalDocs:
+        description: About deleting
+        url: https://example.test/delete
+      responses:
+        '204':
+          description: Deleted.
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Prefix `Token`.
+    OAuth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.test/token
+          scopes:
+            orders:write: Write orders
+    Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+      example: 1
+  schemas:
+    Order:
+      type: object
+      description: An order of the shop.
+      required: [id]
+      properties:
+        id:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum: [open, closed]
+        customer:
+          $ref: '#/components/schemas/Customer'
+    Customer:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Full name.
