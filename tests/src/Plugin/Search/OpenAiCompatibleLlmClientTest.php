@@ -16,6 +16,7 @@ use Derafu\Content\Plugin\Search\Exception\SearchUpstreamException;
 use Derafu\Content\Plugin\Search\OpenAiCompatibleLlmClient;
 use Derafu\TestsContent\Support\FixtureHttpServer;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
@@ -31,6 +32,24 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(SearchUpstreamException::class)]
 final class OpenAiCompatibleLlmClientTest extends TestCase
 {
+    /** @return iterable<string, array{string, string}> */
+    public static function invalidResponseMaps(): iterable
+    {
+        yield 'choice is a positional list' => ['chat_choice_list', 'choices.0'];
+        yield 'choice has a numeric field' => ['chat_choice_numeric_key', 'choices.0'];
+        yield 'message is a positional list' => ['chat_message_list', 'choices.0.message'];
+        yield 'message has a numeric field' => ['chat_message_numeric_key', 'choices.0.message'];
+    }
+
+    #[DataProvider('invalidResponseMaps')]
+    public function testChoicesAndMessagesMustHaveStringKeys(string $scenario, string $path): void
+    {
+        $this->expectException(SearchUpstreamException::class);
+        $this->expectExceptionMessage('The key "' . $path . '" must be of type map, array given.');
+
+        $this->client($scenario)->query('guide');
+    }
+
     private static FixtureHttpServer $server;
 
     public static function setUpBeforeClass(): void
@@ -172,7 +191,7 @@ final class OpenAiCompatibleLlmClientTest extends TestCase
         $client = $this->client('chat_choices_not_list');
 
         $this->expectException(SearchUpstreamException::class);
-        $this->expectExceptionMessageMatches('/returned an invalid response: The key "choices" must be of type list<object>, string given/');
+        $this->expectExceptionMessageMatches('/returned an invalid response: The key "choices" must be of type list<map>, string given/');
 
         $client->query('hola');
     }

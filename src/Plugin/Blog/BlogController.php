@@ -433,14 +433,14 @@ class BlogController extends AbstractContentController
      */
     private function feedLimit(Request $request, OptionsInterface $options): int
     {
-        $limit = max(1, $options->requireInt('limit'));
+        $limit = max(1, $options->getReader()->requireInt('limit'));
 
         $requested = $request->query('limit');
         if (is_string($requested) && ctype_digit($requested) && (int) $requested >= 1) {
             $limit = (int) $requested;
         }
 
-        return min($limit, max(1, $options->requireInt('maxLimit')));
+        return min($limit, max(1, $options->getReader()->requireInt('maxLimit')));
     }
 
     /**

@@ -58,6 +58,8 @@ $scenario = $_GET['scenario'] ?? 'results_ok';
     ]]],
     'results_not_list' => [200, ['results' => 'none']],
     'results_item_not_object' => [200, ['results' => [['type' => 'docs', 'uri' => 'guide'], 'guide']]],
+    'results_item_list' => [200, ['results' => [['guide']]]],
+    'results_item_numeric_key' => [200, ['results' => [['id' => 'doc-1', 7 => 'extra']]]],
     // Results whose type or uri is not a text: SearchResultsFilter drops them.
     'results_bad_types' => [200, ['results' => [
         ['type' => 5, 'uri' => 'guide'],
@@ -74,6 +76,10 @@ $scenario = $_GET['scenario'] ?? 'results_ok';
     'chat_missing_field' => [200, ['unexpected' => true]],
     'chat_content_not_text' => [200, ['choices' => [['message' => ['content' => ['not', 'a', 'text']]]]]],
     'chat_choices_not_list' => [200, ['choices' => 'none']],
+    'chat_choice_list' => [200, ['choices' => [['answer']]]],
+    'chat_choice_numeric_key' => [200, ['choices' => [['message' => ['content' => 'answer'], 7 => 'extra']]]],
+    'chat_message_list' => [200, ['choices' => [['message' => ['answer']]]]],
+    'chat_message_numeric_key' => [200, ['choices' => [['message' => ['content' => 'answer', 7 => 'extra']]]]],
     'chat_error_detail' => [400, ['detail' => 'Model not found']],
     'chat_error_object' => [429, ['error' => ['message' => 'Rate limited', 'type' => 'rate_limit_error']]],
     'chat_error_string' => [400, ['error' => 'Bad request']],

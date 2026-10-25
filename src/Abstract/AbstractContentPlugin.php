@@ -64,7 +64,7 @@ abstract class AbstractContentPlugin extends AbstractPlugin implements ContentPl
      */
     public function getPathsToWatch(): array
     {
-        return [$this->options->requireString('path')];
+        return [$this->options->getReader()->requireString('path')];
     }
 
     /**

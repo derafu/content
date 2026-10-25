@@ -12,10 +12,11 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Academy;
 
+use Derafu\Array\ArrayReader;
 use Derafu\Content\Plugin\Academy\Contract\AcademyTestInterface;
-use Derafu\Support\ArrayReader;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Derafu\Value\ValueType;
 use JsonException;
 
 /**
@@ -93,17 +94,18 @@ class AcademyTest implements AcademyTestInterface
             ]);
         }
 
-        $reader = ArrayReader::from($data);
+        $reader = ArrayReader::fromArray($data);
+        $reader->getListOf('questions', ValueType::map());
 
         $questions = array_map(
             fn (ArrayReader $question) => self::questionFromReader($question),
-            $reader->readers('questions') ?? []
+            $reader->getReaders('questions') ?? []
         );
 
         return new self(
-            id: $reader->string('id'),
-            title: $reader->string('title', ''),
-            description: $reader->string('description'),
+            id: $reader->getString('id'),
+            title: $reader->getString('title', ''),
+            description: $reader->getString('description'),
             questions: $questions
         );
     }
@@ -116,15 +118,15 @@ class AcademyTest implements AcademyTestInterface
      */
     private static function questionFromReader(ArrayReader $question): AcademyTestQuestion
     {
-        $type = $question->string('type', 'multiple_choice');
+        $type = $question->getString('type', 'multiple_choice');
 
         return new AcademyTestQuestion(
-            id: $question->string('id', ''),
+            id: $question->getString('id', ''),
             type: $type,
-            text: $question->string('text', ''),
+            text: $question->getString('text', ''),
             options: self::optionsFromReader($type, $question),
-            allowMultiple: $question->bool('allow_multiple', false),
-            explanation: $question->string('explanation')
+            allowMultiple: $question->getBool('allow_multiple', false),
+            explanation: $question->getString('explanation')
         );
     }
 
@@ -143,7 +145,7 @@ class AcademyTest implements AcademyTestInterface
     private static function optionsFromReader(string $type, ArrayReader $question): array
     {
         if ($type === 'true_false') {
-            $answer = $question->bool('answer');
+            $answer = $question->getBool('answer');
 
             return [
                 new AcademyTestOption('true', 'True', $answer === true),
@@ -151,13 +153,15 @@ class AcademyTest implements AcademyTestInterface
             ];
         }
 
+        $question->getListOf('options', ValueType::map());
+
         return array_map(
             fn (ArrayReader $option) => new AcademyTestOption(
-                $option->string('id', ''),
-                $option->string('text', ''),
-                $option->bool('is_correct', false)
+                $option->getString('id', ''),
+                $option->getString('text', ''),
+                $option->getBool('is_correct', false)
             ),
-            $question->readers('options') ?? []
+            $question->getReaders('options') ?? []
         );
     }
 

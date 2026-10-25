@@ -26,6 +26,7 @@
     },
     "require": {
         "php": "^8.5",
+        "derafu/array": "dev-main",
         "derafu/renderer": "dev-main",
         "derafu/routing": "dev-main",
         "derafu/support": "dev-main",
@@ -33,6 +34,7 @@
         "derafu/http": "dev-main",
         "derafu/translation": "dev-main",
         "derafu/twig-components": "dev-main",
+        "derafu/value": "dev-main",
         "psr/cache": "^3.0",
         "psr/http-client": "^1.0",
         "symfony/cache": "^8.1"

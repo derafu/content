@@ -12,13 +12,13 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Abstract;
 
+use Derafu\Array\ArrayReader;
 use Derafu\Content\Contract\ContentAuthorInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\Contract\ContentLoaderInterface;
 use Derafu\Content\Contract\ContentRegistryInterface;
 use Derafu\Content\Contract\ContentTagInterface;
 use Derafu\Content\Exception\ContentNotFoundException;
-use Derafu\Support\ArrayReader;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Psr\Cache\CacheItemPoolInterface;
 
@@ -215,10 +215,10 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         });
 
         // Limit items.
-        $reader = ArrayReader::from($filters, 'filters');
-        $limit = $reader->int('limit');
+        $reader = ArrayReader::fromArray($filters, 'filters');
+        $limit = $reader->getInt('limit');
         if ($limit !== null) {
-            $page = $reader->int('page', 1);
+            $page = $reader->getInt('page', 1);
             $offset = ($page - 1) * $limit;
 
             return array_slice($matched, $offset, $limit);
@@ -375,9 +375,9 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
             return false;
         }
 
-        $filters = ArrayReader::from($filters, 'filters');
-        $id = $filters->string('id');
-        $uri = $filters->string('uri');
+        $filters = ArrayReader::fromArray($filters, 'filters');
+        $id = $filters->getString('id');
+        $uri = $filters->getString('uri');
 
         // Filter by unlisted.
         if (!$id && !$uri) {
@@ -387,12 +387,12 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         }
 
         // Filter by type.
-        if (($type = $filters->string('type')) && $item->type() !== $type) {
+        if (($type = $filters->getString('type')) && $item->type() !== $type) {
             return false;
         }
 
         // Filter by category.
-        if (($category = $filters->string('category')) && $item->category() !== $category) {
+        if (($category = $filters->getString('category')) && $item->category() !== $category) {
             return false;
         }
 
@@ -407,12 +407,12 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         }
 
         // Filter by slug.
-        if (($slug = $filters->string('slug')) && $item->slug() !== $slug) {
+        if (($slug = $filters->getString('slug')) && $item->slug() !== $slug) {
             return false;
         }
 
         // Filter by text (title, description or content data).
-        if ($search = $filters->string('search')) {
+        if ($search = $filters->getString('search')) {
             $search = mb_strtolower($search);
             $text = mb_strtolower($item->title() . ' ' . $item->description() . ' ' . $item->data());
             if (mb_strpos($text, $search) === false) {
@@ -421,7 +421,7 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         }
 
         // Filter by author.
-        if ($author = $filters->string('author')) {
+        if ($author = $filters->getString('author')) {
             $slugs = array_map(fn (ContentAuthorInterface $a) => $a->slug(), $item->authors());
             if (!in_array($author, $slugs, true)) {
                 return false;
@@ -429,15 +429,15 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         }
 
         // Filter by tag.
-        if ($tag = $filters->string('tag')) {
+        if ($tag = $filters->getString('tag')) {
             if (!in_array($tag, array_map(fn (ContentTagInterface $tag) => $tag->slug(), $item->tags()), true)) {
                 return false;
             }
         }
 
         // Filter by date.
-        $year = $filters->int('year');
-        $month = $filters->int('month');
+        $year = $filters->getInt('year');
+        $month = $filters->getInt('month');
         if ($year && $month) {
             if ($item->date()->format('Y-m') !== sprintf('%04d-%02d', $year, $month)) {
                 return false;
@@ -445,13 +445,13 @@ abstract class AbstractContentRegistry implements ContentRegistryInterface
         }
 
         // Filter by indexable.
-        $indexable = $filters->bool('indexable');
+        $indexable = $filters->getBool('indexable');
         if ($indexable !== null && $item->indexable() !== $indexable) {
             return false;
         }
 
         // Filter by searchable.
-        $searchable = $filters->bool('searchable');
+        $searchable = $filters->getBool('searchable');
         if ($searchable !== null && $item->searchable() !== $searchable) {
             return false;
         }

@@ -14,6 +14,7 @@ namespace Derafu\Content\Abstract;
 
 use DateTime;
 use DateTimeInterface;
+use Derafu\Array\ArrayReader;
 use Derafu\Config\Options;
 use Derafu\Content\ContentAttachment;
 use Derafu\Content\ContentAuthor;
@@ -27,12 +28,11 @@ use Derafu\Content\Contract\ContentHtmlTagsInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\RemoteContentFetcher;
 use Derafu\Routing\Contract\RouterInterface;
-use Derafu\Support\ArrayReader;
-use Derafu\Support\ArrayType;
 use Derafu\Support\Str;
 use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Derafu\Value\ValueType;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -437,7 +437,7 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     public function __unserialize(array $data): void
     {
-        $path = ArrayReader::from($data, 'content snapshot')->require('info', ArrayType::string());
+        $path = ArrayReader::fromArray($data, 'content snapshot')->require('info', ValueType::string());
         unset($data['info']);
 
         $this->info = new ContentSplFileInfo($path);
@@ -554,7 +554,7 @@ abstract class AbstractContentItem implements ContentItemInterface
             // The metadata is loaded the first time that it is asked.
             $this->metadata();
 
-            $this->frontmatter = ArrayReader::from($this->metadata->all(), $this->source());
+            $this->frontmatter = ArrayReader::fromArray($this->metadata->all(), $this->source());
         }
 
         return $this->frontmatter;
@@ -773,7 +773,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function has_twig(): bool
     {
         if (!isset($this->has_twig)) {
-            $this->has_twig = $this->frontmatter()->bool('has_twig')
+            $this->has_twig = $this->frontmatter()->getBool('has_twig')
                 // Supported by default Twig components.
                 ?? str_contains($this->data(), '<twig:')
             ;
@@ -820,7 +820,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function slug(): string
     {
         if (!isset($this->slug)) {
-            $this->slug = $this->frontmatter()->string('slug') ?? Str::slug($this->name());
+            $this->slug = $this->frontmatter()->getString('slug') ?? Str::slug($this->name());
         }
 
         return $this->slug;
@@ -855,7 +855,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function title(): string
     {
         if (!isset($this->title)) {
-            $this->title = $this->frontmatter()->string('title') ?? $this->name();
+            $this->title = $this->frontmatter()->getString('title') ?? $this->name();
         }
 
         return $this->title;
@@ -867,8 +867,8 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function description(): string
     {
         if (!isset($this->description)) {
-            $this->description = $this->frontmatter()->string('description')
-                ?? $this->frontmatter()->string('summary') // TODO: Remove this in the future.
+            $this->description = $this->frontmatter()->getString('description')
+                ?? $this->frontmatter()->getString('summary') // TODO: Remove this in the future.
                 ?? $this->preview()
             ;
         }
@@ -882,7 +882,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function keywords(): array
     {
         if (!isset($this->keywords)) {
-            $this->keywords = $this->frontmatter()->stringList('keywords') ?? [];
+            $this->keywords = $this->frontmatter()->getStringList('keywords') ?? [];
         }
 
         return $this->keywords;
@@ -949,7 +949,7 @@ abstract class AbstractContentItem implements ContentItemInterface
             // A text, or `false` for a content that has no image.
             $this->image = $this->frontmatter()->get(
                 'image',
-                ArrayType::oneOf(ArrayType::string(), ArrayType::literal(false)),
+                ValueType::oneOf(ValueType::string(), ValueType::literal(false)),
                 false
             );
         }
@@ -966,7 +966,7 @@ abstract class AbstractContentItem implements ContentItemInterface
             // A text, or `false` for a content that has no video.
             $this->video = $this->frontmatter()->get(
                 'video',
-                ArrayType::oneOf(ArrayType::string(), ArrayType::literal(false)),
+                ValueType::oneOf(ValueType::string(), ValueType::literal(false)),
                 false
             );
 
@@ -993,7 +993,7 @@ abstract class AbstractContentItem implements ContentItemInterface
         if (!isset($this->tags)) {
             $this->tags = array_map(
                 fn (string $tag) => new ContentTag($tag),
-                $this->frontmatter()->stringList('tags') ?? []
+                $this->frontmatter()->getStringList('tags') ?? []
             );
         }
 
@@ -1011,7 +1011,7 @@ abstract class AbstractContentItem implements ContentItemInterface
 
             // A name, or a list whose items are a name, an object with `name`
             // and `slug`, or a list of the name and the slug.
-            $type = ArrayType::oneOf(ArrayType::string(), ArrayType::list());
+            $type = ValueType::oneOf(ValueType::string(), ValueType::list());
             $authors = $reader->get('authors', $type)
                 ?? $reader->get('author', $type) // TODO: Remove this in the future.
                 ?? []
@@ -1025,13 +1025,9 @@ abstract class AbstractContentItem implements ContentItemInterface
                         $this->authors[] = new ContentAuthor($author);
                     } else {
                         $path = 'authors.' . $index;
-                        $entry = new ArrayReader(
-                            ArrayType::array()->parse($author, $path, $this->source()),
-                            $path,
-                            $this->source()
-                        );
-                        $name = $entry->string('name') ?? $entry->require('0', ArrayType::string());
-                        $slug = $entry->string('slug') ?? $entry->string('1');
+                        $entry = ArrayReader::fromValue($author, $this->source(), $path);
+                        $name = $entry->getString('name') ?? $entry->require('0', ValueType::string());
+                        $slug = $entry->getString('slug') ?? $entry->getString('1');
                         $this->authors[] = new ContentAuthor($name, $slug);
                     }
                 }
@@ -1050,7 +1046,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->time)) {
             // Get the time from the metadata (accurate).
-            $this->time = $this->frontmatter()->int('time', -1);
+            $this->time = $this->frontmatter()->getInt('time', -1);
 
             // If the time is not set, calculate it from the content (rough).
             if ($this->time === -1) {
@@ -1096,7 +1092,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function draft(): bool
     {
         if (!isset($this->draft)) {
-            $this->draft = $this->frontmatter()->bool('draft', false);
+            $this->draft = $this->frontmatter()->getBool('draft', false);
         }
 
         return $this->draft;
@@ -1108,7 +1104,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function unlisted(): bool
     {
         if (!isset($this->unlisted)) {
-            $this->unlisted = $this->frontmatter()->bool('unlisted', false);
+            $this->unlisted = $this->frontmatter()->getBool('unlisted', false);
         }
 
         return $this->unlisted;
@@ -1121,8 +1117,8 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->date)) {
             $date =
-                $this->frontmatter()->dateTime('date')
-                ?? $this->frontmatter()->dateTime('created') // TODO: Remove this in the future.
+                $this->frontmatter()->getDateTime('date')
+                ?? $this->frontmatter()->getDateTime('created') // TODO: Remove this in the future.
             ;
 
             if ($date === null) {
@@ -1144,7 +1140,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function last_update(): DateTimeInterface
     {
         if (!isset($this->last_update)) {
-            $last_update = $this->frontmatter()->dateTime('last_update')
+            $last_update = $this->frontmatter()->getDateTime('last_update')
                 ?? new DateTime('@' . $this->info()->getMTime())
             ;
 
@@ -1164,7 +1160,7 @@ abstract class AbstractContentItem implements ContentItemInterface
             // since its file was last modified, or the date since it is.
             $deprecated = $this->frontmatter()->get(
                 'deprecated',
-                ArrayType::oneOf(ArrayType::bool(), ArrayType::dateTime()),
+                ValueType::oneOf(ValueType::bool(), ValueType::dateTime()),
                 false
             );
 
@@ -1194,7 +1190,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function indexable(): bool
     {
         if (!isset($this->indexable)) {
-            $indexable = $this->frontmatter()->bool('indexable');
+            $indexable = $this->frontmatter()->getBool('indexable');
 
             if ($indexable === null) {
                 $this->indexable = !($this->draft() || $this->unlisted() || $this->deprecated());
@@ -1215,7 +1211,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function searchable(): bool
     {
         if (!isset($this->searchable)) {
-            $searchable = $this->frontmatter()->bool('searchable');
+            $searchable = $this->frontmatter()->getBool('searchable');
 
             if ($searchable === null) {
                 $this->searchable = !($this->draft() || $this->unlisted() || $this->deprecated());
@@ -1246,7 +1242,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->pagination_label)) {
             $this->pagination_label =
-                $this->frontmatter()->string('pagination_label')
+                $this->frontmatter()->getString('pagination_label')
                 ?? $this->title()
             ;
         }
@@ -1260,7 +1256,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function sidebar_label(): string
     {
         if (!isset($this->sidebar_label)) {
-            $this->sidebar_label = $this->frontmatter()->string('sidebar_label', $this->title());
+            $this->sidebar_label = $this->frontmatter()->getString('sidebar_label', $this->title());
         }
 
         return $this->sidebar_label;
@@ -1273,8 +1269,8 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->sidebar_position)) {
             $this->sidebar_position =
-                $this->frontmatter()->int('sidebar_position')
-                ?? $this->frontmatter()->int('order') // TODO: Remove this in the future.
+                $this->frontmatter()->getInt('sidebar_position')
+                ?? $this->frontmatter()->getInt('order') // TODO: Remove this in the future.
                 ?? -1
             ;
 
@@ -1295,7 +1291,7 @@ abstract class AbstractContentItem implements ContentItemInterface
         if (!isset($this->sidebar_class_name)) {
             $this->sidebar_class_name = $this->frontmatter()->get(
                 'sidebar_class_name',
-                ArrayType::oneOf(ArrayType::string(), ArrayType::literal(false)),
+                ValueType::oneOf(ValueType::string(), ValueType::literal(false)),
                 false
             );
         }
@@ -1312,7 +1308,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     {
         if (!isset($this->sidebar_custom_props)) {
             $this->sidebar_custom_props =
-                $this->frontmatter()->map('sidebar_custom_props')
+                $this->frontmatter()->getMap('sidebar_custom_props')
                 ?? []
             ;
         }
@@ -1326,7 +1322,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function hide_title(): bool
     {
         if (!isset($this->hide_title)) {
-            $this->hide_title = $this->frontmatter()->bool('hide_title', false);
+            $this->hide_title = $this->frontmatter()->getBool('hide_title', false);
         }
 
         return $this->hide_title;
@@ -1338,7 +1334,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function hide_table_of_contents(): bool
     {
         if (!isset($this->hide_table_of_contents)) {
-            $this->hide_table_of_contents = $this->frontmatter()->bool('hide_table_of_contents', false);
+            $this->hide_table_of_contents = $this->frontmatter()->getBool('hide_table_of_contents', false);
         }
 
         return $this->hide_table_of_contents;
@@ -1350,7 +1346,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function toc_min_heading_level(): int
     {
         if (!isset($this->toc_min_heading_level)) {
-            $this->toc_min_heading_level = min(6, max(2, $this->frontmatter()->int('toc_min_heading_level', 2)));
+            $this->toc_min_heading_level = min(6, max(2, $this->frontmatter()->getInt('toc_min_heading_level', 2)));
         }
 
         return $this->toc_min_heading_level;
@@ -1362,7 +1358,7 @@ abstract class AbstractContentItem implements ContentItemInterface
     public function toc_max_heading_level(): int
     {
         if (!isset($this->toc_max_heading_level)) {
-            $this->toc_max_heading_level = min(6, max(2, $this->frontmatter()->int('toc_max_heading_level', 6)));
+            $this->toc_max_heading_level = min(6, max(2, $this->frontmatter()->getInt('toc_max_heading_level', 6)));
         }
 
         return $this->toc_max_heading_level;
@@ -1530,7 +1526,7 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     protected function resolveReferenceContent(string $metadataKey): ?string
     {
-        $value = $this->frontmatter()->string($metadataKey);
+        $value = $this->frontmatter()->getString($metadataKey);
 
         if ($value === null) {
             return null;

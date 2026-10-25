@@ -107,7 +107,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
      */
     public function serverName(): string
     {
-        return $this->options->requireString('server_name');
+        return $this->options->getReader()->requireString('server_name');
     }
 
     /**
@@ -118,7 +118,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
      */
     public function serverVersion(): string
     {
-        return $this->options->requireString('server_version');
+        return $this->options->getReader()->requireString('server_version');
     }
 
     /**
@@ -128,7 +128,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
      */
     public function sessionPath(): string
     {
-        return $this->options->getString('session_path')
+        return $this->options->getReader()->getString('session_path')
             ?? sys_get_temp_dir() . '/derafu-content-mcp-sessions'
         ;
     }
@@ -140,7 +140,7 @@ class McpPlugin extends AbstractPlugin implements PluginInterface
      */
     public function sessionTtl(): int
     {
-        return $this->options->requireInt('session_ttl');
+        return $this->options->getReader()->requireInt('session_ttl');
     }
 
     /**

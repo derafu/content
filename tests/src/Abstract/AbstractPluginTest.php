@@ -49,7 +49,7 @@ final class AbstractPluginTest extends TestCase
 
         $this->assertSame('docs', $plugin->name());
         $this->assertSame($context, $plugin->context());
-        $this->assertSame('manual', $plugin->options()->requireString('path'));
+        $this->assertSame('manual', $plugin->options()->getReader()->requireString('path'));
         $this->assertSame('handbook', (new DocsPlugin($context, ['name' => 'handbook']))->name());
     }
 

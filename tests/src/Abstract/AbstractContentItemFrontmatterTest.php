@@ -45,6 +45,15 @@ final class AbstractContentItemFrontmatterTest extends TestCase
         return new DocsDoc(dirname(__DIR__, 2) . '/fixtures/frontmatter/' . $name . '.md');
     }
 
+    public function testSidebarPropertiesKeepLiteralKeysAndNestedArrayValues(): void
+    {
+        $this->assertSame([
+            'icon' => 'book',
+            'theme.icon' => 'guide',
+            'badges' => [7 => 'featured', 2 => null],
+        ], $this->item('sidebar-string-keys')->sidebar_custom_props());
+    }
+
     public function testEveryValueOfTheFrontmatterIsRead(): void
     {
         $item = $this->item('valid-all');
@@ -194,7 +203,8 @@ final class AbstractContentItemFrontmatterTest extends TestCase
             'a deprecated that is a list' => ['invalid-deprecated', 'deprecatedAt', $message('invalid-deprecated', 'deprecated', 'bool|date', 'array')],
             'a position that is a text' => ['invalid-sidebar-position', 'sidebar_position', $message('invalid-sidebar-position', 'sidebar_position', 'int', 'string')],
             'a sidebar class that is true' => ['invalid-sidebar-class-name', 'sidebar_class_name', $message('invalid-sidebar-class-name', 'sidebar_class_name', 'string|false', 'bool')],
-            'custom props that are a text' => ['invalid-sidebar-custom-props', 'sidebar_custom_props', $message('invalid-sidebar-custom-props', 'sidebar_custom_props', 'object', 'string')],
+            'custom props that are a text' => ['invalid-sidebar-custom-props', 'sidebar_custom_props', $message('invalid-sidebar-custom-props', 'sidebar_custom_props', 'map', 'string')],
+            'custom props with a numeric key' => ['invalid-sidebar-numeric-key', 'sidebar_custom_props', $message('invalid-sidebar-numeric-key', 'sidebar_custom_props', 'map', 'array')],
             'authors that are a number' => ['invalid-authors-type', 'authors', $message('invalid-authors-type', 'authors', 'string|list', 'int')],
             'an author that is a number' => ['invalid-author-item', 'authors', $message('invalid-author-item', 'authors.0', 'array', 'int')],
             'an author without name' => ['invalid-authors', 'authors', sprintf('The key "authors.0.0" of docs/%s is required.', 'invalid-authors')],

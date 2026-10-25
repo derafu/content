@@ -93,9 +93,9 @@ class PagesPlugin extends AbstractContentPlugin implements ContentPluginInterfac
     ): ContentBagInterface {
         $this->registry = new PagesRegistry(
             $contentLoader,
-            $this->options->requireString('path'),
-            $this->options->requireList('include', 'string'),
-            $this->options->requireList('exclude', 'string'),
+            $this->options->getReader()->requireString('path'),
+            $this->options->getReader()->requireStringList('include'),
+            $this->options->getReader()->requireStringList('exclude'),
             $this->context->cache()
         );
 

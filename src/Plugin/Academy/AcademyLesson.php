@@ -134,7 +134,7 @@ class AcademyLesson extends AbstractContentItem implements AcademyLessonInterfac
      */
     private function resolveTestAttachment(): ?ContentAttachmentInterface
     {
-        $test = $this->frontmatter()->string('test');
+        $test = $this->frontmatter()->getString('test');
 
         if ($test === null) {
             return null;

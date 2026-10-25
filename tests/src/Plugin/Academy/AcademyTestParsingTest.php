@@ -100,11 +100,19 @@ final class AcademyTestParsingTest extends TestCase
             ],
             'questions that are not a list' => [
                 '{"questions": "q1"}',
-                'The key "questions" must be of type list<object>, string given.',
+                'The key "questions" must be of type list<map>, string given.',
             ],
             'a question that is not an object' => [
                 '{"questions": [{"id": "q1"}, "q2"]}',
-                'The key "questions.1" must be of type object, string given.',
+                'The key "questions.1" must be of type map, string given.',
+            ],
+            'a question that is a positional list' => [
+                '{"questions": [["question text"]]}',
+                'The key "questions.0" must be of type map, array given.',
+            ],
+            'a question with a numeric field name' => [
+                '{"questions": [{"id": "q1", "7": "extra"}]}',
+                'The key "questions.0" must be of type map, array given.',
             ],
             'a question id that is not a text' => [
                 '{"questions": [{"id": 1}]}',
@@ -132,11 +140,19 @@ final class AcademyTestParsingTest extends TestCase
             ],
             'options that are not a list' => [
                 '{"questions": [{"options": "a"}]}',
-                'The key "questions.0.options" must be of type list<object>, string given.',
+                'The key "questions.0.options" must be of type list<map>, string given.',
             ],
             'an option that is not an object' => [
                 '{"questions": [{"options": [{"id": "a"}, "b"]}]}',
-                'The key "questions.0.options.1" must be of type object, string given.',
+                'The key "questions.0.options.1" must be of type map, string given.',
+            ],
+            'an option that is a positional list' => [
+                '{"questions": [{"options": [["answer text"]]}]}',
+                'The key "questions.0.options.0" must be of type map, array given.',
+            ],
+            'an option with a numeric field name' => [
+                '{"questions": [{"options": [{"id": "a", "7": "extra"}]}]}',
+                'The key "questions.0.options.0" must be of type map, array given.',
             ],
             'an option id that is not a text' => [
                 '{"questions": [{"options": [{"id": 1}]}]}',

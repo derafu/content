@@ -177,7 +177,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function title(): string
     {
-        return $this->config->requireString('title');
+        return $this->config->getReader()->requireString('title');
     }
 
     /**
@@ -185,7 +185,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function url(): string
     {
-        return $this->config->requireString('url');
+        return $this->config->getReader()->requireString('url');
     }
 
     /**
@@ -193,7 +193,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function baseUrl(): string
     {
-        return $this->config->getString('baseUrl') ?? '';
+        return $this->config->getReader()->getString('baseUrl') ?? '';
     }
 
     /**
@@ -201,7 +201,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function favicon(): string|null
     {
-        return $this->config->getString('favicon');
+        return $this->config->getReader()->getString('favicon');
     }
 
     /**
@@ -209,7 +209,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function titleDelimiter(): string
     {
-        return $this->config->requireString('titleDelimiter');
+        return $this->config->getReader()->requireString('titleDelimiter');
     }
 
     /**
@@ -217,7 +217,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function tagline(): string|null
     {
-        return $this->config->getString('tagline');
+        return $this->config->getReader()->getString('tagline');
     }
 
     /**
@@ -225,7 +225,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function uriFormat(): string
     {
-        return $this->config->requireString('uriFormat');
+        return $this->config->getReader()->requireString('uriFormat');
     }
 
     /**
@@ -233,7 +233,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function noIndex(): bool
     {
-        return $this->config->requireBool('noIndex');
+        return $this->config->getReader()->requireBool('noIndex');
     }
 
     /**
@@ -241,7 +241,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function onBrokenLinks(): string
     {
-        return $this->config->requireString('onBrokenLinks');
+        return $this->config->getReader()->requireString('onBrokenLinks');
     }
 
     /**
@@ -279,7 +279,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function cacheEnabled(): bool
     {
-        return $this->config->requireBool('cache.enabled');
+        return $this->config->getReader()->requireBool('cache.enabled');
     }
 
     /**

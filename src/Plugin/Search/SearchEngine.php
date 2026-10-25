@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Search;
 
+use Derafu\Array\ArrayReader;
 use Derafu\Content\Plugin\Search\Exception\SearchUpstreamException;
-use Derafu\Support\ArrayReader;
-use Derafu\Support\ArrayType;
+use Derafu\Value\ValueType;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
@@ -121,9 +121,9 @@ class SearchEngine
         }
 
         try {
-            return ArrayReader::from($decodedResponse)->require(
+            return ArrayReader::fromArray($decodedResponse)->require(
                 'results',
-                ArrayType::listOf(ArrayType::map())
+                ValueType::listOf(ValueType::map())
             );
         } catch (InvalidArgumentException $e) {
             throw new SearchUpstreamException([

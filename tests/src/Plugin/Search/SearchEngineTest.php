@@ -55,6 +55,23 @@ final class SearchEngineTest extends TestCase
         $this->assertSame('doc-1', $results[0]['id']);
     }
 
+    /** @return iterable<string, array{string}> */
+    public static function invalidResultMaps(): iterable
+    {
+        yield 'positional list' => ['results_item_list'];
+        yield 'numeric field name' => ['results_item_numeric_key'];
+    }
+
+    #[DataProvider('invalidResultMaps')]
+    public function testResultRecordsMustHaveStringKeys(string $scenario): void
+    {
+        $engine = new SearchEngine(self::$server->url() . '/?scenario=' . $scenario . '&text=%s');
+        $this->expectException(SearchUpstreamException::class);
+        $this->expectExceptionMessage('The key "results.0" must be of type map, array given.');
+
+        $engine->query('guide');
+    }
+
     public function testCollectionAndBaseUrlAreInterpolatedIntoTheUrlTemplate(): void
     {
         $engine = new SearchEngine(

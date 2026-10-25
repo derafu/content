@@ -66,7 +66,7 @@ abstract class AbstractPlugin implements PluginInterface
      */
     public function name(): string
     {
-        return $this->options->requireString('name');
+        return $this->options->getReader()->requireString('name');
     }
 
     /**

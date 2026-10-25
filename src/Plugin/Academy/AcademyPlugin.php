@@ -131,9 +131,9 @@ class AcademyPlugin extends AbstractContentPlugin implements ContentPluginInterf
         // Create the registry.
         $this->registry = new AcademyRegistry(
             $contentLoader,
-            $this->options->requireString('path'),
-            $this->options->requireList('include', 'string'),
-            $this->options->requireList('exclude', 'string'),
+            $this->options->getReader()->requireString('path'),
+            $this->options->getReader()->requireStringList('include'),
+            $this->options->getReader()->requireStringList('exclude'),
             $this->context->cache()
         );
 

@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace Derafu\Content\Plugin\Search;
 
+use Derafu\Array\ArrayReader;
 use Derafu\Content\Plugin\Search\Contract\LlmClientInterface;
 use Derafu\Content\Plugin\Search\Exception\SearchUpstreamException;
-use Derafu\Support\ArrayReader;
-use Derafu\Support\ArrayType;
+use Derafu\Value\ValueType;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
@@ -131,8 +131,11 @@ class OpenAiCompatibleLlmClient implements LlmClientInterface
         $content = null;
         if (is_array($decodedResponse)) {
             try {
-                $choice = ArrayReader::from($decodedResponse)->readers('choices')[0] ?? null;
-                $content = $choice?->reader('message')?->get('content', ArrayType::mixed());
+                $reader = ArrayReader::fromArray($decodedResponse);
+                $reader->getListOf('choices', ValueType::map());
+                $choice = $reader->getReaders('choices')[0] ?? null;
+                $choice?->getMap('message');
+                $content = $choice?->getReader('message')?->get('content', ValueType::mixed());
             } catch (InvalidArgumentException $e) {
                 throw new SearchUpstreamException([
                     'The LLM backend at "{url}" returned an invalid response: {error}',

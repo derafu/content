@@ -109,9 +109,9 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
     {
         if (!isset($this->engine)) {
             $this->engine = new SearchEngine(
-                $this->options->requireString('url'),
-                $this->options->getString('collection'),
-                $this->options->getString('base_url')
+                $this->options->getReader()->requireString('url'),
+                $this->options->getReader()->getString('collection'),
+                $this->options->getReader()->getString('base_url')
             );
         }
 
@@ -135,10 +135,10 @@ class SearchPlugin extends AbstractPlugin implements PluginInterface
             }
 
             $this->llm = new OpenAiCompatibleLlmClient(
-                $this->options->requireString('llm_url'),
-                $this->options->requireString('llm_model'),
-                $this->options->getString('llm_api_key'),
-                $this->options->getString('llm_completions_path') ?? '/v1/chat/completions'
+                $this->options->getReader()->requireString('llm_url'),
+                $this->options->getReader()->requireString('llm_model'),
+                $this->options->getReader()->getString('llm_api_key'),
+                $this->options->getReader()->getString('llm_completions_path') ?? '/v1/chat/completions'
             );
         }
 
