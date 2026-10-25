@@ -95,11 +95,10 @@ class AcademyTest implements AcademyTestInterface
         }
 
         $reader = ArrayReader::fromArray($data);
-        $reader->getListOf('questions', ValueType::map());
 
         $questions = array_map(
             fn (ArrayReader $question) => self::questionFromReader($question),
-            $reader->getReaders('questions') ?? []
+            $reader->getReaders('questions', ValueType::map()) ?? []
         );
 
         return new self(
@@ -153,15 +152,13 @@ class AcademyTest implements AcademyTestInterface
             ];
         }
 
-        $question->getListOf('options', ValueType::map());
-
         return array_map(
             fn (ArrayReader $option) => new AcademyTestOption(
                 $option->getString('id', ''),
                 $option->getString('text', ''),
                 $option->getBool('is_correct', false)
             ),
-            $question->getReaders('options') ?? []
+            $question->getReaders('options', ValueType::map()) ?? []
         );
     }
 

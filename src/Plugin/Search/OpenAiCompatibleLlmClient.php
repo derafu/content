@@ -132,10 +132,8 @@ class OpenAiCompatibleLlmClient implements LlmClientInterface
         if (is_array($decodedResponse)) {
             try {
                 $reader = ArrayReader::fromArray($decodedResponse);
-                $reader->getListOf('choices', ValueType::map());
-                $choice = $reader->getReaders('choices')[0] ?? null;
-                $choice?->getMap('message');
-                $content = $choice?->getReader('message')?->get('content', ValueType::mixed());
+                $choice = $reader->getReaders('choices', ValueType::map())[0] ?? null;
+                $content = $choice?->getReader('message', ValueType::map())?->get('content', ValueType::mixed());
             } catch (InvalidArgumentException $e) {
                 throw new SearchUpstreamException([
                     'The LLM backend at "{url}" returned an invalid response: {error}',
