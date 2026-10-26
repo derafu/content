@@ -86,6 +86,7 @@ final class PagesControllerTest extends TestCase
         $this->assertIsArray($result);
         $this->assertIsArray($result['data']);
         $this->assertSame('about', $result['data']['uri']);
+        $this->assertSame(['self' => ['href' => '/pages/about']], $result['data']['_links']);
         $this->assertSame('About us', $result['data']['title']);
         $this->assertIsString($result['data']['data']);
         $this->assertStringContainsString('Test page', $result['data']['data']);

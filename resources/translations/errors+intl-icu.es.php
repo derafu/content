@@ -11,6 +11,9 @@ declare(strict_types=1);
  */
 
 return [
+    'The parent of page "{page}" must implement {interface}; {type} given.' =>
+        'El padre de la página "{page}" debe implementar {interface}; se recibió {type}.',
+
     'Content item with URI "{uri}" (slug: {slug}) is not allowed.' =>
         'El elemento de contenido con URI "{uri}" (slug: {slug}) no está permitido.',
     'Content item with URI "{uri}" not found.' =>

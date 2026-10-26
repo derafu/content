@@ -14,7 +14,7 @@ namespace Derafu\Content\Plugin\Pages;
 
 use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\Plugin\Pages\Contract\PagesPageInterface;
-use Derafu\Routing\Contract\UrlGeneratorInterface;
+use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
 
 /**
  * Pages page.
@@ -39,28 +39,31 @@ class PagesPage extends AbstractContentItem implements PagesPageInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @throws LogicException If the assigned parent is not a page.
      */
     public function parent(): ?PagesPageInterface
     {
-        return $this->parent ?? null;
+        $parent = parent::parent();
+        if ($parent !== null && !$parent instanceof PagesPageInterface) {
+            throw new LogicException([
+                'The parent of page "{page}" must implement {interface}; {type} given.',
+                'page' => $this->name(),
+                'interface' => PagesPageInterface::class,
+                'type' => get_debug_type($parent),
+            ]);
+        }
+
+        return $parent;
     }
 
     /**
      * {@inheritDoc}
      *
-     * The router is not used on purpose. The pages of a website are served
-     * from the root by the file system parser, which gives them no name, so
-     * the router has no route that builds `/{uri}`: the route named
-     * `pages_page` is another path (`/pages/{uri}`) and using it would change
-     * the links that are delivered.
-     *
-     * @return array<string, array{href: string}>
+     * Pages have no listing route.
      */
-    public function links(UrlGeneratorInterface $router): array
+    protected function collectionRoute(): ?string
     {
-        return [
-            'self' => ['href' => '/' . $this->uri()],
-            'collection' => ['href' => ''],
-        ];
+        return null;
     }
 }

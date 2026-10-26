@@ -12,17 +12,21 @@ declare(strict_types=1);
 
 namespace Derafu\TestsContent\Plugin\Pages;
 
+use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
 use Derafu\Content\ContentLoader;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\Exception\ContentNotFoundException;
+use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Pages\PagesPage;
 use Derafu\Content\Plugin\Pages\PagesPlugin;
 use Derafu\Content\Plugin\Pages\PagesRegistry;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RouterFixture;
+use Derafu\Translation\Contract\TranslatableInterface;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +40,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(PagesPlugin::class)]
 #[CoversClass(PagesRegistry::class)]
 #[CoversClass(PagesPage::class)]
+#[UsesClass(AbstractContentItem::class)]
+#[UsesClass(DocsDoc::class)]
 #[UsesClass(ContentBag::class)]
 #[UsesClass(ContentConfig::class)]
 #[UsesClass(ContentContext::class)]
@@ -116,13 +122,38 @@ final class PagesRegistryTest extends TestCase
         $this->assertSame('about', $registry->next('welcome')?->uri());
     }
 
-    public function testThePagesOfAWebsiteAreLinkedFromTheRoot(): void
+    public function testPagesLinkToTheirConfiguredRouteWithoutACollection(): void
     {
         $page = $this->plugin->registry()->get('about');
 
         $this->assertSame(
-            ['self' => ['href' => '/about'], 'collection' => ['href' => '']],
+            ['self' => ['href' => '/pages/about']],
             $page->links(RouterFixture::create())
         );
+    }
+
+    public function testPagesReturnTheirAssignedParent(): void
+    {
+        $parent = new PagesPage(ContentFixtures::contentPath('pages-routing/about.md'));
+        $child = new PagesPage(ContentFixtures::contentPath('pages-routing/about/team.md'));
+        $parent->addChild($child);
+
+        $this->assertNull($parent->parent());
+        $this->assertSame($parent, $child->parent());
+        $this->assertSame('about/team café', $child->uri());
+    }
+
+    public function testAPageReportsAnInvalidParentWithATranslatableException(): void
+    {
+        $page = new PagesPage(ContentFixtures::contentPath('pages/about.md'));
+        $page->setParent(new DocsDoc(ContentFixtures::contentPath('docs/guide.md')));
+
+        try {
+            $page->parent();
+            $this->fail('A page must not silently lose an incompatible parent.');
+        } catch (LogicException $exception) {
+            $this->assertInstanceOf(TranslatableInterface::class, $exception);
+            $this->assertStringContainsString(DocsDoc::class, $exception->getMessage());
+        }
     }
 }

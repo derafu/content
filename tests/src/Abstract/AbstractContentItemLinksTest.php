@@ -40,8 +40,10 @@ use Derafu\Content\Plugin\Pages\PagesPage;
 use Derafu\Content\Plugin\Pages\PagesPlugin;
 use Derafu\Content\Plugin\Pages\PagesRegistry;
 use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Exception\UrlGeneratorException;
 use Derafu\Routing\RouteCollectionFactory;
 use Derafu\Routing\UrlGenerator;
+use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -238,19 +240,15 @@ final class AbstractContentItemLinksTest extends TestCase
         $this->assertSame($expected, $item($this)->links($this->routerWithOtherPaths()));
     }
 
-    /**
-     * The pages of a website are served from the root by the file system
-     * parser, which gives them no name: the router can not build their URL, so
-     * their links keep being the path of the page itself.
-     */
-    public function testThePagesKeepTheirLinksWhateverTheRouter(): void
+    public function testPagesUseTheConfiguredRouteAndHaveNoCollection(): void
     {
-        $expected = ['self' => ['href' => '/about'], 'collection' => ['href' => '']];
-
         $page = $this->item('pages', 'about');
+        $custom = RouterFixture::create([
+            'pages_page' => ['path' => '/info/{page:.+}', 'handler' => 'PageController@show'],
+        ], includeContentRoutes: false);
 
-        $this->assertSame($expected, $page->links(RouterFixture::create()));
-        $this->assertSame($expected, $page->links($this->routerWithOtherPaths()));
+        $this->assertSame(['self' => ['href' => '/pages/about']], $page->links(RouterFixture::create()));
+        $this->assertSame(['self' => ['href' => '/info/about']], $page->links($custom));
     }
 
     /**
@@ -267,5 +265,50 @@ final class AbstractContentItemLinksTest extends TestCase
 
         $this->assertSame($expected, $content->links($generator));
         $this->assertSame($expected, $content->toArray($generator)['_links']);
+    }
+
+    /**
+     * @return array<string, array{string, string, string, string}>
+     */
+    public static function pageRoutes(): array
+    {
+        return [
+            'default route' => ['/pages/{page:.+}', '', 'about', '/pages/about'],
+            'root route' => ['/{page:.+}', '', 'about', '/about'],
+            'custom route' => ['/info/{page:.+}', '', 'about', '/info/about'],
+            'installation prefix' => ['/pages/{page:.+}', '/app', 'about', '/app/pages/about'],
+            'custom route with installation prefix' => ['/info/{page:.+}', '/app', 'about', '/app/info/about'],
+            'nested page with encoded characters' => ['/pages/{page:.+}', '', 'about/team café', '/pages/about/team%20caf%C3%A9'],
+            'nested root page with installation prefix' => ['/{page:.+}', '/app', 'about/team café', '/app/about/team%20caf%C3%A9'],
+        ];
+    }
+
+    #[DataProvider('pageRoutes')]
+    public function testPageLinksUseAnIndependentGeneratorAndRespectItsConfiguration(
+        string $pattern,
+        string $baseUrl,
+        string $uri,
+        string $expected
+    ): void {
+        $plugin = new PagesPlugin(ContentFixtures::contentContext(), ['path' => 'pages-routing']);
+        $plugin->loadContent(ContentFixtures::contentLoader());
+        $page = $plugin->registry()->get($uri);
+        $collection = (new RouteCollectionFactory())->create([
+            'pages_page' => ['path' => $pattern, 'handler' => 'PageController@show'],
+        ]);
+        $generator = new UrlGenerator($collection, new RequestContext(baseUrl: $baseUrl));
+        $links = ['self' => ['href' => $expected]];
+
+        $this->assertSame($uri, $page->uri());
+        $this->assertSame($links, $page->links($generator));
+        $this->assertSame($links, $page->toArray($generator)['_links']);
+    }
+
+    public function testAMissingPagesRouteIsReportedInsteadOfInventingARootLink(): void
+    {
+        $page = $this->item('pages', 'about');
+
+        $this->expectException(UrlGeneratorException::class);
+        $page->links($this->routerWithOtherPaths());
     }
 }
