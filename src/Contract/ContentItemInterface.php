@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Content\Contract;
 
 use DateTimeInterface;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 use JsonSerializable;
 use Stringable;
 
@@ -480,10 +480,10 @@ interface ContentItemInterface extends JsonSerializable, Stringable
      * and for its collection, so they follow the paths of the routes instead of
      * repeating them.
      *
-     * @param RouterInterface $router Router.
+     * @param UrlGeneratorInterface $router URL generator.
      * @return array<string, array{href: string}>
      */
-    public function links(RouterInterface $router): array;
+    public function links(UrlGeneratorInterface $router): array;
 
     /**
      * Get the HTML tags of the content.
@@ -502,13 +502,13 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     /**
      * Get the content as an array.
      *
-     * The links of the content (`_links`) are part of it only when a router is
-     * given, because building them needs it.
+     * The links of the content (`_links`) are included only when a URL
+     * generator is provided.
      *
-     * @param RouterInterface|null $router Router.
+     * @param UrlGeneratorInterface|null $router URL generator.
      * @return array<string, mixed>
      */
-    public function toArray(?RouterInterface $router = null): array;
+    public function toArray(?UrlGeneratorInterface $router = null): array;
 
     /**
      * Get the content as a JSON string.

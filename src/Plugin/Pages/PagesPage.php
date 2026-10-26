@@ -14,7 +14,7 @@ namespace Derafu\Content\Plugin\Pages;
 
 use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\Plugin\Pages\Contract\PagesPageInterface;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 
 /**
  * Pages page.
@@ -56,7 +56,7 @@ class PagesPage extends AbstractContentItem implements PagesPageInterface
      *
      * @return array<string, array{href: string}>
      */
-    public function links(RouterInterface $router): array
+    public function links(UrlGeneratorInterface $router): array
     {
         return [
             'self' => ['href' => '/' . $this->uri()],

@@ -14,6 +14,7 @@ namespace Derafu\TestsContent\Abstract;
 
 use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\Abstract\AbstractContentRegistry;
+use Derafu\Content\ContentAuthor;
 use Derafu\Content\ContentBag;
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
@@ -39,11 +40,15 @@ use Derafu\Content\Plugin\Pages\PagesPage;
 use Derafu\Content\Plugin\Pages\PagesPlugin;
 use Derafu\Content\Plugin\Pages\PagesRegistry;
 use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\RouteCollectionFactory;
+use Derafu\Routing\UrlGenerator;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * The `_links` of an item come from the router, not from paths written in the
@@ -55,6 +60,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(AbstractContentItem::class)]
 #[UsesClass(AbstractContentRegistry::class)]
+#[UsesClass(ContentAuthor::class)]
 #[UsesClass(ContentBag::class)]
 #[UsesClass(ContentConfig::class)]
 #[UsesClass(ContentContext::class)]
@@ -245,5 +251,21 @@ final class AbstractContentItemLinksTest extends TestCase
 
         $this->assertSame($expected, $page->links(RouterFixture::create()));
         $this->assertSame($expected, $page->links($this->routerWithOtherPaths()));
+    }
+
+    /**
+     * @param callable(self): ContentItemInterface $item
+     * @param array<string, array<string, string>> $expected
+     */
+    #[DataProvider('itemsProvider')]
+    public function testTheSameLinksAndContentArraysWorkWithAStandaloneUrlGenerator(callable $item, array $expected): void
+    {
+        $routes = Yaml::parseFile(dirname(__DIR__, 3) . '/resources/config/content-routes.yaml');
+        $this->assertIsArray($routes);
+        $generator = new UrlGenerator((new RouteCollectionFactory())->create($routes));
+        $content = $item($this);
+
+        $this->assertSame($expected, $content->links($generator));
+        $this->assertSame($expected, $content->toArray($generator)['_links']);
     }
 }

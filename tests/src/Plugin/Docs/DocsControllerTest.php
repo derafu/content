@@ -33,6 +33,8 @@ use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
 use Derafu\Http\Request;
 use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\RouteCollectionFactory;
+use Derafu\Routing\UrlGenerator;
 use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RendererFixture;
@@ -40,6 +42,7 @@ use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Exercises DocsController end to end, including a real Twig render of the
@@ -531,5 +534,38 @@ final class DocsControllerTest extends TestCase
 
         $this->assertStringContainsString('<title>unused</title>', $html);
         $this->assertStringNotContainsString('A section with a fixture OpenAPI spec', $html);
+    }
+
+    public function testJsonLinksUseAnIndependentUrlGenerator(): void
+    {
+        $routes = Yaml::parseFile(dirname(__DIR__, 4) . '/resources/config/content-routes.yaml');
+        $this->assertIsArray($routes);
+        $generator = new UrlGenerator((new RouteCollectionFactory())->create($routes), new RequestContext(baseUrl: '/app'));
+        $templateRouter = RouterFixture::create();
+        $templateRouter->setContext(new RequestContext(baseUrl: '/app', pathInfo: '/docs/guide/getting-started.json'));
+        $controller = new DocsController(
+            ContentFixtures::contentService(['docs' => $this->plugin]),
+            RendererFixture::create($templateRouter),
+            $generator,
+        );
+
+        $result = $controller->show(
+            new Request('GET', 'http://localhost/app/docs/guide/getting-started.json'),
+            'guide/getting-started.json',
+        );
+
+        $this->assertIsArray($result);
+        $data = $result['data'];
+        $this->assertIsArray($data);
+        $links = $data['_links'];
+        $this->assertIsArray($links);
+        $self = $links['self'];
+        $collection = $links['collection'];
+        $this->assertIsArray($self);
+        $this->assertIsArray($collection);
+        $this->assertSame('/app/docs/guide/getting-started', $self['href']);
+        $this->assertSame('/app/docs', $collection['href']);
+        $this->assertIsString($data['data']);
+        $this->assertStringContainsString('getting started, child', $data['data']);
     }
 }

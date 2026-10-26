@@ -31,8 +31,11 @@ use Derafu\Content\Plugin\Pages\PagesPage;
 use Derafu\Content\Plugin\Pages\PagesPlugin;
 use Derafu\Content\Plugin\Pages\PagesRegistry;
 use Derafu\Content\PluginLoader;
+use Derafu\Routing\Collection;
+use Derafu\Routing\UrlGenerator;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RouteAddingPlugin;
+use Derafu\TestsContent\Support\RouteRegistrarFixture;
 use Derafu\TestsContent\Support\RouterFixture;
 use Derafu\Translation\Contract\TranslatableInterface;
 use InvalidArgumentException;
@@ -205,5 +208,39 @@ final class PluginLoaderTest extends TestCase
 
         $this->assertInstanceOf(InvalidArgumentException::class, $exception);
         $this->assertSame($message, $exception->getMessage());
+    }
+
+    public function testPluginsCanRegisterRoutesWithoutARouterOrUrlGenerator(): void
+    {
+        $collection = new Collection();
+        $registrar = new RouteRegistrarFixture($collection);
+        $context = new ContentContext(new ContentConfig([
+            'title' => 'Fixture Website',
+            'url' => 'http://localhost',
+            'plugins' => [
+                'custom' => [
+                    'class' => RouteAddingPlugin::class,
+                    'name' => 'custom',
+                    'path' => 'docs',
+                    'route' => [
+                        'name' => 'custom_route',
+                        'path' => '/custom/{id}',
+                        'handler' => 'custom.handler',
+                        'defaults' => ['id' => 7],
+                        'methods' => ['POST'],
+                    ],
+                ],
+            ],
+        ]), new ArrayAdapter());
+        $loader = new PluginLoader(ContentFixtures::contentLoader(), $registrar);
+
+        $plugins = $loader->loadAll(new ContentService($context, $loader));
+        $route = $collection->getByName('custom_route');
+
+        $this->assertArrayHasKey('custom', $plugins);
+        $this->assertSame('custom.handler', $route->getHandler());
+        $this->assertSame(['id' => 7], $route->getDefaults());
+        $this->assertSame(['POST'], $route->getMethods());
+        $this->assertSame('/custom/7', (new UrlGenerator($collection))->generate('custom_route'));
     }
 }

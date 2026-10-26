@@ -15,7 +15,7 @@ namespace Derafu\Content\Abstract;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 
 abstract class AbstractContentController
 {
@@ -46,7 +46,7 @@ abstract class AbstractContentController
      *
      * @param ContentItemInterface $item Content item.
      * @param RendererInterface $renderer Renderer.
-     * @param RouterInterface $router Router, which builds the links (`_links`)
+     * @param UrlGeneratorInterface $router URL generator, which builds the links (`_links`)
      * of the item.
      * @param string $template The item's own "*.md.twig" template.
      * @param array<string, mixed> $vars Variables the template needs
@@ -58,7 +58,7 @@ abstract class AbstractContentController
     protected function jsonResponse(
         ContentItemInterface $item,
         RendererInterface $renderer,
-        RouterInterface $router,
+        UrlGeneratorInterface $router,
         string $template,
         array $vars
     ): array {

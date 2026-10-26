@@ -21,6 +21,14 @@ services:
         autoconfigure: true
         public: false
 
+    # Standalone applications can keep their existing router service. Integrations
+    # can override these aliases with independent generators and registrars.
+    Derafu\Routing\Contract\UrlGeneratorInterface:
+        alias: Derafu\Routing\Contract\RouterInterface
+
+    Derafu\Routing\Contract\RouteRegistrarInterface:
+        alias: Derafu\Routing\Contract\RouterInterface
+
     Derafu\Content\Contract\ContentServiceInterface:
         class: Derafu\Content\ContentService
 

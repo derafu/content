@@ -20,7 +20,7 @@ use Derafu\Content\Plugin\Mcp\Tool\ListTagsTool;
 use Derafu\Content\Plugin\Mcp\Tool\SearchContentTool;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
 use Mcp\Server\Session\FileSessionStore;
@@ -48,12 +48,12 @@ class McpController
      * Constructor.
      *
      * @param ContentServiceInterface $contentService Content service.
-     * @param RouterInterface $router Router.
+     * @param UrlGeneratorInterface $router URL generator.
      * @param RendererInterface $renderer Renderer.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RouterInterface $router,
+        private readonly UrlGeneratorInterface $router,
         private readonly RendererInterface $renderer
     ) {
     }

@@ -15,7 +15,7 @@ namespace Derafu\Content\Plugin\Api;
 use Derafu\Content\ContentFilters;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Http\Request;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 use Derafu\Routing\Enum\UrlReferenceType;
 
 class ApiController
@@ -24,11 +24,11 @@ class ApiController
      * Constructor.
      *
      * @param ContentServiceInterface $contentService Content service.
-     * @param RouterInterface $router Router.
+     * @param UrlGeneratorInterface $router URL generator.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RouterInterface $router
+        private readonly UrlGeneratorInterface $router
     ) {
     }
 

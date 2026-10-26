@@ -18,7 +18,7 @@ use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Academy\Contract\AcademyLessonInterface;
 use Derafu\Content\Plugin\Academy\Contract\AcademyModuleInterface;
 use Derafu\Renderer\Contract\RendererInterface;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 use Derafu\Routing\Enum\UrlReferenceType;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Mcp\Capability\Attribute\Schema;
@@ -40,12 +40,12 @@ class GetContentTool
      * Constructor.
      *
      * @param ContentServiceInterface $contentService Content service.
-     * @param RouterInterface $router Router.
+     * @param UrlGeneratorInterface $router URL generator.
      * @param RendererInterface $renderer Renderer.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
-        private readonly RouterInterface $router,
+        private readonly UrlGeneratorInterface $router,
         private readonly RendererInterface $renderer
     ) {
     }

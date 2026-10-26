@@ -20,7 +20,7 @@ use Derafu\Content\Exception\ContentNotFoundException;
 use Derafu\Content\Plugin\Academy\Contract\AcademyCourseInterface;
 use Derafu\Http\Request;
 use Derafu\Renderer\Contract\RendererInterface;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 
 /**
  * Academy controller.
@@ -32,12 +32,12 @@ class AcademyController extends AbstractContentController
      *
      * @param ContentServiceInterface $contentService Content service.
      * @param RendererInterface $renderer Renderer.
-     * @param RouterInterface $router Router.
+     * @param UrlGeneratorInterface $router URL generator.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
         private readonly RendererInterface $renderer,
-        private readonly RouterInterface $router
+        private readonly UrlGeneratorInterface $router
     ) {
     }
 

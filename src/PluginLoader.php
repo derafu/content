@@ -18,7 +18,7 @@ use Derafu\Content\Contract\ContentPluginInterface;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Contract\PluginInterface;
 use Derafu\Content\Contract\PluginLoaderInterface;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\RouteRegistrarInterface;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 
 /**
@@ -30,10 +30,11 @@ class PluginLoader implements PluginLoaderInterface
      * Constructor.
      *
      * @param ContentLoaderInterface $contentLoader Content loader.
+     * @param RouteRegistrarInterface $router Registrar for routes added by plugins.
      */
     public function __construct(
         private readonly ContentLoaderInterface $contentLoader,
-        private readonly RouterInterface $router
+        private readonly RouteRegistrarInterface $router
     ) {
     }
 

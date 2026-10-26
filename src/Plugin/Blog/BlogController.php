@@ -24,7 +24,7 @@ use Derafu\Http\Enum\HttpStatus;
 use Derafu\Http\Request;
 use Derafu\Http\Response;
 use Derafu\Renderer\Contract\RendererInterface;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 
 /**
@@ -48,12 +48,12 @@ class BlogController extends AbstractContentController
      *
      * @param ContentServiceInterface $contentService Content service.
      * @param RendererInterface $renderer Renderer.
-     * @param RouterInterface $router Router.
+     * @param UrlGeneratorInterface $router URL generator.
      */
     public function __construct(
         private readonly ContentServiceInterface $contentService,
         private readonly RendererInterface $renderer,
-        private readonly RouterInterface $router
+        private readonly UrlGeneratorInterface $router
     ) {
     }
 

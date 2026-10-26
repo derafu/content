@@ -27,7 +27,7 @@ use Derafu\Content\Contract\ContentAuthorInterface;
 use Derafu\Content\Contract\ContentHtmlTagsInterface;
 use Derafu\Content\Contract\ContentItemInterface;
 use Derafu\Content\RemoteContentFetcher;
-use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Contract\UrlGeneratorInterface;
 use Derafu\Support\Str;
 use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
@@ -1552,7 +1552,7 @@ abstract class AbstractContentItem implements ContentItemInterface
      *
      * @return array<string, array{href: string}>
      */
-    public function links(RouterInterface $router): array
+    public function links(UrlGeneratorInterface $router): array
     {
         $route = $this->route();
 
@@ -1677,7 +1677,7 @@ abstract class AbstractContentItem implements ContentItemInterface
      *
      * @return array<string, mixed>
      */
-    public function toArray(?RouterInterface $router = null): array
+    public function toArray(?UrlGeneratorInterface $router = null): array
     {
         $data = [
             'id' => $this->id(),
