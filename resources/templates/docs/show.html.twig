@@ -23,12 +23,12 @@
         </ol>
     </nav>
 
-    {% if doc.metadata.show_title or doc.metadata.show_description %}
+    {% if doc.metadata('show_title') or doc.metadata('show_description') %}
         {% set auxMarkdown = '' %}
-        {% if doc.metadata.show_title %}
+        {% if doc.metadata('show_title') %}
             {% set auxMarkdown = auxMarkdown ~ '# ' ~ doc.title ~ "\n" %}
         {% endif %}
-        {% if doc.metadata.show_description %}
+        {% if doc.metadata('show_description') %}
             {% set auxMarkdown = auxMarkdown ~ doc.description ~ "\n" %}
         {% endif %}
         {{ auxMarkdown | markdown }}
@@ -72,8 +72,8 @@
         </div>
     {% endif %}
 
-    {% if doc.metadata.iframe %}
-        <iframe src="{{ doc.metadata.iframe }}" width="100%" height="800px" allow="autoplay" class="mb-4"></iframe>
+    {% if doc.metadata('iframe') %}
+        <iframe src="{{ doc.metadata('iframe') }}" width="100%" height="800px" allow="autoplay" class="mb-4"></iframe>
     {% endif %}
 
     {% if doc.video %}
@@ -87,7 +87,7 @@
         </div>
     {% endif %}
 
-    {% if doc.metadata.openapi %}
+    {% if doc.metadata('openapi') %}
         <div id="swagger-ui" class="mb-4"></div>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@latest/swagger-ui.css">
         <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@latest/swagger-ui-bundle.js"></script>
@@ -101,7 +101,7 @@
         </style>
         <script>
             SwaggerUIBundle({
-                url: "{{ doc.metadata.openapi }}",
+                url: "{{ doc.metadata('openapi') }}",
                 dom_id: '#swagger-ui',
                 defaultModelsExpandDepth: -1,
                 deepLinking: true,
@@ -109,7 +109,7 @@
         </script>
     {% endif %}
 
-    {% if doc.metadata.show_children and doc.children | length > 0 %}
+    {% if doc.metadata('show_children') and doc.children | length > 0 %}
         <div class="row mb-4">
             {% for child in doc.children %}
                 <div class="col-md-4">
@@ -127,7 +127,7 @@
         </div>
     {% endif %}
 
-    {% if doc.metadata.show_source %}
+    {% if doc.metadata('show_source') %}
         <div class="position-relative my-5 rounded overflow-hidden border mb-4">
             <div class="bg-dark text-white px-3 py-2 border-bottom small font-monospace">
                 <i class="fa-solid fa-file-lines fa-fw me-2"></i>

@@ -63,7 +63,7 @@
         </div>
     {% endif %}
 
-    {% if faq.metadata.show_children %}
+    {% if faq.metadata('show_children') %}
         <div class="row mb-4">
             {% for child in faq.children %}
                 <div class="col-md-6">

@@ -34,7 +34,7 @@
         }) %}
         <div class="mb-5">
             <twig:block-card
-                image="{{ post.image | default(base_path ~ '/img/content/blog/default-cover.png') }}"
+                image="{{ post.image | default((base_path|default('')) ~ '/img/content/blog/default-cover.png') }}"
                 title="{{ post.title }}"
                 content="<div class='text-muted small mb-2'>{{ postMeta }}</div>{{ post.description | markdown }}"
                 buttonText="{{ 'Read more'|trans }}"

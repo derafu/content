@@ -24,6 +24,7 @@
     - pdf_content (required): the item's own rendered body.
     - pdf_hierarchy (optional): children/modules/lessons listing.
 #}
+{% set pdf_kind = pdf_kind|default(null) %}
 {% import 'pdf/_macros.pdf.twig' as pdfmacros %}
 {% trans_default_domain 'content+intl-icu' %}
 <html>

@@ -8,7 +8,7 @@
     <section id="hero">
         <twig:block-hero
             size="small"
-            background="{{ post.image | default(base_path ~ '/img/content/blog/default-cover.png') }}"
+            background="{{ post.image | default((base_path|default('')) ~ '/img/content/blog/default-cover.png') }}"
             title=""
         />
     </section>

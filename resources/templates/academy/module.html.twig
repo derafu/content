@@ -42,11 +42,8 @@
                             <li class="breadcrumb-item">
                                 <a href="{{ path('academy_course', {'course': course.slug}) }}">{{ course.title }}</a>
                             </li>
-                            <li class="breadcrumb-item">
-                                {{ module.title }}
-                            </li>
                             <li class="breadcrumb-item active" aria-current="page">
-                                {{ lesson.title }}
+                                {{ module.title }}
                             </li>
                         </ol>
                     </nav>
