@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\TestsContent;
 
+use Composer\InstalledVersions;
 use Derafu\Content\Contract\ContentConfigInterface;
 use Derafu\Content\Contract\ContentContextInterface;
 use Derafu\Content\Contract\ContentServiceInterface;
@@ -22,26 +23,21 @@ use Derafu\Content\Plugin\Pages\PagesController;
 use Derafu\Content\Plugin\Sitemap\SitemapController;
 use Derafu\Content\Translation\ContentTranslationResourceProvider;
 use Derafu\Http\Request;
-use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Contract\RouteRegistrarInterface;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Routing\Contract\UrlGeneratorInterface;
-use Derafu\Routing\Router;
 use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
-use Derafu\TestsContent\Support\RendererFixture;
-use Derafu\TestsContent\Support\RouterFixture;
-use Derafu\Translation\TranslatorFactory;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Translation\Translator;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The complete package YAML with real application dependencies and fixture content.
@@ -66,8 +62,12 @@ final class ServicesTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.project_dir', ContentFixtures::contentPath());
         $container->setParameter('kernel.cache_dir', $this->cacheDirectory);
-        (new YamlFileLoader($container, new FileLocator(dirname(__DIR__, 2) . '/resources/config')))
-            ->load('content-services.yaml');
+        (new YamlFileLoader($container, new FileLocator([
+            dirname(__DIR__, 2) . '/tests/fixtures/config',
+            (InstalledVersions::getInstallPath('derafu/renderer')
+                ?? throw new RuntimeException('derafu/renderer must be installed for these tests.')) . '/resources/config',
+        ])))
+            ->load('services.yaml');
         $configuration = $container->getParameter('derafu.content.config');
         $this->assertIsArray($configuration);
         $this->assertIsArray($configuration['plugins']);
@@ -80,18 +80,10 @@ final class ServicesTest extends TestCase
             $configuration['plugins']['pages'] = ['path' => 'pages'];
         }
         $container->setParameter('derafu.content.config', $configuration);
-        $container->register(RouterInterface::class, Router::class)
-            ->setFactory([RouterFixture::class, 'create']);
         $this->assertArrayHasKey(
             ContentTranslationResourceProvider::class,
             $container->findTaggedServiceIds('derafu_translation.resource_provider')
         );
-        $container->register('app.translator', Translator::class)
-            ->setFactory([TranslatorFactory::class, 'create'])
-            ->setArguments(['es', ['en'], new TaggedIteratorArgument('derafu_translation.resource_provider')]);
-        $container->register(RendererInterface::class)
-            ->setFactory([RendererFixture::class, 'create'])
-            ->setArguments([new Reference(RouterInterface::class), new Reference('app.translator')]);
         foreach ($container->getDefinitions() as $definition) {
             $definition->setPublic(true);
         }
@@ -164,7 +156,7 @@ final class ServicesTest extends TestCase
     public function testTaggedResourcesTranslateAnExceptionForADisabledPlugin(): void
     {
         $container = $this->container();
-        $translator = $container->get('app.translator');
+        $translator = $container->get(TranslatorInterface::class);
         $this->assertInstanceOf(Translator::class, $translator);
         $service = $container->get(ContentServiceInterface::class);
         $this->assertInstanceOf(ContentServiceInterface::class, $service);

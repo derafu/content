@@ -1,0 +1,20 @@
+imports:
+    - { resource: '../../../resources/config/content-services.yaml' }
+    - { resource: '../../../vendor/derafu/renderer/resources/config/renderer-markdown-services.yaml' }
+    - { resource: '../../../vendor/derafu/renderer/resources/config/renderer-pdf-services.yaml' }
+
+parameters:
+    fixture.translation_domain: content+intl-icu
+
+services:
+    Derafu\TestsContent\Support\FixtureTemplatePathProvider:
+        tags:
+            - { name: derafu_twig.template_path_provider, priority: 100 }
+
+    Derafu\TestsContent\Support\FixtureExtensionProvider:
+        arguments:
+            $router: '@?Derafu\Routing\Contract\RouterInterface'
+            $translator: '@?Symfony\Contracts\Translation\TranslatorInterface'
+            $domain: '%fixture.translation_domain%'
+        tags:
+            - { name: derafu_twig.extension_provider, priority: 100 }

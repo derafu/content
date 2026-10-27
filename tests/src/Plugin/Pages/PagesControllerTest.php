@@ -40,6 +40,7 @@ use PHPUnit\Framework\TestCase;
  * real Request, and — for the HTML path — a real Twig renderer, so the
  * actual show.{html,md,json}.twig templates run for real. No mocks.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(PagesController::class)]
 #[CoversClass(AbstractContentController::class)]
 #[UsesClass(PagesPlugin::class)]

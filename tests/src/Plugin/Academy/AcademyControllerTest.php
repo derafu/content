@@ -50,6 +50,7 @@ use PHPUnit\Framework\TestCase;
  * none of the 5 actions (index, course, module, lesson, tag) had ever been
  * rendered end to end before this test, only AcademyRegistry directly.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(AcademyController::class)]
 #[CoversClass(AbstractContentController::class)]
 #[UsesClass(AcademyPlugin::class)]

@@ -81,6 +81,7 @@ use PHPUnit\Framework\TestCase;
  * (there is no HTTP server, so there is nothing to generate real URLs
  * against).
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(McpController::class)]
 #[CoversClass(McpPlugin::class)]
 #[CoversClass(GetContentTool::class)]

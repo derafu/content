@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\TestsContent\Routing;
 
+use Composer\InstalledVersions;
 use Derafu\Content\Contract\ContentServiceInterface;
 use Derafu\Content\Plugin\Academy\AcademyController;
 use Derafu\Content\Plugin\Api\ApiController;
@@ -24,7 +25,6 @@ use Derafu\Content\Plugin\Search\SearchController;
 use Derafu\Content\Plugin\Sitemap\SitemapController;
 use Derafu\Content\Plugin\Storage\StorageController;
 use Derafu\Http\Request;
-use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Contract\RouteRegistrarInterface;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Routing\Contract\UrlGeneratorInterface;
@@ -33,12 +33,12 @@ use Derafu\Routing\Router;
 use Derafu\Routing\UrlGenerator;
 use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
-use Derafu\TestsContent\Support\RendererFixture;
 use Derafu\TestsContent\Support\RouteAddingPlugin;
 use Derafu\TestsContent\Support\RouteRegistrarFixture;
 use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -57,8 +57,12 @@ final class RoutingServicesTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.project_dir', ContentFixtures::contentPath());
         $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
-        (new YamlFileLoader($container, new FileLocator(dirname(__DIR__, 3) . '/resources/config')))
-            ->load('content-services.yaml');
+        (new YamlFileLoader($container, new FileLocator([
+            dirname(__DIR__, 2) . '/fixtures/config',
+            (InstalledVersions::getInstallPath('derafu/renderer')
+                ?? throw new RuntimeException('derafu/renderer must be installed for these tests.')) . '/resources/config',
+        ])))
+            ->load('renderer.yaml');
         $container->setParameter('derafu.content.config', [
             'title' => 'Fixture Website',
             'url' => 'https://example.test',
@@ -73,7 +77,6 @@ final class RoutingServicesTest extends TestCase
         ]);
         // Keep caching isolated while preserving the real package services.
         $container->register('derafu_content.cache', ArrayAdapter::class)->setSynthetic(true)->setPublic(true);
-        $container->register(RendererInterface::class)->setSynthetic(true)->setPublic(true);
 
         return $container;
     }
@@ -88,7 +91,6 @@ final class RoutingServicesTest extends TestCase
         }
         $container->compile();
         $container->set('derafu_content.cache', new ArrayAdapter());
-        $container->set(RendererInterface::class, RendererFixture::create());
     }
 
     private function assertControllersCanBeConstructed(ContainerBuilder $container): void

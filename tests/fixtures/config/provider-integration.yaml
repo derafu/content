@@ -1,0 +1,9 @@
+imports:
+    - { resource: services.yaml }
+
+parameters:
+    derafu.content.config:
+        title: Provider integration
+        url: https://example.test
+        plugins:
+            docs: { path: docs }

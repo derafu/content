@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  * The texts of the Markdown and XML templates are not checked: the scanner of
  * texts reads HTML.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(ContentTranslationResourceProvider::class)]
 final class ContentMessagesTest extends TestCase
 {

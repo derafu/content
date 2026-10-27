@@ -36,6 +36,7 @@ use Throwable;
  * The errors that the package raises with the exceptions of PHP are
  * translatable, and say what they said before.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(ContentService::class)]
 #[CoversClass(ContentAttachment::class)]
 #[CoversClass(DocsDoc::class)]

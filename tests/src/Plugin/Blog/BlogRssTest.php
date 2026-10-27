@@ -50,6 +50,7 @@ use Throwable;
  * It uses a post of its own, with root-relative links and images, because the
  * fixture posts have none, so what makes them absolute was never checked.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(BlogController::class)]
 #[CoversClass(AbstractContentController::class)]
 #[UsesClass(BlogPlugin::class)]

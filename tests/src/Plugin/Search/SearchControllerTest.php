@@ -49,6 +49,7 @@ use Throwable;
  * results) runs for real instead of being asserted against a hand-built
  * array.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(SearchController::class)]
 #[UsesClass(SearchPlugin::class)]
 #[UsesClass(DocsPlugin::class)]

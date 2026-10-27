@@ -20,15 +20,11 @@ use Derafu\Content\Plugin\Blog\BlogPlugin;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
 use Derafu\Content\Translation\ContentTranslationResourceProvider;
 use Derafu\Http\Request;
-use Derafu\Renderer\Factory\RendererFactory;
 use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RendererFixture;
 use Derafu\TestsContent\Support\RouterFixture;
 use Derafu\Translation\TranslatorFactory;
-use Derafu\Twig\Extension\RoutingExtension;
-use Derafu\Twig\Extension\TranslationExtension;
-use Derafu\Twig\Extension\TwigExtension;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -122,14 +118,7 @@ final class TemplateTranslationsTest extends TestCase
         $router = RouterFixture::create();
         $router->setContext(new RequestContext(pathInfo: '/docs/past-deprecated.pdf'));
 
-        $twig = RendererFactory::createTwigService([
-            'paths' => [ContentFixtures::templatesPath(), dirname(__DIR__, 3) . '/resources/templates'],
-            'extensions' => [
-                new TwigExtension(),
-                new TranslationExtension($translator, null, $translator !== null ? 'es' : null),
-                new RoutingExtension($router),
-            ],
-        ]);
+        $twig = RendererFixture::twigService($router, $translator, domain: null);
 
         $data = ['plugin' => $plugin, 'doc' => $doc, 'full' => false, 'item' => $doc];
         $section = $twig->renderFromString("{% import 'pdf/_macros.pdf.twig' as pdf %}{{ pdf.section(item, 'Docs', 0, {}) }}", $data);

@@ -37,6 +37,7 @@ use PHPUnit\Framework\TestCase;
  * Exercises SitemapController with real fixture content and a real
  * Router/Twig render, producing actual XML.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(SitemapController::class)]
 #[UsesClass(SitemapPlugin::class)]
 #[UsesClass(DocsPlugin::class)]

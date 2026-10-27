@@ -41,6 +41,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Exercises FaqController end to end with a real Twig render.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(FaqController::class)]
 #[CoversClass(AbstractContentController::class)]
 #[UsesClass(FaqPlugin::class)]

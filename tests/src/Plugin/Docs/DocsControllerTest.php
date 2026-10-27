@@ -50,6 +50,7 @@ use Symfony\Component\Yaml\Yaml;
  * real Router: sidebarPath/sidebarCollapsible/sidebarDepth are pinned down
  * by a no-mock regression test.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(DocsController::class)]
 #[CoversClass(AbstractContentController::class)]
 #[UsesClass(DocsPlugin::class)]

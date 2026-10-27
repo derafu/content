@@ -15,13 +15,10 @@ namespace Derafu\TestsContent\Plugin\Docs;
 use Derafu\Content\ContentLoader;
 use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Docs\DocsPlugin;
-use Derafu\Renderer\Factory\RendererFactory;
 use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
+use Derafu\TestsContent\Support\RendererFixture;
 use Derafu\TestsContent\Support\RouterFixture;
-use Derafu\Twig\Extension\RoutingExtension;
-use Derafu\Twig\Extension\TranslationExtension;
-use Derafu\Twig\Extension\TwigExtension;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
@@ -46,17 +43,7 @@ final class DocsShowOpenApiTest extends TestCase
         $router = RouterFixture::create();
         $router->setContext(new RequestContext(pathInfo: $pathInfo));
 
-        $twigService = RendererFactory::createTwigService([
-            'paths' => [
-                ContentFixtures::templatesPath(),
-                dirname(__DIR__, 3) . '/../resources/templates',
-            ],
-            'extensions' => [
-                new TwigExtension(),
-                new TranslationExtension(null, 'content+intl-icu'),
-                new RoutingExtension($router),
-            ],
-        ]);
+        $twigService = RendererFixture::twigService($router);
 
         $data = [
             'plugin' => $plugin,

@@ -44,6 +44,7 @@ use PHPUnit\Framework\TestCase;
  * real Twig render — including "archive" and "rss", neither of which had
  * ever been run end to end before this test, only BlogRegistry directly.
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\Derafu\Content\Provider\ContentTemplatePathProvider::class)]
 #[CoversClass(BlogController::class)]
 #[CoversClass(AbstractContentController::class)]
 #[UsesClass(BlogPlugin::class)]

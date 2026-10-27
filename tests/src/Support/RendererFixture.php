@@ -12,14 +12,15 @@ declare(strict_types=1);
 
 namespace Derafu\TestsContent\Support;
 
+use Composer\InstalledVersions;
 use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Renderer\Engine\Html\TwigHtmlEngine;
-use Derafu\Renderer\Factory\RendererFactory;
 use Derafu\Routing\Contract\RouterInterface;
-use Derafu\Twig\Extension\RoutingExtension;
-use Derafu\Twig\Extension\TranslationExtension;
-use Derafu\Twig\Extension\TwigExtension;
-use Derafu\Twig\Provider\DirectoryComponentProvider;
+use Derafu\Twig\Contract\TwigServiceInterface;
+use RuntimeException;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
@@ -66,26 +67,63 @@ final class RendererFixture
         ?RouterInterface $router = null,
         ?TranslatorInterface $translator = null
     ): RendererInterface {
-        $extensions = [
-            new TwigExtension(),
-            new TranslationExtension($translator, 'content+intl-icu', $translator !== null ? 'es' : null),
-        ];
-
-        if ($router !== null) {
-            $extensions[] = new RoutingExtension($router);
+        $container = self::container($router, $translator);
+        $renderer = $container->get(RendererInterface::class);
+        if (!$renderer instanceof RendererInterface) {
+            throw new RuntimeException('The renderer service has an invalid type.');
         }
 
-        return RendererFactory::create([
-            'paths' => [
-                ContentFixtures::templatesPath(),
-                dirname(__DIR__, 3) . '/resources/templates',
-                dirname(__DIR__, 3) . '/vendor/derafu/twig-components/resources/templates',
-            ],
-            'engines' => ['twig', 'markdown', 'pdf'],
-            'extensions' => $extensions,
-            'components' => new DirectoryComponentProvider(
-                dirname(__DIR__, 3) . '/vendor/derafu/twig-components/src/Component'
-            ),
-        ]);
+        return $renderer;
+    }
+
+    public static function twigService(
+        ?RouterInterface $router = null,
+        ?TranslatorInterface $translator = null,
+        ?string $domain = 'content+intl-icu'
+    ): TwigServiceInterface {
+        $container = self::container($router, $translator, $domain);
+        $twig = $container->get(TwigServiceInterface::class);
+        if (!$twig instanceof TwigServiceInterface) {
+            throw new RuntimeException('The Twig service has an invalid type.');
+        }
+
+        return $twig;
+    }
+
+    private static function container(
+        ?RouterInterface $router,
+        ?TranslatorInterface $translator,
+        ?string $domain = 'content+intl-icu'
+    ): ContainerBuilder {
+        $root = dirname(__DIR__, 3);
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.project_dir', ContentFixtures::contentPath());
+        $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
+        (new YamlFileLoader($container, new FileLocator([
+            $root . '/tests/fixtures/config',
+            (InstalledVersions::getInstallPath('derafu/renderer')
+                ?? throw new RuntimeException('derafu/renderer must be installed for these tests.')) . '/resources/config',
+        ])))->load('renderer.yaml');
+        $container->setParameter('fixture.translation_domain', $domain);
+        $services = [
+            RouterInterface::class => $router ?? RouterFixture::create(),
+            TranslatorInterface::class => $translator,
+        ];
+        foreach ($services as $id => $service) {
+            if ($service !== null) {
+                $container->register($id)->setSynthetic(true)->setPublic(true);
+            }
+        }
+        foreach ([RendererInterface::class, TwigServiceInterface::class] as $id) {
+            $container->getDefinition($id)->setPublic(true);
+        }
+        $container->compile();
+        foreach ($services as $id => $service) {
+            if ($service !== null) {
+                $container->set($id, $service);
+            }
+        }
+
+        return $container;
     }
 }

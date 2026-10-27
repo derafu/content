@@ -1,3 +1,10 @@
+# Reuses shared rendering services and contributes only Content's templates.
+# Markdown and PDF engines are optional; consumers import their Renderer YAML
+# when those output formats are enabled.
+imports:
+    - { resource: '../../../renderer/resources/config/renderer-services.yaml' }
+    - { resource: '../../../twig-components/resources/config/twig-components-twig-services.yaml' }
+
 parameters:
     derafu.content.config:
         title: 'Derafu Content'
@@ -28,6 +35,9 @@ services:
 
     Derafu\Routing\Contract\RouteRegistrarInterface:
         alias: Derafu\Routing\Contract\RouterInterface
+
+    Derafu\Content\Provider\ContentTemplatePathProvider:
+        tags: ['derafu_twig.template_path_provider']
 
     Derafu\Content\Contract\ContentServiceInterface:
         class: Derafu\Content\ContentService
