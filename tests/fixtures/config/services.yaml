@@ -1,11 +1,8 @@
 imports:
+    - { resource: routing-standalone.yaml }
     - { resource: renderer.yaml }
 
 services:
-    Derafu\Routing\Contract\RouterInterface:
-        class: Derafu\Routing\Router
-        factory: ['Derafu\TestsContent\Support\RouterFixture', 'create']
-
     Symfony\Contracts\Translation\TranslatorInterface:
         class: Symfony\Component\Translation\Translator
         factory: ['Derafu\Translation\TranslatorFactory', 'create']

@@ -103,7 +103,7 @@ final class RendererFixture
             $root . '/tests/fixtures/config',
             (InstalledVersions::getInstallPath('derafu/renderer')
                 ?? throw new RuntimeException('derafu/renderer must be installed for these tests.')) . '/resources/config',
-        ])))->load('renderer.yaml');
+        ])))->load('renderer-with-router.yaml');
         $container->setParameter('fixture.translation_domain', $domain);
         $services = [
             RouterInterface::class => $router ?? RouterFixture::create(),

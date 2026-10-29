@@ -30,6 +30,7 @@ use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use Psr\Cache\CacheItemPoolInterface;
 use RuntimeException;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Config\FileLocator;
@@ -37,6 +38,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Translation\Translator;
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -57,9 +59,12 @@ final class ServicesTest extends TestCase
         (new Filesystem())->remove($this->cacheDirectory);
     }
 
-    private function container(bool $pages = false): ContainerBuilder
+    private function container(bool $pages = false, string $fixture = 'services.yaml'): ContainerBuilder
     {
         $container = new ContainerBuilder();
+        $routes = Yaml::parseFile(dirname(__DIR__, 2) . '/resources/config/content-routes.yaml');
+        $this->assertIsArray($routes);
+        $container->setParameter('fixture.content_routes', $routes);
         $container->setParameter('kernel.project_dir', ContentFixtures::contentPath());
         $container->setParameter('kernel.cache_dir', $this->cacheDirectory);
         (new YamlFileLoader($container, new FileLocator([
@@ -67,7 +72,7 @@ final class ServicesTest extends TestCase
             (InstalledVersions::getInstallPath('derafu/renderer')
                 ?? throw new RuntimeException('derafu/renderer must be installed for these tests.')) . '/resources/config',
         ])))
-            ->load('services.yaml');
+            ->load($fixture);
         $configuration = $container->getParameter('derafu.content.config');
         $this->assertIsArray($configuration);
         $this->assertIsArray($configuration['plugins']);
@@ -102,7 +107,7 @@ final class ServicesTest extends TestCase
     {
         $container = $this->container();
         foreach ($container->getDefinitions() as $id => $definition) {
-            if (!str_starts_with($id, 'Derafu\\Content\\') && $id !== 'derafu_content.cache') {
+            if (!str_starts_with($id, 'Derafu\\Content\\') && $id !== 'Psr\\Cache\\CacheItemPoolInterface $content') {
                 continue;
             }
             $class = $definition->getClass();
@@ -113,7 +118,7 @@ final class ServicesTest extends TestCase
         $context = $container->get(ContentContextInterface::class);
         $this->assertInstanceOf(ContentContextInterface::class, $context);
         $this->assertSame($container->get(ContentConfigInterface::class), $context->config());
-        $this->assertSame($container->get('derafu_content.cache'), $context->cache());
+        $this->assertSame($container->get('Psr\\Cache\\CacheItemPoolInterface $content'), $context->cache());
         $this->assertInstanceOf(FilesystemAdapter::class, $context->cache());
         $this->assertSame('Services Website', $context->config()->title());
         $this->assertSame($container->get(RouterInterface::class), $container->get(UrlGeneratorInterface::class));
@@ -173,5 +178,41 @@ final class ServicesTest extends TestCase
                 $exception->trans($translator)
             );
         }
+    }
+
+    public function testConfiguredCacheParametersPersistDataAndIsolateTheDefaultPool(): void
+    {
+        $first = $this->container(fixture: 'cache-override.yaml')->get(ContentContextInterface::class);
+        $this->assertInstanceOf(ContentContextInterface::class, $first);
+        $firstPool = $first->cache();
+        $this->assertInstanceOf(CacheItemPoolInterface::class, $firstPool);
+        $this->assertTrue($firstPool->save($firstPool->getItem('integration.marker')->set('stored')));
+        $this->assertDirectoryExists($this->cacheDirectory . '/custom');
+
+        $second = $this->container(fixture: 'cache-override.yaml')->get(ContentContextInterface::class);
+        $this->assertInstanceOf(ContentContextInterface::class, $second);
+        $secondPool = $second->cache();
+        $this->assertInstanceOf(CacheItemPoolInterface::class, $secondPool);
+        $this->assertSame('stored', $secondPool->getItem('integration.marker')->get());
+
+        $default = $this->container()->get(ContentContextInterface::class);
+        $this->assertInstanceOf(ContentContextInterface::class, $default);
+        $defaultPool = $default->cache();
+        $this->assertInstanceOf(CacheItemPoolInterface::class, $defaultPool);
+        $this->assertFalse($defaultPool->hasItem('integration.marker'));
+    }
+
+    public function testStandaloneRoutingAddsFilesystemPagesAlongsideContentRoutes(): void
+    {
+        $router = $this->container()->get(RouterInterface::class);
+        $this->assertInstanceOf(RouterInterface::class, $router);
+        $this->assertSame(
+            ContentFixtures::templatesPath('pages/legal.html.twig'),
+            $router->match('/legal', 'GET')->getHandler()
+        );
+        $this->assertSame(
+            DocsController::class . '::show',
+            $router->match('/docs/guide.html', 'GET')->getHandler()
+        );
     }
 }

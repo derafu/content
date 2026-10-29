@@ -1,0 +1,29 @@
+imports:
+    - { resource: routing-capabilities.yaml }
+
+services:
+    # Fixture infrastructure assembles one route collection for two capabilities.
+    Derafu\Routing\RouteCollectionFactory: ~
+
+    Derafu\Routing\Contract\CollectionInterface:
+        factory: ['@Derafu\Routing\RouteCollectionFactory', create]
+        arguments:
+            $routes: '%fixture.content_routes%'
+
+    Derafu\Routing\Contract\RequestContextInterface:
+        class: Derafu\Routing\ValueObject\RequestContext
+        arguments:
+            $baseUrl: /app
+            $host: example.test
+            $scheme: https
+
+    Derafu\Routing\Contract\UrlGeneratorInterface:
+        class: Derafu\Routing\UrlGenerator
+        arguments:
+            $routes: '@Derafu\Routing\Contract\CollectionInterface'
+            $context: '@Derafu\Routing\Contract\RequestContextInterface'
+
+    Derafu\Routing\Contract\RouteRegistrarInterface:
+        class: Derafu\TestsContent\Support\RouteRegistrarFixture
+        arguments:
+            $routes: '@Derafu\Routing\Contract\CollectionInterface'

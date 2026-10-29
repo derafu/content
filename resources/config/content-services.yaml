@@ -6,6 +6,10 @@ imports:
     - { resource: '../../../twig-components/resources/config/twig-components-twig-services.yaml' }
 
 parameters:
+    derafu.content.cache.namespace: derafu_content
+    derafu.content.cache.default_lifetime: 60
+    derafu.content.cache.directory: '%kernel.cache_dir%'
+
     derafu.content.config:
         title: 'Derafu Content'
         url: 'https://www.derafu.dev'
@@ -28,14 +32,8 @@ services:
         autoconfigure: true
         public: false
 
-    # Standalone applications can keep their existing router service. Integrations
-    # can override these aliases with independent generators and registrars.
-    Derafu\Routing\Contract\UrlGeneratorInterface:
-        alias: Derafu\Routing\Contract\RouterInterface
-
-    Derafu\Routing\Contract\RouteRegistrarInterface:
-        alias: Derafu\Routing\Contract\RouterInterface
-
+    # URL generation and route registration are supplied by the host stack.
+    # Standalone apps import Routing's YAML; Symfony supplies its own adapters.
     Derafu\Content\Provider\ContentTemplatePathProvider:
         tags: ['derafu_twig.template_path_provider']
 
@@ -45,17 +43,17 @@ services:
     # Content registry cache: same directory the rest of the app already
     # uses (var/cache/<env>/), so "clear the cache" means the same thing
     # everywhere and there is nothing extra to remember to clean up.
-    derafu_content.cache:
+    Psr\Cache\CacheItemPoolInterface $content:
         class: Symfony\Component\Cache\Adapter\FilesystemAdapter
         arguments:
-            $namespace: 'derafu_content'
-            $defaultLifetime: 60
-            $directory: '%kernel.cache_dir%'
+            $namespace: '%derafu.content.cache.namespace%'
+            $defaultLifetime: '%derafu.content.cache.default_lifetime%'
+            $directory: '%derafu.content.cache.directory%'
 
     Derafu\Content\Contract\ContentContextInterface:
         class: Derafu\Content\ContentContext
         arguments:
-            $cache: '@derafu_content.cache'
+            $cache: '@Psr\Cache\CacheItemPoolInterface $content'
 
     Derafu\Content\Contract\ContentConfigInterface:
         class: Derafu\Content\ContentConfig

@@ -32,6 +32,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Yaml\Yaml;
 
 #[CoversClass(ContentTemplatePathProvider::class)]
 #[UsesNamespace('Derafu\Content')]
@@ -52,6 +53,9 @@ final class ContentTemplatePathProviderTest extends TestCase
     private function container(): ContainerBuilder
     {
         $container = new ContainerBuilder();
+        $routes = Yaml::parseFile(dirname(__DIR__, 3) . '/resources/config/content-routes.yaml');
+        $this->assertIsArray($routes);
+        $container->setParameter('fixture.content_routes', $routes);
         $container->setParameter('kernel.project_dir', ContentFixtures::contentPath());
         $container->setParameter('kernel.cache_dir', $this->cacheDirectory);
         (new YamlFileLoader($container, new FileLocator([

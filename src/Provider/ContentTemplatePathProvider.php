@@ -14,8 +14,16 @@ namespace Derafu\Content\Provider;
 
 use Derafu\Twig\Contract\TemplatePathProviderInterface;
 
+/**
+ * Contributes Content's fallback templates to the shared Twig environment.
+ *
+ * Consumers can supply higher-priority template roots through the same tag.
+ */
 final class ContentTemplatePathProvider implements TemplatePathProviderInterface
 {
+    /**
+     * {@inheritDoc}
+     */
     public function getPaths(): array
     {
         return [dirname(__DIR__, 2) . '/resources/templates'];

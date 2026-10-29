@@ -1,0 +1,8 @@
+imports:
+    - { resource: '../../../vendor/derafu/routing/resources/config/routing-filesystem-services.yaml' }
+
+parameters:
+    derafu.routing.routes: '%fixture.content_routes%'
+    derafu.routing.filesystem.directories:
+        - '%kernel.project_dir%/../templates/pages'
+    derafu.routing.filesystem.extensions: ['.html.twig']

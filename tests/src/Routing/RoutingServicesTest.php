@@ -28,18 +28,13 @@ use Derafu\Http\Request;
 use Derafu\Routing\Contract\RouteRegistrarInterface;
 use Derafu\Routing\Contract\RouterInterface;
 use Derafu\Routing\Contract\UrlGeneratorInterface;
-use Derafu\Routing\RouteCollectionFactory;
-use Derafu\Routing\Router;
 use Derafu\Routing\UrlGenerator;
 use Derafu\Routing\ValueObject\RequestContext;
 use Derafu\TestsContent\Support\ContentFixtures;
-use Derafu\TestsContent\Support\RouteAddingPlugin;
 use Derafu\TestsContent\Support\RouteRegistrarFixture;
-use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -52,31 +47,20 @@ use Symfony\Component\Yaml\Yaml;
 #[CoversNothing]
 final class RoutingServicesTest extends TestCase
 {
-    private function container(): ContainerBuilder
+    private function container(string $config): ContainerBuilder
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.project_dir', ContentFixtures::contentPath());
         $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
+        $routes = Yaml::parseFile(dirname(__DIR__, 3) . '/resources/config/content-routes.yaml');
+        $this->assertIsArray($routes);
+        $container->setParameter('fixture.content_routes', $routes);
         (new YamlFileLoader($container, new FileLocator([
             dirname(__DIR__, 2) . '/fixtures/config',
             (InstalledVersions::getInstallPath('derafu/renderer')
                 ?? throw new RuntimeException('derafu/renderer must be installed for these tests.')) . '/resources/config',
         ])))
-            ->load('renderer.yaml');
-        $container->setParameter('derafu.content.config', [
-            'title' => 'Fixture Website',
-            'url' => 'https://example.test',
-            'plugins' => [
-                'api' => null,
-                'custom' => [
-                    'class' => RouteAddingPlugin::class,
-                    'name' => 'custom',
-                    'path' => 'docs',
-                ],
-            ],
-        ]);
-        // Keep caching isolated while preserving the real package services.
-        $container->register('derafu_content.cache', ArrayAdapter::class)->setSynthetic(true)->setPublic(true);
+            ->load($config);
 
         return $container;
     }
@@ -90,7 +74,6 @@ final class RoutingServicesTest extends TestCase
             $alias->setPublic(true);
         }
         $container->compile();
-        $container->set('derafu_content.cache', new ArrayAdapter());
     }
 
     private function assertControllersCanBeConstructed(ContainerBuilder $container): void
@@ -105,12 +88,11 @@ final class RoutingServicesTest extends TestCase
 
     public function testTheExistingRouterServiceRemainsSufficient(): void
     {
-        $container = $this->container();
-        $router = RouterFixture::create();
-        $router->setContext(new RequestContext(host: 'example.test', scheme: 'https'));
-        $container->register(RouterInterface::class, Router::class)->setSynthetic(true)->setPublic(true);
+        $container = $this->container('routing-standalone-integration.yaml');
         $this->compile($container);
-        $container->set(RouterInterface::class, $router);
+        $router = $container->get(RouterInterface::class);
+        $this->assertInstanceOf(RouterInterface::class, $router);
+        $router->setContext(new RequestContext(host: 'example.test', scheme: 'https'));
         $this->assertControllersCanBeConstructed($container);
 
         $this->assertSame($router, $container->get(UrlGeneratorInterface::class));
@@ -123,21 +105,12 @@ final class RoutingServicesTest extends TestCase
 
     public function testAnIntegrationCanReplaceBothCapabilitiesWithoutRegisteringARouter(): void
     {
-        $container = $this->container();
-        $routes = Yaml::parseFile(dirname(__DIR__, 3) . '/resources/config/content-routes.yaml');
-        $this->assertIsArray($routes);
-        $collection = (new RouteCollectionFactory())->create($routes);
-        $generator = new UrlGenerator($collection, new RequestContext(
-            baseUrl: '/app',
-            host: 'example.test',
-            scheme: 'https'
-        ));
-        $registrar = new RouteRegistrarFixture($collection);
-        $container->register(UrlGeneratorInterface::class, UrlGenerator::class)->setSynthetic(true)->setPublic(true);
-        $container->register(RouteRegistrarInterface::class, RouteRegistrarFixture::class)->setSynthetic(true)->setPublic(true);
+        $container = $this->container('routing-independent.yaml');
         $this->compile($container);
-        $container->set(UrlGeneratorInterface::class, $generator);
-        $container->set(RouteRegistrarInterface::class, $registrar);
+        $generator = $container->get(UrlGeneratorInterface::class);
+        $registrar = $container->get(RouteRegistrarInterface::class);
+        $this->assertInstanceOf(UrlGenerator::class, $generator);
+        $this->assertInstanceOf(RouteRegistrarFixture::class, $registrar);
         $this->assertControllersCanBeConstructed($container);
 
         $this->assertFalse($container->has(RouterInterface::class));

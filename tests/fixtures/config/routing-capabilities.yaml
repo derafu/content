@@ -1,0 +1,18 @@
+imports:
+    - { resource: renderer.yaml }
+
+parameters:
+    derafu.content.config:
+        title: Fixture Website
+        url: https://example.test
+        plugins:
+            api: ~
+            custom:
+                class: Derafu\TestsContent\Support\RouteAddingPlugin
+                name: custom
+                path: docs
+
+services:
+    # Isolated cache for integration tests; production Content services are reused.
+    Psr\Cache\CacheItemPoolInterface $content:
+        class: Symfony\Component\Cache\Adapter\ArrayAdapter

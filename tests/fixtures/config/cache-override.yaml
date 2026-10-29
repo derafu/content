@@ -1,0 +1,7 @@
+imports:
+    - { resource: services.yaml }
+
+parameters:
+    derafu.content.cache.namespace: custom_content
+    derafu.content.cache.default_lifetime: 3600
+    derafu.content.cache.directory: '%kernel.cache_dir%/custom'

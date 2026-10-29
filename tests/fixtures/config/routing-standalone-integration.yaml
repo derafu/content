@@ -1,0 +1,3 @@
+imports:
+    - { resource: routing-standalone.yaml }
+    - { resource: routing-capabilities.yaml }

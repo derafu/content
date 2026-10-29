@@ -1,0 +1,5 @@
+# Unit rendering scenarios may supply their own RouterInterface instance.
+# Its capability aliases still come from Routing's production configuration.
+imports:
+    - { resource: '../../../vendor/derafu/routing/resources/config/routing-services.yaml' }
+    - { resource: renderer.yaml }
