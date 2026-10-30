@@ -24,12 +24,12 @@ use Derafu\Content\Plugin\Blog\BlogController;
 use Derafu\Content\Plugin\Blog\BlogPlugin;
 use Derafu\Content\Plugin\Blog\BlogPost;
 use Derafu\Content\Plugin\Blog\BlogRegistry;
+use Derafu\File\Directory;
 use Derafu\Http\Request;
 use Derafu\Http\Response;
 use Derafu\Renderer\Contract\EngineInterface;
 use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\ValueObject\RequestContext;
-use Derafu\Support\File;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RendererFixture;
 use Derafu\TestsContent\Support\RouterFixture;
@@ -88,7 +88,7 @@ final class BlogRssTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::rmdir($this->contentPath);
+        Directory::remove($this->contentPath);
     }
 
     /**

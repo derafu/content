@@ -30,7 +30,7 @@ use Derafu\Content\Plugin\Academy\AcademyModule;
 use Derafu\Content\Plugin\Academy\AcademyPlugin;
 use Derafu\Content\Plugin\Academy\AcademyRegistry;
 use Derafu\Content\Plugin\Academy\Contract\AcademyRegistryInterface;
-use Derafu\Support\File;
+use Derafu\File\Directory;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -66,7 +66,7 @@ final class AcademyRegistryNavigationTest extends TestCase
     protected function tearDown(): void
     {
         if ($this->directory !== null) {
-            File::rmdir($this->directory);
+            Directory::remove($this->directory);
         }
     }
 

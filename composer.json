@@ -47,6 +47,7 @@
         "phpunit/phpunit": "^13.4",
         "guzzlehttp/guzzle": "^7.16",
         "mcp/sdk": "^0.7",
+        "derafu/file": "dev-main",
         "derafu/markdown": "^2.1",
         "mpdf/mpdf": "^8.3",
         "nikic/php-parser": "^5.9",

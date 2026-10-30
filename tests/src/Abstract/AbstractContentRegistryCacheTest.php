@@ -31,7 +31,7 @@ use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Docs\DocsRegistry;
 use Derafu\Content\Plugin\Faq\FaqQuestion;
 use Derafu\Content\Plugin\Faq\FaqRegistry;
-use Derafu\Support\File;
+use Derafu\File\Directory;
 use Derafu\TestsContent\Support\ContentFixtures;
 use Derafu\TestsContent\Support\CountingContentLoader;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -181,7 +181,7 @@ final class AbstractContentRegistryCacheTest extends TestCase
             $this->assertNotNull($test);
             $this->assertStringContainsString('"questions"', $test->raw());
         } finally {
-            File::rmdir($cacheDir);
+            Directory::remove($cacheDir);
         }
     }
 }

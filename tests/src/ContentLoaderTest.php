@@ -16,7 +16,7 @@ use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\ContentLoader;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\Plugin\Docs\DocsDoc;
-use Derafu\Support\File;
+use Derafu\File\Directory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -52,7 +52,7 @@ final class ContentLoaderTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::rmdir($this->path);
+        Directory::remove($this->path);
     }
 
     private function write(string $file, string $title, int $position): void

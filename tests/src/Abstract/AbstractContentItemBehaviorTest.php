@@ -19,7 +19,7 @@ use Derafu\Content\ContentHtmlTags;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\ContentTag;
 use Derafu\Content\Plugin\Docs\DocsDoc;
-use Derafu\Support\File;
+use Derafu\File\Directory;
 use Derafu\TestsContent\Support\RouterFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -50,7 +50,7 @@ final class AbstractContentItemBehaviorTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::rmdir($this->directory);
+        Directory::remove($this->directory);
     }
 
     private function item(string $text, string $frontmatter = '', string $file = 'item.md'): DocsDoc

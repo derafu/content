@@ -19,7 +19,7 @@ use Derafu\Content\Plugin\Academy\AcademyLesson;
 use Derafu\Content\Plugin\Academy\AcademyTest;
 use Derafu\Content\Plugin\Academy\AcademyTestOption;
 use Derafu\Content\Plugin\Academy\AcademyTestQuestion;
-use Derafu\Support\File;
+use Derafu\File\Directory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -48,7 +48,7 @@ final class AcademyLessonTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::rmdir($this->directory);
+        Directory::remove($this->directory);
     }
 
     private function lesson(string $name, string $frontmatter = '', bool $withQuiz = false): AcademyLesson

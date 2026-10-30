@@ -16,8 +16,8 @@ use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\ContentAttachment;
 use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\Plugin\Docs\DocsDoc;
+use Derafu\File\Directory;
 use Derafu\Http\Enum\ContentType;
-use Derafu\Support\File;
 use Derafu\TestsContent\Support\ContentFixtures;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -45,7 +45,7 @@ final class ContentAttachmentTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::rmdir($this->directory);
+        Directory::remove($this->directory);
     }
 
     private function parent(): DocsDoc

@@ -14,7 +14,7 @@ namespace Derafu\TestsContent;
 
 use Derafu\Content\ContentConfig;
 use Derafu\Content\ContentContext;
-use Derafu\Support\File;
+use Derafu\File\Directory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -54,7 +54,7 @@ final class ContentContextTest extends TestCase
         // This default writes to the real system temp dir (there is no way
         // to exercise ContentContext's own default otherwise), so clean up
         // the directory it creates instead of leaving it behind.
-        File::rmdir(sys_get_temp_dir() . '/derafu_content');
+        Directory::remove(sys_get_temp_dir() . '/derafu_content');
     }
 
     public function testAnInjectedCachePoolIsUsedInstead(): void
