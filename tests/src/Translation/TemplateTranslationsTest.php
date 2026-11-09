@@ -155,8 +155,14 @@ final class TemplateTranslationsTest extends TestCase
 
         $messages = json_decode(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5), true, flags: JSON_THROW_ON_ERROR);
         $this->assertIsArray($messages);
+        $validated = [];
+        foreach ($messages as $key => $text) {
+            $this->assertIsString($key);
+            $this->assertIsString($text);
+            $validated[$key] = $text;
+        }
 
-        return array_map(fn (mixed $text): string => is_string($text) ? $text : '', $messages);
+        return $validated;
     }
 
     public function testTheTextsOfTheWidgetOfTheTestAreInEnglishAndTheyAreTranslated(): void
@@ -201,11 +207,17 @@ final class TemplateTranslationsTest extends TestCase
 
         $messages = json_decode(html_entity_decode($match[3], ENT_QUOTES | ENT_HTML5), true, flags: JSON_THROW_ON_ERROR);
         $this->assertIsArray($messages);
+        $validated = [];
+        foreach ($messages as $key => $text) {
+            $this->assertIsString($key);
+            $this->assertIsString($text);
+            $validated[$key] = $text;
+        }
 
         return [
             'data-api' => html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5),
             'data-base-path' => $match[2],
-            'messages' => array_map(fn (mixed $text): string => is_string($text) ? $text : '', $messages),
+            'messages' => $validated,
         ];
     }
 

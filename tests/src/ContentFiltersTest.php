@@ -14,6 +14,7 @@ namespace Derafu\TestsContent;
 
 use Derafu\Content\ContentFilters;
 use Derafu\Translation\Contract\TranslatableInterface;
+use Derafu\Value\Exception\TypeMismatchException;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -116,5 +117,19 @@ final class ContentFiltersTest extends TestCase
         $this->assertInstanceOf(TranslatableInterface::class, $exception);
         $this->assertSame(400, $exception->getCode());
         $this->assertSame($message, $exception->getMessage());
+    }
+
+    public function testNumericRequestKeysAreATranslatableBadRequest(): void
+    {
+        try {
+            ContentFilters::fromRequest(['search' => 'guide', 123 => 'invalid']);
+            $this->fail('Numeric request keys must be rejected.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertInstanceOf(TranslatableInterface::class, $exception);
+            $this->assertSame(400, $exception->getCode());
+            $this->assertInstanceOf(TypeMismatchException::class, $exception->getPrevious());
+            $this->assertStringContainsString('content request filters', $exception->getMessage());
+            $this->assertStringContainsString('map, array given.', $exception->getMessage());
+        }
     }
 }

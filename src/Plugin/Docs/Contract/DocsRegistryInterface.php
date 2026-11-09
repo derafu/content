@@ -23,7 +23,7 @@ interface DocsRegistryInterface extends ContentRegistryInterface
      * Get docs filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<DocsDocInterface>
+     * @return list<DocsDocInterface>
      */
     public function filter(array $filters = []): array;
 

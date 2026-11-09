@@ -23,7 +23,7 @@ interface FaqRegistryInterface extends ContentRegistryInterface
      * Get FAQs filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<FaqQuestionInterface>
+     * @return list<FaqQuestionInterface>
      */
     public function filter(array $filters = []): array;
 

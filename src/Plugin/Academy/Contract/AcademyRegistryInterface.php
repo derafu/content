@@ -23,7 +23,7 @@ interface AcademyRegistryInterface extends ContentRegistryInterface
      * Get academy courses filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<AcademyCourseInterface>
+     * @return list<AcademyCourseInterface>
      */
     public function filter(array $filters = []): array;
 

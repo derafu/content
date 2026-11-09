@@ -23,7 +23,7 @@ interface PagesRegistryInterface extends ContentRegistryInterface
      * Get pages filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<PagesPageInterface>
+     * @return list<PagesPageInterface>
      */
     public function filter(array $filters = []): array;
 

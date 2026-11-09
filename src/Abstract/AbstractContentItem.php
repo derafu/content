@@ -191,14 +191,14 @@ abstract class AbstractContentItem implements ContentItemInterface
     /**
      * Tags of the content.
      *
-     * @var array<ContentTag>
+     * @var list<ContentTag>
      */
     private array $tags;
 
     /**
      * Authors of the content.
      *
-     * @var array<ContentAuthorInterface>
+     * @var list<ContentAuthorInterface>
      */
     private array $authors;
 
@@ -422,6 +422,8 @@ abstract class AbstractContentItem implements ContentItemInterface
      */
     public function __serialize(): array
     {
+        // The snapshot contains the named properties declared by content items.
+        /** @var array<string, mixed> $data */
         $data = get_object_vars($this);
 
         $data['info'] = $this->info->getPathname();

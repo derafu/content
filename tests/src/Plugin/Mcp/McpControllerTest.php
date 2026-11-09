@@ -301,7 +301,12 @@ final class McpControllerTest extends TestCase
         $list = [];
         foreach ($tools as $tool) {
             $this->assertIsArray($tool);
-            $list[] = $tool;
+            $entry = [];
+            foreach ($tool as $key => $value) {
+                $this->assertIsString($key);
+                $entry[$key] = $value;
+            }
+            $list[] = $entry;
         }
 
         return $list;
@@ -588,6 +593,7 @@ final class McpControllerTest extends TestCase
         $results = $this->toolPayload($body);
         $previews = array_column($results, 'preview', 'uri');
 
+        $this->assertIsString($previews['guide']);
         $this->assertSame(303, mb_strlen($previews['guide']));
         $this->assertStringEndsWith('...', $previews['guide']);
         $this->assertStringStartsWith('word xxx', $previews['guide']);

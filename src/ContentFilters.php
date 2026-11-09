@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Content;
 
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Derafu\Value\Exception\TypeMismatchException;
+use Derafu\Value\ValueType;
 
 /**
  * Filters of the registries from the data of a request.
@@ -51,12 +53,21 @@ final class ContentFilters
      *
      * The keys without value (empty text) are not filters.
      *
-     * @param array<string, mixed> $data Data of the request.
+     * @param array<array-key, mixed> $data Data of the request.
      * @return array<string, mixed>
      * @throws InvalidArgumentException If the value of a filter has another type.
      */
     public static function fromRequest(array $data): array
     {
+        try {
+            $data = ValueType::map()->parse($data, source: 'content request filters');
+        } catch (TypeMismatchException $exception) {
+            throw new InvalidArgumentException([
+                'The request filters must be a map: {error}',
+                'error' => $exception,
+            ], 400, $exception);
+        }
+
         $filters = array_filter($data, fn ($value) => $value !== '');
 
         foreach (self::STRINGS as $key) {

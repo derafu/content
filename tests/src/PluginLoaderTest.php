@@ -41,6 +41,7 @@ use Derafu\Translation\Contract\TranslatableInterface;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -242,5 +243,58 @@ final class PluginLoaderTest extends TestCase
         $this->assertSame(['id' => 7], $route->getDefaults());
         $this->assertSame(['POST'], $route->getMethods());
         $this->assertSame('/custom/7', (new UrlGenerator($collection))->generate('custom_route'));
+    }
+
+    #[TestWith(['name', 7])]
+    #[TestWith(['path', []])]
+    #[TestWith(['handler', 7])]
+    #[TestWith(['defaults', 'invalid'])]
+    #[TestWith(['defaults', [123 => 'invalid']])]
+    #[TestWith(['methods', 'POST'])]
+    #[TestWith(['methods', [7]])]
+    #[TestWith(['methods', ['method' => 'POST']])]
+    public function testRouteOptionsRejectIncorrectTypes(string $key, mixed $value): void
+    {
+        $route = ['name' => 'custom_route', 'path' => '/custom', 'handler' => 'custom.handler'];
+        $route[$key] = $value;
+        $exception = $this->failureOf(['custom' => [
+            'class' => RouteAddingPlugin::class,
+            'name' => 'custom',
+            'path' => 'docs',
+            'route' => $route,
+        ]]);
+
+        $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+        $this->assertInstanceOf(TranslatableInterface::class, $exception);
+        $this->assertStringContainsString('"' . $key, $exception->getMessage());
+        $this->assertStringContainsString('plugin addRoute', $exception->getMessage());
+    }
+
+    public function testNullOptionalRouteValuesUseEmptyArrays(): void
+    {
+        $collection = new Collection();
+        $registrar = new RouteRegistrarFixture($collection);
+        $context = new ContentContext(new ContentConfig([
+            'title' => 'Fixture Website',
+            'url' => 'http://localhost',
+            'plugins' => ['custom' => [
+                'class' => RouteAddingPlugin::class,
+                'name' => 'custom',
+                'path' => 'docs',
+                'route' => [
+                    'name' => 'nullable_route',
+                    'path' => '/nullable',
+                    'handler' => 'custom.handler',
+                    'defaults' => null,
+                    'methods' => null,
+                ],
+            ]],
+        ]), new ArrayAdapter());
+        $loader = new PluginLoader(ContentFixtures::contentLoader(), $registrar);
+        $loader->loadAll(new ContentService($context, $loader));
+
+        $route = $collection->getByName('nullable_route');
+        $this->assertSame([], $route->getDefaults());
+        $this->assertSame([], $route->getMethods());
     }
 }

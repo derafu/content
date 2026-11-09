@@ -225,14 +225,14 @@ interface ContentItemInterface extends JsonSerializable, Stringable
     /**
      * A list of strings to tag your content.
      *
-     * @return array<string, ContentTagInterface>
+     * @return list<ContentTagInterface>
      */
     public function tags(): array;
 
     /**
      * The authors of the content.
      *
-     * @return array<string, ContentAuthorInterface>
+     * @return list<ContentAuthorInterface>
      */
     public function authors(): array;
 

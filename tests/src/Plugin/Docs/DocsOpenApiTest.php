@@ -18,8 +18,10 @@ use Derafu\Content\ContentSplFileInfo;
 use Derafu\Content\Plugin\Docs\DocsDoc;
 use Derafu\Content\Plugin\Docs\DocsOpenApiView;
 use Derafu\Translation\Contract\TranslatableInterface;
+use Derafu\Value\Exception\TypeMismatchException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -184,5 +186,20 @@ final class DocsOpenApiTest extends TestCase
             [['summary' => '', 'text' => '2026-01-31T10:30:00+00:00']],
             $doc->openapiView()?->parameterNotes($operation, $operation->parameters[2])['examples']
         );
+    }
+
+    #[TestWith(['numeric-root'])]
+    #[TestWith(['list-root'])]
+    public function testAnInvalidRootIdentifiesItsDocument(string $name): void
+    {
+        try {
+            $this->doc($name)->openapiSpec();
+            $this->fail('The OpenAPI root must be a map.');
+        } catch (RuntimeException $exception) {
+            $this->assertInstanceOf(TranslatableInterface::class, $exception);
+            $this->assertInstanceOf(TypeMismatchException::class, $exception->getPrevious());
+            $this->assertStringStartsWith('The OpenAPI document of "' . $name . '" is not valid:', $exception->getMessage());
+            $this->assertStringContainsString('map, array given.', $exception->getMessage());
+        }
     }
 }

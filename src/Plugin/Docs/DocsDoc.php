@@ -16,6 +16,8 @@ use DateTimeInterface;
 use Derafu\Content\Abstract\AbstractContentItem;
 use Derafu\Content\Plugin\Docs\Contract\DocsDocInterface;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
+use Derafu\Value\Exception\TypeMismatchException;
+use Derafu\Value\ValueType;
 use JsonException;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -41,7 +43,7 @@ class DocsDoc extends AbstractContentItem implements DocsDocInterface
      * The OpenAPI document as it was read, to give to the view what the
      * model does not have.
      *
-     * @var array<array-key, mixed>
+     * @var array<string, mixed>
      */
     private array $openapiRaw = [];
 
@@ -130,10 +132,13 @@ class DocsDoc extends AbstractContentItem implements DocsDocInterface
                 ? json_decode($raw, true, flags: JSON_THROW_ON_ERROR)
                 : self::withoutDates(Yaml::parse($raw, Yaml::PARSE_DATETIME));
 
-            $this->openapiRaw = is_array($data) ? $data : [];
+            $this->openapiRaw = ValueType::map()->parse(
+                is_array($data) ? $data : [],
+                source: 'OpenAPI ' . $this->uri()
+            );
 
             return Parser::parse($this->openapiRaw);
-        } catch (JsonException | ParseException | OpenAPIException $e) {
+        } catch (JsonException | ParseException | OpenAPIException | TypeMismatchException $e) {
             throw new RuntimeException([
                 'The OpenAPI document of "{content}" is not valid: {error}',
                 'content' => $this->uri(),

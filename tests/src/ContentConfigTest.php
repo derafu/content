@@ -13,7 +13,9 @@ declare(strict_types=1);
 namespace Derafu\TestsContent;
 
 use Derafu\Content\ContentConfig;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -87,5 +89,23 @@ final class ContentConfigTest extends TestCase
         $this->assertSame('G-1', $config->customField('analytics'));
         $this->assertNull($config->customField('missing'));
         $this->assertSame('x', $config->customField('missing', 'x'));
+    }
+
+    #[TestWith(['markdown'])]
+    #[TestWith(['plugins'])]
+    #[TestWith(['i18n'])]
+    #[TestWith(['customFields'])]
+    public function testConfigurationSectionsRejectNumericKeys(string $section): void
+    {
+        $config = new ContentConfig([
+            'title' => 'My Site',
+            'url' => 'https://example.com',
+            $section => [123 => 'invalid'],
+        ]);
+
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "' . $section . '" must be of type map, array given.');
+
+        $config->{$section}();
     }
 }

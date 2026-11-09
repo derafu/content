@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\Content;
 
+use Closure;
+use Derafu\Array\ArrayReader;
 use Derafu\Content\Contract\ContentContextInterface;
 use Derafu\Content\Contract\ContentLoaderInterface;
 use Derafu\Content\Contract\ContentPluginInterface;
@@ -20,6 +22,7 @@ use Derafu\Content\Contract\PluginInterface;
 use Derafu\Content\Contract\PluginLoaderInterface;
 use Derafu\Routing\Contract\RouteRegistrarInterface;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Derafu\Value\ValueType;
 
 /**
  * Plugin loader.
@@ -154,15 +157,21 @@ class PluginLoader implements PluginLoaderInterface
     {
         return [
             // Create a route to add to the website.
-            'addRoute' => fn (array $route) =>
-                $this->router->addRoute(
-                    $route['name'] ?? throw new InvalidArgumentException('Key "name" is required for addRoute().'),
-                    $route['path'] ?? throw new InvalidArgumentException('Key "path" is required for addRoute().'),
-                    $route['handler'] ?? throw new InvalidArgumentException('Key "handler" is required for addRoute().'),
-                    $route['defaults'] ?? [],
-                    $route['methods'] ?? [],
-                )
-            ,
+            'addRoute' => function (array $route) {
+                $name = $route['name'] ?? throw new InvalidArgumentException('Key "name" is required for addRoute().');
+                $path = $route['path'] ?? throw new InvalidArgumentException('Key "path" is required for addRoute().');
+                $handler = $route['handler'] ?? throw new InvalidArgumentException('Key "handler" is required for addRoute().');
+                $reader = ArrayReader::fromArray($route, 'plugin addRoute');
+
+                return $this->router->addRoute(
+                    ValueType::string()->parse($name, 'name', 'plugin addRoute'),
+                    ValueType::string()->parse($path, 'path', 'plugin addRoute'),
+                    ValueType::oneOf(ValueType::string(), ValueType::array(), ValueType::instanceOf(Closure::class))
+                        ->parse($handler, 'handler', 'plugin addRoute'),
+                    $reader->getMap('defaults') ?? [],
+                    $reader->getStringList('methods') ?? [],
+                );
+            },
         ];
     }
 }

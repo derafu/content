@@ -11,6 +11,8 @@ declare(strict_types=1);
  */
 
 return [
+    'The request filters must be a map: {error}' =>
+        'Los filtros de la solicitud deben ser un mapa: {error}',
     'The parent of page "{page}" must implement {interface}; {type} given.' =>
         'El padre de la página "{page}" debe implementar {interface}; se recibió {type}.',
 

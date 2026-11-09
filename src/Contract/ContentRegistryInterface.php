@@ -55,7 +55,7 @@ interface ContentRegistryInterface
      * Get content filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<ContentItemInterface>
+     * @return list<ContentItemInterface>
      */
     public function filter(array $filters = []): array;
 

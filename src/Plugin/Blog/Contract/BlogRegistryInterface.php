@@ -23,7 +23,7 @@ interface BlogRegistryInterface extends ContentRegistryInterface
      * Get blog posts filtered by criteria.
      *
      * @param array<string, mixed> $filters Filter criteria.
-     * @return array<BlogPostInterface>
+     * @return list<BlogPostInterface>
      */
     public function filter(array $filters = []): array;
 

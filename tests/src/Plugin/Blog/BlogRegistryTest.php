@@ -130,7 +130,7 @@ final class BlogRegistryTest extends TestCase
         $authors = $post->authors();
 
         $this->assertCount(1, $authors);
-        $author = array_values($authors)[0];
+        $author = $authors[0];
         $this->assertInstanceOf(ContentAuthor::class, $author);
         $this->assertSame('Ana Tester', $author->name());
     }

@@ -46,7 +46,7 @@ class ListContentTool
      * @param string|null $search Free-text search over title, description and body.
      * @param int $limit Maximum number of items to return (1-100).
      * @param int $page Page number, used together with limit.
-     * @return array<int, array<string, mixed>>
+     * @return list<array<string, mixed>>
      */
     public function __invoke(
         #[Schema(enum: ['academy', 'blog', 'docs', 'faq', 'pages'])]

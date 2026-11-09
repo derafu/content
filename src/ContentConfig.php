@@ -251,7 +251,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function markdown(): array
     {
-        return $this->config->requireContainer('markdown')->all();
+        return $this->config->getReader()->requireMap('markdown');
     }
 
     /**
@@ -261,7 +261,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function plugins(): array
     {
-        return $this->config->requireContainer('plugins')->all();
+        return $this->config->getReader()->requireMap('plugins');
     }
 
     /**
@@ -271,7 +271,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function i18n(): array
     {
-        return $this->config->requireContainer('i18n')->all();
+        return $this->config->getReader()->requireMap('i18n');
     }
 
     /**
@@ -287,7 +287,7 @@ class ContentConfig implements ContentConfigInterface
      */
     public function customFields(): array
     {
-        return $this->config->requireContainer('customFields')->all();
+        return $this->config->getReader()->requireMap('customFields');
     }
 
     /**
